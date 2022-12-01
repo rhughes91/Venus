@@ -7,7 +7,7 @@ to create a portable Windows buid. The commands to use CMake make use of the [Mi
 
 ### CMake Commands
 ```bash
-files" -DCMAKE_BUILD_TYPE=Release -S . -B build/Venus/cmake
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build/Venus/cmake
 ```
 ```bash
 cmake --build build/Venus/cmake
