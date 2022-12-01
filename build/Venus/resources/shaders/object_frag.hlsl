@@ -54,19 +54,16 @@ uniform int totalSpotLights;
 
 in vec3 Normal;
 in vec3 FragPos;
-in vec4 FragPosLightSpace;
 out vec4 FragColor;
 
 in vec2 TexCoord;
 
 uniform Material material;
-uniform sampler2D shadowMap;
 
 uniform bool advanced;
 uniform vec3 lightPos, viewPos;
 uniform vec4 objColor;
 
-float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal);
 vec4 calcDirLight(DirLight light, vec4 color, vec3 normal, vec3 viewDir, float shadow);
 vec4 calcPointLight(PointLight light, vec4 color, vec3 normal, vec3 viewDir, float shadow);
 vec4 calcSpotLight(SpotLight light, vec4 color, vec3 normal, vec3 viewDir, float shadow);
@@ -77,7 +74,6 @@ void main()
     vec3 viewDir = normalize(viewPos - FragPos);
     vec4 color =  texture(material.diffuse, TexCoord) * objColor;
 
-    // float shadow = ShadowCalculation(FragPosLightSpace, norm);
     float shadow = 0;
     vec4 result = color * 0.0;
     result += calcDirLight(dirLight, color, norm, viewDir, shadow);
@@ -90,35 +86,6 @@ void main()
     }
 
     FragColor = result;
-}
-
-float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal)
-{
-    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
-
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
-    float currentDepth = projCoords.z;
-
-    vec3 lightDir = normalize(lightPos - FragPos);
-    float bias = max(0.006 * (1.0 - dot(Normal, lightDir)), 0.005);
-    
-    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for(int x = -1; x <= 1; ++x)
-    {
-        for(int y = -1; y <= 1; ++y)
-        {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
-        }    
-    }
-    shadow /= 9.0;
-    
-    if(projCoords.z > 1.0)
-        shadow = 0.0;
-        
-    return shadow;
 }
 
 vec4 calcDirLight(DirLight light, vec4 color, vec3 normal, vec3 viewDir, float shadow)

@@ -200,7 +200,7 @@ void vellichor::initialize()
         Vector2 lastMousePosition;
         Vector3 cameraPosition, bufferDirection = vec3::forward, lastCamera = vec3::forward, direction = vec3::forward, force, forceDirection;
 
-        float speed = 2.0f, rotationalSpeed = 20.0f, radius = 6, angle = 0, mouseSensitivity = 0.5f;
+        float speed = 2.0f, rotationalSpeed = 0, radius = 4, angle = 0, mouseSensitivity = 0.5f;
         Vector3 circularMotion = Vector3(radius * std::sin(angle), 0, radius * std::cos(angle));
     };
     Event& event = object::initializeScript<Event>();
@@ -259,7 +259,7 @@ void vellichor::initialize()
 
             Object camera("camera");
             data.camera = &camera.addComponent<Camera>(Camera(2.0f, Color(0.01f, 0, 0.005f, 1), Vector3(0, -0.15, -1), vec3::up));
-            data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(data.violetTransform -> position + Vector3(0, 1.25f, 6))});
+            data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(data.violetTransform -> position + Vector3(0, 1.25f, data.radius))});
             g_window.screen.camera = camera.data;
 
             violet.addComponent<Billboard>(Billboard{camera.data});
@@ -306,12 +306,14 @@ void vellichor::initialize()
                 data.lastCamera = camDirection;
                 data.direction = data.force;
 
-                float theta = vec3::signedAngle(data.force * Vector3(-1, 1, 1), vec3::forward) + vec3::signedAngle(vec3::forward, camDirection);
-                data.forceDirection = Vector3(std::sin(theta), 0, std::cos(theta));
+                float theta1 = vec3::signedAngle(data.force * Vector3(-1, 1, 1), vec3::forward), theta2 = vec3::signedAngle(vec3::forward, camDirection);
+                data.forceDirection = Vector3(std::sin(theta1+theta2), 0, std::cos(theta1+theta2));
             }
 
             data.angle = math::modf(data.angle + (data.lastMousePosition - g_window.mouseScreenPosition()).x * data.mouseSensitivity, 2*M_PI);
             data.lastMousePosition = g_window.mouseScreenPosition();
+
+            data.angle += 0.025f;
 
             data.animator -> setParameter("moving", data.force != vec3::zero);
             idle.setParameter("force", data.direction);
