@@ -1,4 +1,5 @@
 #include "vector.h"
+#include "color.h"
 #include <iomanip>
 
 Vector2 vec2::sign(const Vector2 &vector)

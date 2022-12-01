@@ -150,18 +150,7 @@ src/CMakeFiles/venus_lib.dir/file_util.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
- C:/Projects/Venus/include/graphics.h \
- C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
- C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
- C:/msys64/mingw64/include/c++/12.1.0/tuple \
- C:/msys64/mingw64/include/c++/12.1.0/bits/uses_allocator.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
- C:/Projects/Venus/include/vector.h C:/Projects/Venus/include/color.h \
+ C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/vector.h \
  C:/msys64/mingw64/include/c++/12.1.0/math.h \
  C:/msys64/mingw64/include/c++/12.1.0/cmath \
  C:/msys64/mingw64/include/math.h \
@@ -178,4 +167,4 @@ src/CMakeFiles/venus_lib.dir/file_util.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
- C:/Projects/Venus/include/shader.h
+ C:/Projects/Venus/include/color.h

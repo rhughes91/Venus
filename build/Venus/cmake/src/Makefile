@@ -129,29 +129,33 @@ venus_lib/fast:
 	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
 .PHONY : venus_lib/fast
 
-component.obj: component.cpp.obj
-.PHONY : component.obj
+# Convenience name for target.
+src/CMakeFiles/file_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/file_lib.dir/rule
+.PHONY : src/CMakeFiles/file_lib.dir/rule
 
-# target to build an object file
-component.cpp.obj:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/component.cpp.obj
-.PHONY : component.cpp.obj
+# Convenience name for target.
+file_lib: src/CMakeFiles/file_lib.dir/rule
+.PHONY : file_lib
 
-component.i: component.cpp.i
-.PHONY : component.i
+# fast build rule for target.
+file_lib/fast:
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\file_lib.dir\build.make src/CMakeFiles/file_lib.dir/build
+.PHONY : file_lib/fast
 
-# target to preprocess a source file
-component.cpp.i:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/component.cpp.i
-.PHONY : component.cpp.i
+# Convenience name for target.
+src/CMakeFiles/ecs_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/ecs_lib.dir/rule
+.PHONY : src/CMakeFiles/ecs_lib.dir/rule
 
-component.s: component.cpp.s
-.PHONY : component.s
+# Convenience name for target.
+ecs_lib: src/CMakeFiles/ecs_lib.dir/rule
+.PHONY : ecs_lib
 
-# target to generate assembly for a file
-component.cpp.s:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/component.cpp.s
-.PHONY : component.cpp.s
+# fast build rule for target.
+ecs_lib/fast:
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
+.PHONY : ecs_lib/fast
 
 event.obj: event.cpp.obj
 .PHONY : event.obj
@@ -182,7 +186,7 @@ file_util.obj: file_util.cpp.obj
 
 # target to build an object file
 file_util.cpp.obj:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/file_util.cpp.obj
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\file_lib.dir\build.make src/CMakeFiles/file_lib.dir/file_util.cpp.obj
 .PHONY : file_util.cpp.obj
 
 file_util.i: file_util.cpp.i
@@ -190,7 +194,7 @@ file_util.i: file_util.cpp.i
 
 # target to preprocess a source file
 file_util.cpp.i:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/file_util.cpp.i
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\file_lib.dir\build.make src/CMakeFiles/file_lib.dir/file_util.cpp.i
 .PHONY : file_util.cpp.i
 
 file_util.s: file_util.cpp.s
@@ -198,7 +202,7 @@ file_util.s: file_util.cpp.s
 
 # target to generate assembly for a file
 file_util.cpp.s:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/file_util.cpp.s
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\file_lib.dir\build.make src/CMakeFiles/file_lib.dir/file_util.cpp.s
 .PHONY : file_util.cpp.s
 
 global.obj: global.cpp.obj
@@ -302,7 +306,7 @@ structure.obj: structure.cpp.obj
 
 # target to build an object file
 structure.cpp.obj:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/structure.cpp.obj
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.obj
 .PHONY : structure.cpp.obj
 
 structure.i: structure.cpp.i
@@ -310,7 +314,7 @@ structure.i: structure.cpp.i
 
 # target to preprocess a source file
 structure.cpp.i:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/structure.cpp.i
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.i
 .PHONY : structure.cpp.i
 
 structure.s: structure.cpp.s
@@ -318,7 +322,7 @@ structure.s: structure.cpp.s
 
 # target to generate assembly for a file
 structure.cpp.s:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/structure.cpp.s
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.s
 .PHONY : structure.cpp.s
 
 vector.obj: vector.cpp.obj
@@ -353,10 +357,9 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
+	@echo ... ecs_lib
+	@echo ... file_lib
 	@echo ... venus_lib
-	@echo ... component.obj
-	@echo ... component.i
-	@echo ... component.s
 	@echo ... event.obj
 	@echo ... event.i
 	@echo ... event.s

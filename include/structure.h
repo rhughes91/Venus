@@ -1,14 +1,14 @@
 #ifndef STRUCTURE_H
 #define STRUCTURE_H
 
-#include <iostream>
 #include <array>
 #include <bitset>
 #include <memory>
 #include <queue>
 #include <set>
 #include <unordered_map>
-#include <math.h>
+
+#include "vector.h"
 
 using Entity = uint32_t;
 using Path = std::pair<std::string, std::string>;
@@ -69,20 +69,8 @@ struct Time
     Time() {}
 
     // updates the "fixedUpdate" timer, interpolates deltaTime, and tracks the average framerate
-    void update(double time)
-    {
-        double currentFrame = time;
-        lastDeltaTime = deltaTime;
-        deltaTime = deltaTime * 0.75f + (currentFrame - lastFrame) * 0.25f;
-        lastFrame = currentFrame;
-        timer += deltaTime;
-        averageFrameRate = (averageFrameRate + (1/deltaTime))/2;
-    }
-    void beginTimer(double time_)
-    {
-        float currentFrame = time_;
-        lastFrame = currentFrame;
-    }
+    void update();
+    void beginTimer();
     void resetTimer(double interval)
     {
         timer = timer-interval;
@@ -922,6 +910,104 @@ class Object
         }
 };
 
+// Billboard (struct): forces the 'target' to rotate towards the active Camera
+struct Billboard
+{
+    Entity target;
+};
+
+// Button (struct): triggers its 'trigger' function when its attached Rect component is clicked on
+struct Button
+{
+    void(*trigger)(Entity entity);
+
+    Button(void(*trigger__)(Entity entity) = [](Entity entity){}) : trigger(trigger__) {}
+};
+
+
+// PHYSICS COMPONENTS
+
+
+// struct Box
+// { 
+//     Vector3 min, max;
+//     Box(const Vector3 &vmin, const Vector3 &vmax) 
+//     { 
+//         min = vmin;
+//         max = vmax;
+//     } 
+//     Vector3 bounds[2];
+    
+//     bool CheckLineBox(Vector3 L1, Vector3 L2, Vector3& Hit)
+//     {
+//         if (L2.x < min.x && L1.x < min.x) return false;
+//         if (L2.x > max.x && L1.x > max.x) return false;
+//         if (L2.y < min.y && L1.y < min.y) return false;
+//         if (L2.y > max.y && L1.y > max.y) return false;
+//         if (L2.z < min.z && L1.z < min.z) return false;
+//         if (L2.z > max.z && L1.z > max.z) return false;
+//         if (L1.x > min.x && L1.x < max.x &&
+//             L1.y > min.y && L1.y < max.y &&
+//             L1.z > min.z && L1.z < max.z)
+//         {
+//             Hit = L1;
+//             return true;
+//         }
+//         if ((GetIntersection(L1.x - min.x, L2.x - min.x, L1, L2, Hit) && InBox(Hit, min, max, 1))
+//         || (GetIntersection(L1.y - min.y, L2.y - min.y, L1, L2, Hit) && InBox(Hit, min, max, 2))
+//         || (GetIntersection(L1.z - min.z, L2.z - min.z, L1, L2, Hit) && InBox(Hit, min, max, 3))
+//         || (GetIntersection(L1.x - max.x, L2.x - max.x, L1, L2, Hit) && InBox(Hit, min, max, 1))
+//         || (GetIntersection(L1.y - max.y, L2.y - max.y, L1, L2, Hit) && InBox(Hit, min, max, 2))
+//         || (GetIntersection(L1.z - max.z, L2.z - max.z, L1, L2, Hit) && InBox(Hit, min, max, 3)))
+//             return true;
+
+//         return false;
+//     }
+
+//     bool GetIntersection(float fDst1, float fDst2, Vector3 P1, Vector3 P2, Vector3& Hit)
+//     {
+//         if ((fDst1 * fDst2) > 0) return false;
+//         if (fDst1 == fDst2) return false;
+//         Hit = P1 + (P2 - P1) * (-fDst1 / (fDst2 - fDst1));
+//         return true;
+//     }
+
+//     bool InBox(Vector3 Hit, Vector3 min, Vector3 max, int Axis)
+//     {
+//         if (Axis == 1 && Hit.z >= min.z && Hit.z <= max.z && Hit.y >= min.y && Hit.y <= max.y) return true;
+//         if (Axis == 2 && Hit.z >= min.z && Hit.z <= max.z && Hit.x >= min.x && Hit.x <= max.x) return true;
+//         if (Axis == 3 && Hit.x >= min.x && Hit.x <= max.x && Hit.y >= min.y && Hit.y <= max.y) return true;
+//         return false;
+//     }
+
+// };
+
+// BoxCollider (struct): calls 'trigger' function whenever another BoxCollider intersects with this one :: otherwise, miss function is called
+struct BoxCollider
+{
+    bool mobile;
+    Vector3 scale, storedPosition;
+    
+    void (*trigger)(Entity, Entity, int);
+    void (*miss)(Entity);
+
+    BoxCollider(bool mobile__ = false, const Vector3& scale__ = 1) : mobile(mobile__), scale(scale__)
+    {
+        trigger = [](Entity entity, Entity target, int triggerd){};
+        miss = [](Entity entity){};
+    }
+
+    void setTrigger(void (*trigger__)(Entity, Entity, int))
+    {
+        trigger = trigger__;
+    }
+
+    void setMiss(void (*miss__)(Entity))
+    {
+        miss = miss__;
+    }
+};
+
 // object (namespace): allows the user to avoid accessing the global ObjectManager variable :: only way to initialize a Script
 namespace object
 {
@@ -934,6 +1020,7 @@ namespace object
     void fixedUpdate();
     
     Object find(std::string name);
+    Vector3 brightness(int32_t value);
 
     template<typename T>
     T& addComponent(Entity data, T component)
@@ -990,5 +1077,13 @@ namespace object
         }
     }
 };
+
+// physics (namespace): allows for collision handling with a BoxCollider
+namespace physics
+{
+    enum Direction {UP, RIGHT, DOWN, LEFT};
+    void collisionHandler(Entity entity, Entity collision, int triggered);
+    void collisionMiss(Entity entity);
+}
 
 #endif

@@ -1,16 +1,15 @@
-#include <iostream>
-#include <string>
-#include "setup.h"
-#include "graphics.h"
+#include "glad/glad.h"
+#include "image/stb_image.h"
 
-extern Window g_window;
+#include "graphics.h"
+#include "structure.h"
+
 extern Time g_time;
 
 void FrameBuffer::initialize()
 {
     glGenFramebuffers(1, &data);
 }
-
 void FrameBuffer::remove()
 {
     for(auto buffer : renderBuffers)
@@ -23,7 +22,6 @@ void FrameBuffer::remove()
     }
     glDeleteFramebuffers(1, &data);
 }
-
 void FrameBuffer::refresh(uint16_t width, uint16_t height)
 {
     for(auto texture : textures)
@@ -44,15 +42,6 @@ void FrameBuffer::refresh(uint16_t width, uint16_t height)
         glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
     }
 }
-
-bool FrameBuffer::complete()
-{
-    bind(GL_FRAMEBUFFER);
-    bool complete = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-    unbind();
-    return complete;
-}
-
 void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t height, uint32_t component, uint32_t componentType, uint32_t attachment, uint32_t scaling, uint32_t wrapping, bool multisampled)
 {
     uint32_t texture;
@@ -85,253 +74,105 @@ void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t h
     unbind();
 }
 
-void FrameBuffer::addRenderBuffer(const std::string& name)
-{
-    uint32_t renderBuffer;
-    bind(GL_FRAMEBUFFER);
-
-    glGenRenderbuffers(1, &renderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
-    renderBuffers.insert({name, renderBuffer});
-    unbind();
-}
-
 void FrameBuffer::bind(uint32_t type)
 {
     glBindFramebuffer(type, data);
 }
-
 void FrameBuffer::unbind()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);  
 }
-
 void FrameBuffer::bindTexture(const std::string& name)
 {
     glBindTexture(textures[name].type, textures[name].data);
 }
-
-
-Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__) : count(numVertices), dimensions(dimensions__)
+bool FrameBuffer::complete()
 {
-    std::vector<Vector3> positions = std::vector<Vector3>(count);
-    for(int i=0; i<count; i++)
+    bind(GL_FRAMEBUFFER);
+    bool complete = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+    unbind();
+    return complete;
+}
+
+extern std::string g_source;
+extern std::unordered_map<std::string, uint32_t> g_loadedTextures;
+
+
+uint32_t texture::typeToModifier(texture::Type type)
+{
+    switch(type)
     {
-        positions[i] = vertices__[i];
+        case PNG: return GL_SRGB_ALPHA;
+        case JPEG: return GL_SRGB;
     }
-    std::vector<float> textureCoords = std::vector<float>(2 * count);
-    for(int i=0; i<count; i++)
+    return GL_SRGB;
+}
+void texture::set(const std::string &path, int32_t screenChannel)
+{
+    int32_t width, height, channels;
+    unsigned char *data = stbi_load((g_source + "resources/images/" + path).c_str(), &width, &height, &channels, 0);
+
+    uint32_t channel;
+    switch (channels)
     {
-        textureCoords[i*2] = texture__[i*2];
-        textureCoords[i*2 + 1] = texture__[i*2 + 1];
+    case 1:
+        channel = GL_RED;
+        break;
+    case 3:
+        channel = GL_RGB;
+        break;
+    case 4:
+        channel = GL_RGBA;
+        break;
     }
-    std::vector<Vertex> vertices;
-    for(int i=0; i<count; i+=3)
+    uint32_t texture;
+
+    glGenTextures(1, &texture);
+
+    if (data)
     {
-        Vector3 normal = vec3::triSurface(positions[i], positions[i+1], positions[i+2]);
-        for(int j=0; j<3; j++)
-        {
-            vertices.push_back({positions[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
-        }
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, channel, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // set the texture wrapping/filtering options (on the currently bound texture object)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
-
-    // vertex positions
-    glEnableVertexAttribArray(0);	
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    // vertex normals
-    glEnableVertexAttribArray(1);	
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vector3));
-    // vertex texture coords
-    glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3)*2));
-}
-
-Mesh::Mesh(const std::vector<Vertex> &vertices, const Vector3& dimensions__) : count(vertices.size()), dimensions(dimensions__)
-{
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
-
-    // vertex positions
-    glEnableVertexAttribArray(0);	
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    // vertex normals
-    glEnableVertexAttribArray(1);	
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vector3));
-    // vertex texture coords
-    glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3)*2));
-}
-
-void Mesh::draw(const uint32_t texture) const
-{
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, g_window.screen.depthBuffer.getTexture("texture").data);
-
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, count);
-}
-
-void Mesh::remove()
-{
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-}
-
-Mesh shape::square(int32_t tiling)
-{
-    Vector3 vectors[]
+    else
     {
-        Vector3(0.5f, -0.5f, 0),
-        Vector3(-0.5f, 0.5f, 0),
-        Vector3(-0.5f, -0.5f, 0),
-        
-        
-        Vector3(0.5f, 0.5f, 0),
-        Vector3(-0.5f, 0.5f, 0),
-        Vector3(0.5f, -0.5f, 0),
-        
-    };
-    float textureCorners = tiling;
-    float texture[]
-    {
-        textureCorners, 0,
-        0, textureCorners,
-        0, 0,
-        
-
-        textureCorners, textureCorners,
-        0, textureCorners,
-        textureCorners, 0,
-        
-    };
-    Mesh result = Mesh(vectors, 6, texture, Vector3(1, 1, 0));
-    return result;
+        std::cout << "Failed to load texture: " << path << std::endl;
+    }
+    stbi_image_free(data);
+    g_loadedTextures[path] = texture;
 }
-
-Mesh shape::cube()
+void texture::set(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
 {
-    Vector3 vectors[]
+    for (std::string subPath : subPaths)
     {
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(0.5f, 0.5f, -0.5f),
-        Vector3(0.5f, -0.5f, -0.5f),
-        // NORTH
-        Vector3(0.5f, 0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(-0.5f, 0.5f, -0.5f),
-
-        Vector3(-0.5f, -0.5f, 0.5f),
-        Vector3(0.5f, -0.5f, 0.5f),
-        Vector3(0.5f, 0.5f, 0.5f),
-        // SOUTH
-        Vector3(0.5f, 0.5f, 0.5f),
-        Vector3(-0.5f, 0.5f, 0.5f),
-        Vector3(-0.5f, -0.5f, 0.5f),
-
-        Vector3(-0.5f, 0.5f, 0.5f),
-        Vector3(-0.5f, 0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-        // EAST
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(-0.5f, -0.5f, 0.5f),
-        Vector3(-0.5f, 0.5f, 0.5f),
-
-        Vector3(0.5f, 0.5f, 0.5f),
-        Vector3(0.5f, -0.5f, -0.5f),
-        Vector3(0.5f, 0.5f, -0.5f),
-        // WEST
-        Vector3(0.5f, -0.5f, -0.5f),
-        Vector3(0.5f, 0.5f, 0.5f),
-        Vector3(0.5f, -0.5f, 0.5f),
-        
-
-        Vector3(-0.5f, -0.5f, -0.5f),
-        Vector3(0.5f, -0.5f, -0.5f),
-        Vector3(0.5f, -0.5f, 0.5f),
-        // TOP
-        Vector3(0.5f, -0.5f, 0.5f),
-        Vector3(-0.5f, -0.5f, 0.5f),
-        Vector3(-0.5f, -0.5f, -0.5f),
-
-        Vector3(-0.5f, 0.5f, -0.5f),
-        Vector3(0.5f, 0.5f, 0.5f),
-        Vector3(0.5f, 0.5f, -0.5f),
-        // BOTTOM
-        Vector3(0.5f, 0.5f, 0.5f),
-        Vector3(-0.5f, 0.5f, -0.5f),
-        Vector3(-0.5f, 0.5f, 0.5f),
-        
-    };
-    
-    float texture[]
+        texture::set(path + subPath + "." + texture::typeToString(type), texture::typeToModifier(type));
+    }
+}
+uint32_t texture::get(const std::string &path)
+{
+    return g_loadedTextures.at(path);
+}
+std::vector<uint32_t> texture::get(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
+{
+    std::vector<uint32_t> textures;
+    for (std::string subPath : subPaths)
     {
-        0, 0,
-        1, 1,
-        1, 0,
-        // NORTH
-        1, 1,
-        0, 0,
-        0, 1,
-
-        0, 0,
-        1, 0,
-        1, 1,
-        // SOUTH
-        1, 1,
-        0, 1,
-        0, 0,
-
-        1, 0,
-        1, 1,
-        0, 1,
-        // EAST
-        0, 1,
-        0, 0,
-        1, 0,
-
-        1, 0,
-        0, 1,
-        1, 1,
-        // WEST
-        0, 1,
-        1, 0,
-        0, 0,
-        
-
-        0, 1,
-        1, 1,
-        1, 0,
-        // TOP
-        1, 0,
-        0, 0,
-        0, 1,
-
-        0, 1,
-        1, 0,
-        1, 1,
-        // BOTTOM
-        1, 0,
-        0, 1,
-        0, 0,
-        
-    };
-    Mesh result = Mesh(vectors, 36, texture, vec3::one);
-    return result;
+        textures.push_back(g_loadedTextures[path + subPath + "." + texture::typeToString(type)]);
+    }
+    return textures;
+}
+void texture::remove()
+{
+    for (auto &pair : g_loadedTextures)
+    {
+        glDeleteTextures(1, &pair.second);
+    }
 }

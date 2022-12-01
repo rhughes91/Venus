@@ -1,8 +1,6 @@
-#include <iostream>
-#include <math.h>
-
+#include "input.h"
 #include "setup.h"
-#include "file_util.h"
+#include "structure.h"
 
 extern Window g_window;
 extern Time g_time;
@@ -27,13 +25,13 @@ void beginEventLoop()
     float timeScale = 0.02f;
     object::load();
     object::start();
-    g_time.beginTimer(glfwGetTime());
-    while (!glfwWindowShouldClose(g_window.data))
+    g_time.beginTimer();
+    while (!g_window.closing())
     {
-        g_time.update(glfwGetTime());
+        g_time.update();
 
-        if(g_keyboard.inputs[GLFW_KEY_ESCAPE].pressed)
-            glfwSetWindowShouldClose(g_window.data, true);
+        if(g_keyboard.inputs[key::ESCAPE].pressed)
+            g_window.close();
 
         while(g_time.timer > timeScale)
         {
@@ -47,9 +45,7 @@ void beginEventLoop()
 
         g_keyboard.refresh();
         g_mouse.refresh();
-        
-        glfwSwapBuffers(g_window.data);
-        glfwPollEvents();
+        g_window.refresh();
     }
 
     g_window.remove();
@@ -59,5 +55,5 @@ void beginEventLoop()
 
     std::cout << g_time.averageFrameRate << " FPS : " << g_time.deltaTime*1000 << " ms" << std::endl;
     g_window.throwError();
-    glfwTerminate();
+    g_window.terminate();
 }

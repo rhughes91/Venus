@@ -4,6 +4,7 @@
 #include <limits>
 
 #include "file_util.h"
+#include "shader.h"
 
 extern std::string g_source;
 

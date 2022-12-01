@@ -1,22 +1,22 @@
 #ifndef SETUP_H
 #define SETUP_H
 
-#include "image/stb_image.h"
-#include "glad/glad.h"
-#define GLFW_DLL
-#include "GLFW/glfw3.h"
-#include <string>
+#include "graphics.h"
+#include "shader.h"
 
-#include "component.h"
+// DirectionalLight (struct): holds data needed to render a directional light
+struct DirectionalLight
+{
+    Vector3 direction;
+    Color color;
+    float strength;
+};
 
 // Screen (struct): holds basic data about how data is rendered to the screen
 struct Screen
 {
     bool fullscreen = false;
-
-    mat4x4 lightSpaceMatrix;
-
-    Entity camera;
+    uint32_t camera;
 
     bool resolutionUpdated;
     Vector2 m_lastResolution;
@@ -26,7 +26,6 @@ struct Screen
     FrameBuffer frameBuffer, subBuffer, depthBuffer;
 
     DirectionalLight dirLight;
-
     Shader shader;
     float gamma;
 
@@ -48,28 +47,25 @@ class Window
         uint16_t SCR_WIDTH = 0;
         uint16_t SCR_HEIGHT = 0;
 
-        GLFWwindow *data;
+        void *data;
         bool active;
 
         Window() {};
         Window(std::string name, uint32_t width, uint32_t height);
+
+        bool closing();
         bool throwError();
-        void enableVSync(bool enable)
-        {
-            glfwSwapInterval(enable);
-        }
-        void hideMouse(bool enable)
-        {
-            glfwSetInputMode(data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
-        }
-        void lockMouse(bool enable)
-        {
-            glfwSetInputMode(data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-        }
+
+        void close();
+        void enableVSync(bool enable);
+        void hideMouse(bool enable);
+        void lockMouse(bool enable);
+        void refresh();
         void remove()
         {
             screen.remove();
         }
+        void terminate();
 
         float aspectRatioInv()
         {
@@ -93,7 +89,7 @@ class Window
 };
 
 // initializes the global 'g_window' Window singleton
-bool initGL(const char * name, uint32_t width, uint32_t height);
+bool createWindow(const char * name, uint32_t width, uint32_t height);
 
 // begins the primary game loop
 void beginEventLoop();

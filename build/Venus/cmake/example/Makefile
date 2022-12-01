@@ -116,18 +116,18 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-example/CMakeFiles/vell_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 example/CMakeFiles/vell_lib.dir/rule
-.PHONY : example/CMakeFiles/vell_lib.dir/rule
+example/CMakeFiles/vellichor_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 example/CMakeFiles/vellichor_lib.dir/rule
+.PHONY : example/CMakeFiles/vellichor_lib.dir/rule
 
 # Convenience name for target.
-vell_lib: example/CMakeFiles/vell_lib.dir/rule
-.PHONY : vell_lib
+vellichor_lib: example/CMakeFiles/vellichor_lib.dir/rule
+.PHONY : vellichor_lib
 
 # fast build rule for target.
-vell_lib/fast:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vell_lib.dir\build.make example/CMakeFiles/vell_lib.dir/build
-.PHONY : vell_lib/fast
+vellichor_lib/fast:
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vellichor_lib.dir\build.make example/CMakeFiles/vellichor_lib.dir/build
+.PHONY : vellichor_lib/fast
 
 # Convenience name for target.
 example/CMakeFiles/main.dir/rule:
@@ -172,7 +172,7 @@ vellichor.obj: vellichor.cpp.obj
 
 # target to build an object file
 vellichor.cpp.obj:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vell_lib.dir\build.make example/CMakeFiles/vell_lib.dir/vellichor.cpp.obj
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vellichor_lib.dir\build.make example/CMakeFiles/vellichor_lib.dir/vellichor.cpp.obj
 .PHONY : vellichor.cpp.obj
 
 vellichor.i: vellichor.cpp.i
@@ -180,7 +180,7 @@ vellichor.i: vellichor.cpp.i
 
 # target to preprocess a source file
 vellichor.cpp.i:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vell_lib.dir\build.make example/CMakeFiles/vell_lib.dir/vellichor.cpp.i
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vellichor_lib.dir\build.make example/CMakeFiles/vellichor_lib.dir/vellichor.cpp.i
 .PHONY : vellichor.cpp.i
 
 vellichor.s: vellichor.cpp.s
@@ -188,7 +188,7 @@ vellichor.s: vellichor.cpp.s
 
 # target to generate assembly for a file
 vellichor.cpp.s:
-	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vell_lib.dir\build.make example/CMakeFiles/vell_lib.dir/vellichor.cpp.s
+	cd /d C:\Projects\Venus\build\Venus\cmake && $(MAKE) $(MAKESILENT) -f example\CMakeFiles\vellichor_lib.dir\build.make example/CMakeFiles/vellichor_lib.dir/vellichor.cpp.s
 .PHONY : vellichor.cpp.s
 
 # Help Target
@@ -200,7 +200,7 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... main
-	@echo ... vell_lib
+	@echo ... vellichor_lib
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s

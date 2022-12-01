@@ -161,25 +161,25 @@ Animator& configurePlayerAnimator(Object& violet)
 
 
     int idleFrameCount = 7;
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0000", "0001", "0002"}, "png"), idleFrameCount), "south");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0003", "0004", "0005"}, "png"), idleFrameCount), "swest");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0006", "0007", "0008"}, "png"), idleFrameCount), "west");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0009", "0010", "0011"}, "png"), idleFrameCount), "nwest");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0012", "0013", "0014"}, "png"), idleFrameCount), "north");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0015", "0016", "0017"}, "png"), idleFrameCount), "neast");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0018", "0019", "0020"}, "png"), idleFrameCount), "east");
-    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0021", "0022", "0023"}, "png"), idleFrameCount), "seast");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0000", "0001", "0002"}, texture::PNG), idleFrameCount), "south");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0003", "0004", "0005"}, texture::PNG), idleFrameCount), "swest");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0006", "0007", "0008"}, texture::PNG), idleFrameCount), "west");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0009", "0010", "0011"}, texture::PNG), idleFrameCount), "nwest");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0012", "0013", "0014"}, texture::PNG), idleFrameCount), "north");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0015", "0016", "0017"}, texture::PNG), idleFrameCount), "neast");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0018", "0019", "0020"}, texture::PNG), idleFrameCount), "east");
+    idle.add(Animation(texture::get("Vellichor/Violet/Idle/violet_idle", {"0021", "0022", "0023"}, texture::PNG), idleFrameCount), "seast");
     register8DStates(idle);
 
     int moveFrameCount = 5;
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09"}, "png"), moveFrameCount), "south");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"10", "11", "12", "13", "14", "15", "16", "17", "18", "19"}, "png"), moveFrameCount), "swest");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"20"}, "png"), moveFrameCount), "west");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"21"}, "png"), moveFrameCount), "nwest");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"22"}, "png"), moveFrameCount), "north");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"23"}, "png"), moveFrameCount), "neast");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"24"}, "png"), moveFrameCount), "east");
-    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"25"}, "png"), moveFrameCount), "seast");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09"}, texture::PNG), moveFrameCount), "south");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"10", "11", "12", "13", "14", "15", "16", "17", "18", "19"}, texture::PNG), moveFrameCount), "swest");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"20"}, texture::PNG), moveFrameCount), "west");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"21"}, texture::PNG), moveFrameCount), "nwest");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"22"}, texture::PNG), moveFrameCount), "north");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"23"}, texture::PNG), moveFrameCount), "neast");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"24"}, texture::PNG), moveFrameCount), "east");
+    move.add(Animation(texture::get("Vellichor/Violet/Move/violet_move00", {"25"}, texture::PNG), moveFrameCount), "seast");
     register8DStates(move);
 
     animator.addTransition<bool>("moving", Operation::equals, true, std::pair{"idle", "move"});
@@ -200,7 +200,7 @@ void vellichor::initialize()
         Vector2 lastMousePosition;
         Vector3 cameraPosition, bufferDirection = vec3::forward, lastCamera = vec3::forward, direction = vec3::forward, force, forceDirection;
 
-        float speed = 2.0f, rotationalSpeed = 0, radius = 4, angle = 0, mouseSensitivity = 0.5f;
+        float speed = 2.0f, rotationalSpeed = 0, radius = 6, angle = 0, mouseSensitivity = 0.5f;
         Vector3 circularMotion = Vector3(radius * std::sin(angle), 0, radius * std::cos(angle));
     };
     Event& event = object::initializeScript<Event>();
@@ -209,10 +209,10 @@ void vellichor::initialize()
         event.load([]
         (System& script)
         {
-            texture::set("Vellichor/", {"wall_texture", "bookcase_texture", "ladder_texture", "carpet_texture", "window_texture"}, "png", GL_SRGB_ALPHA);
-            texture::set("Vellichor/Violet/Idle/violet_idle00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"}, "png", GL_SRGB_ALPHA);
-            texture::set("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"}, "png", GL_SRGB_ALPHA);
-            texture::set("Vellichor/Mother/Idle/mother_idle00", {"00"}, "png", GL_SRGB_ALPHA);
+            texture::set("Vellichor/", {"wall_texture", "bookcase_texture", "ladder_texture", "carpet_texture", "window_texture"}, texture::PNG);
+            texture::set("Vellichor/Violet/Idle/violet_idle00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"}, texture::PNG);
+            texture::set("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"}, texture::PNG);
+            texture::set("Vellichor/Mother/Idle/mother_idle00", {"00"}, texture::PNG);
 
             g_window.enableVSync(true);
             g_window.lockMouse(true);
@@ -237,13 +237,13 @@ void vellichor::initialize()
             (Entity entity, Entity compare, int triggered)
             {
                 float climbSpeed = 2, maxHeight = 0.6f, minHeight = -31.5f;
-                if(g_keyboard.inputs[GLFW_KEY_SPACE].held)
+                if(g_keyboard.inputs[key::SPACE].held)
                 {
                     Transform &transform = object::getComponent<Transform>(entity);
                     Vector3 newTransform = transform.position + Vector3(0, climbSpeed * g_time.deltaTime, 0);
                     transform.position = Vector3(newTransform.x, math::clamp(newTransform.y, minHeight, maxHeight), newTransform.z);
                 }
-                if(g_keyboard.inputs[GLFW_KEY_LEFT_SHIFT].held)
+                if(g_keyboard.inputs[key::LEFT_SHIFT].held)
                 {
                     Transform &transform = object::getComponent<Transform>(entity);
                     Vector3 newTransform = transform.position - Vector3(0, climbSpeed * g_time.deltaTime, 0);
@@ -294,7 +294,7 @@ void vellichor::initialize()
             AnimationState& move = data.animator -> get("move");
 
             Vector3 camDirection = -data.camera -> front.xz().normalized();
-            data.force = Vector3(g_keyboard.inputs[GLFW_KEY_D].held - g_keyboard.inputs[GLFW_KEY_A].held, 0, g_keyboard.inputs[GLFW_KEY_S].held - g_keyboard.inputs[GLFW_KEY_W].held).normalized();
+            data.force = Vector3(g_keyboard.inputs[key::D].held - g_keyboard.inputs[key::A].held, 0, g_keyboard.inputs[key::S].held - g_keyboard.inputs[key::W].held).normalized();
             if(data.force == 0)
             {
                 data.forceDirection = 0;
@@ -312,8 +312,6 @@ void vellichor::initialize()
 
             data.angle = math::modf(data.angle + (data.lastMousePosition - g_window.mouseScreenPosition()).x * data.mouseSensitivity, 2*M_PI);
             data.lastMousePosition = g_window.mouseScreenPosition();
-
-            data.angle += 0.025f;
 
             data.animator -> setParameter("moving", data.force != vec3::zero);
             idle.setParameter("force", data.direction);

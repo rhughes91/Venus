@@ -1,11 +1,15 @@
-#include <iostream>
-#include <windows.h>
+#include "glad/glad.h"
+#define GLFW_DLL
+#include "GLFW/glfw3.h"
+#include "image/stb_image.h"
 
 #include "setup.h"
+#include "input.h"
+#include "structure.h"
+
+Window g_window;
 
 extern std::string g_source;
-extern Time g_time;
-extern Window g_window;
 extern InputManager g_keyboard, g_mouse;
 
 void Screen::clear(const Color& color)
@@ -66,32 +70,192 @@ void Screen::draw()
     quad.draw(subBuffer.getTexture("texture").data);
 }
 
+void object::render()
+{
+    g_window.screen.store();
+    g_manager.render();
+    g_window.screen.draw();
+}
+void FrameBuffer::addRenderBuffer(const std::string& name)
+{
+    uint32_t renderBuffer;
+    bind(GL_FRAMEBUFFER);
+
+    glGenRenderbuffers(1, &renderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
+    renderBuffers.insert({name, renderBuffer});
+    unbind();
+}
+void Mesh::draw(const uint32_t texture) const
+{
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, g_window.screen.depthBuffer.getTexture("texture").data);
+
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, count);
+}
+
+uint32_t glInputToKeyCode(uint32_t input)
+{
+    switch(input)
+    {
+        case GLFW_KEY_SPACE: return key::SPACE;
+        case GLFW_KEY_APOSTROPHE: return key::APOSTROPHE;
+        case GLFW_KEY_COMMA: return key::COMMA;
+        case GLFW_KEY_MINUS : return key::MINUS;
+        case GLFW_KEY_PERIOD: return key::PERIOD;
+        case GLFW_KEY_SLASH: return key::SLASH;
+        case GLFW_KEY_0: return key::ZERO;
+        case GLFW_KEY_1: return key::ONE;
+        case GLFW_KEY_2: return key::TWO;
+        case GLFW_KEY_3: return key::THREE;
+        case GLFW_KEY_4: return key::FOUR;
+        case GLFW_KEY_5: return key::FIVE;
+        case GLFW_KEY_6: return key::SIX;
+        case GLFW_KEY_7: return key::SEVEN;
+        case GLFW_KEY_8: return key::EIGHT;
+        case GLFW_KEY_9: return key::NINE;
+        case GLFW_KEY_SEMICOLON: return key::SEMICOLON;
+        case GLFW_KEY_EQUAL: return key::EQUAL;
+        case GLFW_KEY_A: return key::A;
+        case GLFW_KEY_B: return key::B;
+        case GLFW_KEY_C: return key::C;
+        case GLFW_KEY_D: return key::D;
+        case GLFW_KEY_E: return key::E;
+        case GLFW_KEY_F: return key::F;
+        case GLFW_KEY_G: return key::G;
+        case GLFW_KEY_H: return key::H;
+        case GLFW_KEY_I: return key::I;
+        case GLFW_KEY_J: return key::J;
+        case GLFW_KEY_K: return key::K;
+        case GLFW_KEY_L: return key::L;
+        case GLFW_KEY_M: return key::M;
+        case GLFW_KEY_N: return key::N;
+        case GLFW_KEY_O: return key::O;
+        case GLFW_KEY_P: return key::P;
+        case GLFW_KEY_Q: return key::Q;
+        case GLFW_KEY_R: return key::R;
+        case GLFW_KEY_S: return key::S;
+        case GLFW_KEY_T: return key::T;
+        case GLFW_KEY_U: return key::U;
+        case GLFW_KEY_V: return key::V;
+        case GLFW_KEY_W: return key::W;
+        case GLFW_KEY_X: return key::X;
+        case GLFW_KEY_Y: return key::Y;
+        case GLFW_KEY_Z: return key::Z;
+        case GLFW_KEY_LEFT_BRACKET: return key::LEFT_BRACKET;
+        case GLFW_KEY_BACKSLASH: return key::BACKSLASH;
+        case GLFW_KEY_RIGHT_BRACKET: return key::RIGHT_BRACKET;
+        case GLFW_KEY_GRAVE_ACCENT: return key::GRAVE;
+        case GLFW_KEY_ESCAPE: return key::ESCAPE;
+        case GLFW_KEY_ENTER: return key::ENTER;
+        case GLFW_KEY_TAB: return key::TAB;
+        case GLFW_KEY_BACKSPACE: return key::BACKSPACE;
+        case GLFW_KEY_INSERT: return key::INSERT;
+        case GLFW_KEY_DELETE: return key::DEL;
+        case GLFW_KEY_RIGHT: return key::RIGHT;
+        case GLFW_KEY_LEFT: return key::LEFT;
+        case GLFW_KEY_DOWN: return key::DOWN;
+        case GLFW_KEY_UP: return key::UP;
+        case GLFW_KEY_PAGE_UP: return key::PAGE_UP;
+        case GLFW_KEY_PAGE_DOWN: return key::PAGE_DOWN;
+        case GLFW_KEY_HOME: return key::HOME;
+        case GLFW_KEY_END: return key::END;
+        case GLFW_KEY_CAPS_LOCK: return key::CAPS_LOCK;
+        case GLFW_KEY_SCROLL_LOCK: return key::SCROLL_LOCK;
+        case GLFW_KEY_NUM_LOCK: return key::NUM_LOCK;
+        case GLFW_KEY_PRINT_SCREEN: return key::PRINT_SCREEN;
+        case GLFW_KEY_PAUSE: return key::PAUSE;
+        case GLFW_KEY_F1: return key::F1;
+        case GLFW_KEY_F2: return key::F2;
+        case GLFW_KEY_F3: return key::F3;
+        case GLFW_KEY_F4: return key::F4;
+        case GLFW_KEY_F5: return key::F5;
+        case GLFW_KEY_F6: return key::F6;
+        case GLFW_KEY_F7: return key::F7;
+        case GLFW_KEY_F8: return key::F8;
+        case GLFW_KEY_F9: return key::F9;
+        case GLFW_KEY_F10: return key::F10;
+        case GLFW_KEY_F11: return key::F11;
+        case GLFW_KEY_F12: return key::F12;
+        case GLFW_KEY_F13: return key::F13;
+        case GLFW_KEY_F14: return key::F14;
+        case GLFW_KEY_F15: return key::F15;
+        case GLFW_KEY_F16: return key::F16;
+        case GLFW_KEY_F17: return key::F17;
+        case GLFW_KEY_F18: return key::F18;
+        case GLFW_KEY_F19: return key::F19;
+        case GLFW_KEY_F20: return key::F20;
+        case GLFW_KEY_F21: return key::F21;
+        case GLFW_KEY_F22: return key::F22;
+        case GLFW_KEY_F23: return key::F23;
+        case GLFW_KEY_F24: return key::F24;
+        case GLFW_KEY_F25: return key::F25;
+        case GLFW_KEY_KP_0: return key::K_0;
+        case GLFW_KEY_KP_1: return key::K_1;
+        case GLFW_KEY_KP_2: return key::K_2;
+        case GLFW_KEY_KP_3: return key::K_3;
+        case GLFW_KEY_KP_4: return key::K_4;
+        case GLFW_KEY_KP_5: return key::K_5;
+        case GLFW_KEY_KP_6: return key::K_6;
+        case GLFW_KEY_KP_7: return key::K_7;
+        case GLFW_KEY_KP_8: return key::K_8;
+        case GLFW_KEY_KP_9: return key::K_9;
+        case GLFW_KEY_KP_DECIMAL: return key::K_DECIMAL;
+        case GLFW_KEY_KP_DIVIDE: return key::K_DIVIDE;
+        case GLFW_KEY_KP_MULTIPLY: return key::K_MULTIPLY;
+        case GLFW_KEY_KP_SUBTRACT: return key::K_SUBTRACT;
+        case GLFW_KEY_KP_ADD: return key::K_ADD;
+        case GLFW_KEY_KP_ENTER: return key::K_ENTER;
+        case GLFW_KEY_KP_EQUAL: return key::K_EQUAL;
+        case GLFW_KEY_LEFT_SHIFT: return key::LEFT_SHIFT;
+        case GLFW_KEY_LEFT_CONTROL: return key::LEFT_CTRL;
+        case GLFW_KEY_LEFT_ALT: return key::LEFT_ALT;
+        case GLFW_KEY_LEFT_SUPER: return key::LEFT_SUPER;
+        case GLFW_KEY_RIGHT_SHIFT: return key::RIGHT_SHIFT;
+        case GLFW_KEY_RIGHT_CONTROL: return key::RIGHT_CTRL;
+        case GLFW_KEY_RIGHT_ALT: return key::RIGHT_ALT;
+        case GLFW_KEY_RIGHT_SUPER: return key::RIGHT_SUPER;
+        case GLFW_KEY_WORLD_1: return key::GLOBAL_0;
+        case GLFW_KEY_WORLD_2: return key::GLOBAL_1;
+        case GLFW_KEY_MENU: return key::MENU;
+    }
+    return key::NIL;
+}
+
+void Time::update()
+{
+    double currentFrame = glfwGetTime();
+    lastDeltaTime = deltaTime;
+    deltaTime = deltaTime * 0.75f + (currentFrame - lastFrame) * 0.25f;
+    lastFrame = currentFrame;
+    timer += deltaTime;
+    averageFrameRate = (averageFrameRate + (1/deltaTime))/2;
+}
+void Time::beginTimer()
+{
+    float currentFrame = glfwGetTime();
+    lastFrame = currentFrame;
+}
+
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if(action == GLFW_REPEAT)
         return;
 
-    g_keyboard.parse(GLFW_KEY_SPACE, glfwGetKey(window, GLFW_KEY_SPACE));
-    for(GLenum k = GLFW_KEY_0; k <= GLFW_KEY_9; k++)
+    for(GLenum k = 0; k<=GLFW_KEY_LAST; k++)
     {
-        g_keyboard.parse(k, glfwGetKey(window, k));
-    }
-    for(GLenum k = GLFW_KEY_A; k <= GLFW_KEY_Z; k++)
-    {
-        g_keyboard.parse(k, glfwGetKey(window, k));
-    }
-    for(GLenum k = GLFW_KEY_ESCAPE; k <= GLFW_KEY_PAGE_DOWN; k++)
-    {
-        g_keyboard.parse(k, glfwGetKey(window, k));
-    }
-    for(GLenum k = GLFW_KEY_LEFT_SHIFT; k <= GLFW_KEY_LAST; k++)
-    {
-        g_keyboard.parse(k, glfwGetKey(window, k));
+        g_keyboard.parse(glInputToKeyCode(k), glfwGetKey(window, k));
     }
 
     if(action == GLFW_RELEASE)
     {
-        g_keyboard.parse(key, false);
+        g_keyboard.parse(glInputToKeyCode(key), false);
     }
 
     if(key == GLFW_KEY_F && action == GLFW_PRESS)
@@ -175,23 +339,26 @@ Window::Window(std::string name, uint32_t width, uint32_t height)
         return;
     }
 
-    glfwMakeContextCurrent(data);
-    glfwSetWindowPos(data, 0, 25);
+    glfwMakeContextCurrent((GLFWwindow *)data);
+    glfwSetWindowPos((GLFWwindow *)data, 0, 25);
     
-    glfwSetFramebufferSizeCallback(data, framebuffer_size_callback);
-    glfwSetKeyCallback(data, key_callback);
-    glfwSetCursorPosCallback(data, mouse_callback);
-    glfwSetMouseButtonCallback(data, mouse_button_callback);
+    glfwSetFramebufferSizeCallback((GLFWwindow *)data, framebuffer_size_callback);
+    glfwSetKeyCallback((GLFWwindow *)data, key_callback);
+    glfwSetCursorPosCallback((GLFWwindow *)data, mouse_callback);
+    glfwSetMouseButtonCallback((GLFWwindow *)data, mouse_button_callback);
 
     configureGLAD();
     
     double xPos, yPos;
-    glfwGetCursorPos(data, &xPos, &yPos);
+    glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
     mousePosition = {(float)xPos, (float)yPos};
     g_window = *this;
     g_window.screen.initialize(DirectionalLight{Vector3(0, 0, 1), color::WHITE, 1}, Shader("screen_vertex", "screen_frag"));
 }
-
+bool Window::closing()
+{
+    return glfwWindowShouldClose((GLFWwindow *)data);
+}
 bool Window::throwError()
 {
     uint32_t error = glGetError();
@@ -226,7 +393,6 @@ bool Window::throwError()
     std::cout << errorMessage << std::endl;
     return error;
 }
-
 void Window::configureGLAD()
 {
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -248,20 +414,44 @@ void Window::configureGLAD()
     // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     active = true;
 }
+void Window::close()
+{
+    glfwSetWindowShouldClose((GLFWwindow *)data, true);
+}
+void Window::enableVSync(bool enable)
+{
+    glfwSwapInterval(enable);
+}
+void Window::hideMouse(bool enable)
+{
+    glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
+}
+void Window::lockMouse(bool enable)
+{
+    glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+}
+void Window::refresh()
+{
+    glfwSwapBuffers((GLFWwindow *)g_window.data);
+    glfwPollEvents();
+}
+void Window::terminate()
+{
+    glfwTerminate();
+}
 
-
-bool initGL(const char *name, uint32_t width, uint32_t height)
+bool createWindow(const char *name, uint32_t width, uint32_t height)
 {
     Window(name, width, height);
     if(!g_window.active)
         return false;
 
     stbi_set_flip_vertically_on_load(true);
-    texture::set("", {"default"}, "png", GL_SRGB_ALPHA);
+    texture::set("", {"default"}, texture::PNG);
     mesh::set("square", shape::square());
     mesh::set("cube", shape::cube());
 
-    g_keyboard.initialize(GLFW_KEY_LAST);
+    g_keyboard.initialize(key::MENU);
     g_mouse.initialize(GLFW_MOUSE_BUTTON_LAST);
 
     return true;

@@ -129,6 +129,32 @@ venus_lib/fast:
 .PHONY : venus_lib/fast
 
 #=============================================================================
+# Target rules for targets named file_lib
+
+# Build rule for target.
+file_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 file_lib
+.PHONY : file_lib
+
+# fast build rule for target.
+file_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\file_lib.dir\build.make src/CMakeFiles/file_lib.dir/build
+.PHONY : file_lib/fast
+
+#=============================================================================
+# Target rules for targets named ecs_lib
+
+# Build rule for target.
+ecs_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 ecs_lib
+.PHONY : ecs_lib
+
+# fast build rule for target.
+ecs_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
+.PHONY : ecs_lib/fast
+
+#=============================================================================
 # Target rules for targets named vendor_lib
 
 # Build rule for target.
@@ -142,17 +168,17 @@ vendor_lib/fast:
 .PHONY : vendor_lib/fast
 
 #=============================================================================
-# Target rules for targets named vell_lib
+# Target rules for targets named vellichor_lib
 
 # Build rule for target.
-vell_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 vell_lib
-.PHONY : vell_lib
+vellichor_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 vellichor_lib
+.PHONY : vellichor_lib
 
 # fast build rule for target.
-vell_lib/fast:
-	$(MAKE) $(MAKESILENT) -f example\CMakeFiles\vell_lib.dir\build.make example/CMakeFiles/vell_lib.dir/build
-.PHONY : vell_lib/fast
+vellichor_lib/fast:
+	$(MAKE) $(MAKESILENT) -f example\CMakeFiles\vellichor_lib.dir\build.make example/CMakeFiles/vellichor_lib.dir/build
+.PHONY : vellichor_lib/fast
 
 #=============================================================================
 # Target rules for targets named main
@@ -175,8 +201,10 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
+	@echo ... ecs_lib
+	@echo ... file_lib
 	@echo ... main
-	@echo ... vell_lib
+	@echo ... vellichor_lib
 	@echo ... vendor_lib
 	@echo ... venus_lib
 .PHONY : help

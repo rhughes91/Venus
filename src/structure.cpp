@@ -1,18 +1,31 @@
-#include "file_util.h"
-#include "setup.h"
+#include "glad/glad.h"
+
+#include "component.h"
 #include "input.h"
+#include "machine.h"
+#include "setup.h"
+#include "structure.h"
+#include "ui.h"
 
 extern ObjectManager g_manager;
 extern Window g_window;
-extern Time g_time;
 extern InputManager g_keyboard, g_mouse;
 
+
+Camera::Camera(float speed__, Color color__, Vector3 front__, Vector3 up__) : speed(speed__), backgroundColor(color__), front(front__), up(up__)
+{
+    projection = mat4::inter(math::radians(45.0f), 2.5f, g_window.aspectRatioInv(), 0.01f, 200.0f, 1.0f);
+}
+
+Vector2 Rect::relativePosition()
+{
+    return position + relativeOrigin - scale * vec2::sign(relativeOrigin) * Vector2(g_window.aspectRatio(), 1) * 0.5f;
+}
 
 Object object::find(std::string name)
 {
     return Object(name, g_manager.getEntity(name));
 }
-
 Vector3 object::brightness(int32_t value)
 {
     switch(value)
@@ -32,7 +45,7 @@ Vector3 object::brightness(int32_t value)
     return 0;
 }
 
-
+// cannot interpret MUTE, DECR_VOLUME, INCR_VOLUME, CALCULATOR, GLOBAL_2, GLOBAL_3, and GLOBAL_4
 void InputManager::initialize(int end)
 {
     for(uint32_t i = 0; i <= end; i++)
@@ -40,7 +53,6 @@ void InputManager::initialize(int end)
         inputs.insert({i, Key{i}});
     }
 }
-
 void InputManager::parse(int32_t input, bool pressed)
 {
     Key& key = inputs[input];
@@ -57,7 +69,6 @@ void InputManager::parse(int32_t input, bool pressed)
         key.held = false;
     }
 }
-
 void InputManager::refresh()
 {
     for(Key key : heldKeys)
@@ -70,12 +81,34 @@ void InputManager::refresh()
     }
 }
 
-
 void Timer::update(float max)
 {
     timer += math::clamp(g_time.deltaTime, 0.f, max);
 }
 
+uint32_t Animation::step()
+{
+    if(frameCount != frameRate-1)
+    {
+        frameCount++;
+    }
+    else
+    {
+        frameCount = 0;
+        if(frames.size() == 0)
+            return texture::get("default.png");
+        frame = (frame + 1) % frames.size();
+    }
+    return frames[frame];
+}
+void anim::reset(Animation& animation)
+{
+    animation.frame = 0;
+}
+void anim::keep(Animation& current, Animation& last)
+{
+    current.frame = (last.frame < current.frames.size() ? last.frame:0);
+}
 
 void physics::collisionHandler(Entity entity, Entity collision, int triggered)
 {
@@ -133,7 +166,6 @@ void physics::collisionHandler(Entity entity, Entity collision, int triggered)
         }
     }
 }
-
 void physics::collisionMiss(Entity entity)
 {
     object::getComponent<Physics2D>(entity).resetCollisions();
@@ -196,14 +228,14 @@ ObjectManager::ObjectManager()
         system -> setUpdate([]
         (System &system)
         {
-            for(auto const &entity : system.m_entities)
-            {
-                Rect& rect = object::getComponent<Rect>(entity);
-                if(g_mouse.inputs[GLFW_MOUSE_BUTTON_LEFT].pressed && rect.contains(g_window.mouseScreenPosition()))
-                {
-                    object::getComponent<Button>(entity).trigger(entity);
-                }
-            }
+            // for(auto const &entity : system.m_entities)
+            // {
+            //     Rect& rect = object::getComponent<Rect>(entity);
+            //     if(g_mouse.inputs[GLFW_MOUSE_BUTTON_LEFT].pressed && rect.contains(g_window.mouseScreenPosition()))
+            //     {
+            //         object::getComponent<Button>(entity).trigger(entity);
+            //     }
+            // }
         });
 
         system = registerSystem<PhysicsHandler>();

@@ -1,6 +1,6 @@
 src/CMakeFiles/venus_lib.dir/component.cpp.obj: \
  C:\Projects\Venus\src\component.cpp \
- C:/Projects/Venus/include/structure.h \
+ C:/Projects/Venus/include/component.h \
  C:/msys64/mingw64/include/c++/12.1.0/iostream \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/c++config.h \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/os_defines.h \
@@ -131,50 +131,7 @@ src/CMakeFiles/venus_lib.dir/component.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/istream \
  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
- C:/msys64/mingw64/include/c++/12.1.0/array \
- C:/msys64/mingw64/include/c++/12.1.0/compare \
- C:/msys64/mingw64/include/c++/12.1.0/bitset \
- C:/msys64/mingw64/include/c++/12.1.0/memory \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tempbuf.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_raw_storage_iter.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/align.h \
- C:/msys64/mingw64/include/c++/12.1.0/bit \
- C:/msys64/mingw64/include/c++/12.1.0/bits/uses_allocator.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/unique_ptr.h \
- C:/msys64/mingw64/include/c++/12.1.0/tuple \
- C:/msys64/mingw64/include/c++/12.1.0/bits/shared_ptr.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/shared_ptr_base.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/allocated_ptr.h \
- C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
- C:/msys64/mingw64/include/c++/12.1.0/ext/concurrence.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/shared_ptr_atomic.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/atomic_base.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/atomic_lockfree_defines.h \
- C:/msys64/mingw64/include/c++/12.1.0/backward/auto_ptr.h \
- C:/msys64/mingw64/include/c++/12.1.0/pstl/glue_memory_defs.h \
- C:/msys64/mingw64/include/c++/12.1.0/pstl/execution_defs.h \
- C:/msys64/mingw64/include/c++/12.1.0/queue \
- C:/msys64/mingw64/include/c++/12.1.0/deque \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_deque.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/deque.tcc \
- C:/msys64/mingw64/include/c++/12.1.0/vector \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_heap.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_queue.h \
- C:/msys64/mingw64/include/c++/12.1.0/set \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
- C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
- C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
+ C:/Projects/Venus/include/color.h C:/Projects/Venus/include/vector.h \
  C:/msys64/mingw64/include/c++/12.1.0/math.h \
  C:/msys64/mingw64/include/c++/12.1.0/cmath \
  C:/msys64/mingw64/include/math.h \
@@ -192,12 +149,53 @@ src/CMakeFiles/venus_lib.dir/component.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
- C:/Projects/Venus/include/setup.h \
- C:/Projects/Venus/include/image/stb_image.h \
- C:/Projects/Venus/include/glad/glad.h \
- C:/Projects/Venus/include/KHR/khrplatform.h \
- C:/Projects/Venus/include/GLFW/glfw3.h \
- C:/Projects/Venus/include/component.h C:/Projects/Venus/include/vector.h \
- C:/Projects/Venus/include/color.h C:/Projects/Venus/include/graphics.h \
- C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/machine.h \
- C:/Projects/Venus/include/structure.h C:/Projects/Venus/include/ui.h
+ C:/Projects/Venus/include/graphics.h \
+ C:/msys64/mingw64/include/c++/12.1.0/vector \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
+ C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
+ C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
+ C:/msys64/mingw64/include/c++/12.1.0/tuple \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/uses_allocator.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
+ C:/Projects/Venus/include/machine.h \
+ C:/msys64/mingw64/include/c++/12.1.0/array \
+ C:/msys64/mingw64/include/c++/12.1.0/compare \
+ C:/msys64/mingw64/include/c++/12.1.0/bitset \
+ C:/msys64/mingw64/include/c++/12.1.0/memory \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tempbuf.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_raw_storage_iter.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/align.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bit \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/unique_ptr.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/shared_ptr.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/shared_ptr_base.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/allocated_ptr.h \
+ C:/msys64/mingw64/include/c++/12.1.0/ext/concurrence.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/shared_ptr_atomic.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/atomic_base.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/atomic_lockfree_defines.h \
+ C:/msys64/mingw64/include/c++/12.1.0/backward/auto_ptr.h \
+ C:/msys64/mingw64/include/c++/12.1.0/pstl/glue_memory_defs.h \
+ C:/msys64/mingw64/include/c++/12.1.0/pstl/execution_defs.h \
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/graphics.h \
+ C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/shader.h \
+ C:/Projects/Venus/include/structure.h \
+ C:/msys64/mingw64/include/c++/12.1.0/queue \
+ C:/msys64/mingw64/include/c++/12.1.0/deque \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_deque.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/deque.tcc \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_heap.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_queue.h \
+ C:/msys64/mingw64/include/c++/12.1.0/set \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
+ C:/Projects/Venus/include/ui.h

@@ -2,9 +2,11 @@
 #define MACHINE_H
 
 #include <iostream>
+#include <array>
 #include <bitset>
-
-#include "structure.h"
+#include <memory>
+#include <vector>
+#include <unordered_map>
 
 /**
  * State Machine Architecture: switches between various pieces of data based on provided conditions
@@ -354,5 +356,46 @@ namespace machine
         machine.update();
     }
 };
+
+
+// Animation (struct): holds the data and logic needed to switch between images at a certain 'frameRate'
+struct Animation
+{
+    std::vector<uint32_t> frames;
+    int frame = 0;
+    int frameRate = 1;
+
+    Animation() {}
+    Animation(const std::vector<uint32_t>& frames__)
+    {
+        frames = frames__;
+    }
+
+    Animation(const std::vector<uint32_t>& frames__, int32_t frameRate__)
+    {
+        frames = frames__;
+        frameRate = frameRate__;
+    }
+
+    // loops 'frame' between 0 and the size of 'frames' and returns the image data at that index
+    uint32_t step();
+
+    private:
+        int32_t frameCount = 0;
+};
+
+// anim (namespace): holds basic StateMachine transition functions for Animations
+namespace anim
+{
+    // resets 'animation' to frame zero on transition
+    void reset(Animation& animation);
+
+    // attempts to maintain frame index from 'last' animation on transition :: otherwise, frame index is set to zero
+    void keep(Animation& current, Animation& last);
+};
+
+// acts as layered StateMachine :: layer one is AnimationState, layer two is Animation
+using AnimationState = StateMachine<Animation>;
+using Animator = StateMachine<AnimationState>;
 
 #endif

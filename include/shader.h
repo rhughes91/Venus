@@ -1,8 +1,10 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+#include <vector>
 #include <string>
 #include <stdint.h>
+
 #include "vector.h"
 #include "color.h"
 
@@ -57,5 +59,69 @@ namespace shader
 
     void remove();
 };
+
+
+// Vertex (struct): holds basic vertex data as it is stored in a .obj file
+struct Vertex
+{
+    Vector3 position;
+    Vector3 normal;
+    Vector2 uv;
+};
+
+// Mesh (struct): wrapper for the Vertex Array Object and Vertex Buffer Object necessary to render a mesh
+class Mesh
+{
+    public:
+        Mesh() {}
+        Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__);
+        Mesh(const std::vector<Vertex> &vertices, const Vector3& dimensions__);
+
+        void draw(const uint32_t texture) const;
+        void remove();
+
+        uint32_t VAO, VBO, count;
+        Vector3 dimensions;
+};
+
+// shape (namespace): provides basic Mesh shapes without needing to load a file
+namespace shape
+{
+    Mesh square(int32_t tiling = 1);
+    Mesh cube();
+}
+
+// mesh (namespace): global methods for loading and accessing mesh data from .obj files
+namespace mesh
+{
+    Mesh &set(const std::string& path);
+    Mesh &set(const std::string& path, const Mesh& mesh);
+    void set(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
+    Mesh &get(const std::string& path);
+    std::vector<Mesh> get(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
+
+    void remove();
+};
+
+
+// Model (struct): holds an entity's Material and Mesh data which allows it to be rendered
+struct Model
+{
+    Color color;
+    Material material;
+    Mesh data;
+    uint32_t texture;
+
+    Model(const Color& color__ = color::WHITE, const Material& material__ = Material(), const Mesh &data__ = Mesh(), uint32_t texture__ = 0) : color(color__), material(material__), data(data__), texture(texture__) {}
+
+    // uses the Material's shader of this Model
+    void draw()
+    {
+        data.draw(texture);
+    }
+};
+
+// loads .obj file at 'filename' :: applied textures will be applied in a checkerboard pattern of size 'tiling'
+Mesh loadObjFile(const std::string &fileName, Vector2 tiling = Vector2(1, 1));
 
 #endif

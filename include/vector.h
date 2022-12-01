@@ -1,8 +1,8 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include "color.h"
 #include <iostream>
+#include <string>
 
 #define M_PI 3.14159265358979323846
 #include <math.h>

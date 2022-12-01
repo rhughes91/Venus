@@ -92,9 +92,11 @@ main_EXTERNAL_OBJECTS =
 
 C:/Projects/Venus/build/Venus/main.exe: example/CMakeFiles/main.dir/main.cpp.obj
 C:/Projects/Venus/build/Venus/main.exe: example/CMakeFiles/main.dir/build.make
-C:/Projects/Venus/build/Venus/main.exe: example/libvell_lib.a
+C:/Projects/Venus/build/Venus/main.exe: example/libvellichor_lib.a
 C:/Projects/Venus/build/Venus/main.exe: src/libvenus_lib.a
 C:/Projects/Venus/build/Venus/main.exe: vendor/libvendor_lib.a
+C:/Projects/Venus/build/Venus/main.exe: src/libecs_lib.a
+C:/Projects/Venus/build/Venus/main.exe: src/libfile_lib.a
 C:/Projects/Venus/build/Venus/main.exe: C:/Projects/Venus/lib/libglfw3dll.a
 C:/Projects/Venus/build/Venus/main.exe: example/CMakeFiles/main.dir/linkLibs.rsp
 C:/Projects/Venus/build/Venus/main.exe: example/CMakeFiles/main.dir/objects1

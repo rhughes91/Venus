@@ -57,7 +57,9 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "src/CMakeFiles/venus_lib.dir/DependInfo.cmake"
+  "src/CMakeFiles/file_lib.dir/DependInfo.cmake"
+  "src/CMakeFiles/ecs_lib.dir/DependInfo.cmake"
   "vendor/CMakeFiles/vendor_lib.dir/DependInfo.cmake"
-  "example/CMakeFiles/vell_lib.dir/DependInfo.cmake"
+  "example/CMakeFiles/vellichor_lib.dir/DependInfo.cmake"
   "example/CMakeFiles/main.dir/DependInfo.cmake"
   )
