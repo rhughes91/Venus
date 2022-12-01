@@ -3,7 +3,7 @@ The Venus Game Engine is a C++ framework meant to simplify game development.
 
 ## Usage
 For the simplest experience, any code for game development can be built from code within the **example** folder. The engine uses [CMake](https://cmake.org/download/) 
-to create a portable Windows buid. The commands to use CMake make use of the [MingGW](https://www.mingw-w64.org/), but other compilers should work just as well with CMake.
+to create a portable Windows buid. The commands to use CMake make use of the [MingGW](https://www.mingw-w64.org/) compiler, but other compilers should work just as well with CMake.
 
 ### CMake Commands
 ```bash
