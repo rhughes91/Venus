@@ -1,0 +1,2 @@
+C:\msys64\mingw64\bin\ar.exe qc libvendor_lib.a CMakeFiles/vendor_lib.dir/glad.c.obj CMakeFiles/vendor_lib.dir/stb_image.cpp.obj
+C:\msys64\mingw64\bin\ranlib.exe libvendor_lib.a

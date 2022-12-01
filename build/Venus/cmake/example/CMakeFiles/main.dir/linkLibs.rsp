@@ -1,0 +1,1 @@
+ libvell_lib.a ../src/libvenus_lib.a ../vendor/libvendor_lib.a C:/Projects/Venus/lib/libglfw3dll.a -static-libgcc -static-libstdc++ -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
