@@ -2,6 +2,7 @@
 
 extern Window g_window;
 extern InputManager g_keyboard;
+extern InputManager g_mouse;
 
 void createWorld()
 {
@@ -215,11 +216,13 @@ void vellichor::initialize()
             texture::set("Vellichor/Mother/Idle/mother_idle00", {"00"}, texture::PNG);
 
             g_window.enableVSync(true);
-            g_window.lockMouse(true);
+            g_window.lockCursor(true);
+            // g_window.enableDecoration(false);
+            g_window.setDefaultBackgroundColor(color::BLACK);
 
             Event& data = script.data<Event>();
-
-            data.lastMousePosition = g_window.mouseScreenPosition();
+            data.lastMousePosition = g_window.cursorScreenPosition();
+            
             createWorld();
 
             Material uiMaterial =    Material {shader::get("ui_shader")};
@@ -258,7 +261,7 @@ void vellichor::initialize()
             spotLight.addComponent<SpotLight>({vec3::down, color::WHITE, 4.0f, object::brightness(2), std::cos(math::radians(25.0f)), std::cos(math::radians(20.0f))});
 
             Object camera("camera");
-            data.camera = &camera.addComponent<Camera>(Camera(2.0f, Color(0.01f, 0, 0.005f, 1), Vector3(0, -0.15, -1), vec3::up));
+            data.camera = &camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, Vector3(0, -0.15, -1), vec3::up));
             data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(data.violetTransform -> position + Vector3(0, 1.25f, data.radius))});
             g_window.screen.camera = camera.data;
 
@@ -282,6 +285,20 @@ void vellichor::initialize()
             data.cameraPosition = playerOffset;
             data.camera -> front = (data.violetTransform -> position - target - playerOffset).normalized();
             data.circularMotion = target;
+
+            // g_window.setPosition(Vector2I((float)(50 * std::cos(g_time.runtime*2)), (float)(50 * std::sin(g_time.runtime*2))) + g_window.center());
+            if(g_keyboard.inputs[key::Q].pressed)
+            {
+                g_window.setTitle("(◕‿◕✿)");
+            }
+            else if(g_keyboard.inputs[key::E].pressed)
+            {
+                g_window.setTitle("ლ(ಠ益ಠლ)");
+            }
+            else if(g_keyboard.inputs[key::TAB].pressed)
+            {
+                // g_window.set
+            }
         });
 
         // FIXED UPDATE (50 FPS)
@@ -310,8 +327,8 @@ void vellichor::initialize()
                 data.forceDirection = Vector3(std::sin(theta1+theta2), 0, std::cos(theta1+theta2));
             }
 
-            data.angle = math::modf(data.angle + (data.lastMousePosition - g_window.mouseScreenPosition()).x * data.mouseSensitivity, 2*M_PI);
-            data.lastMousePosition = g_window.mouseScreenPosition();
+            data.angle = math::modf(data.angle + (data.lastMousePosition - g_window.cursorScreenPosition()).x * data.mouseSensitivity, 2*M_PI);
+            data.lastMousePosition = g_window.cursorScreenPosition();
 
             data.animator -> setParameter("moving", data.force != vec3::zero);
             idle.setParameter("force", data.direction);

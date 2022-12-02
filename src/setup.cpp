@@ -27,8 +27,8 @@ void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screen
     depthBuffer.initialize();
 
     frameBuffer.addTexture("multiTexture", g_window.SCR_WIDTH, g_window.SCR_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, 0, GL_REPEAT, true);
-    subBuffer.addTexture("texture", g_window.SCR_WIDTH, g_window.SCR_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_REPEAT, false);
-
+    subBuffer.addTexture("texture", g_window.SCR_WIDTH, g_window.SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_REPEAT, false);
+    
     frameBuffer.addRenderBuffer("renderBuffer");
 
     shader = screenShader__;
@@ -44,8 +44,8 @@ void Screen::remove()
 }
 void Screen::refreshResolution()
 {
-    frameBuffer.refresh(g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
-    subBuffer.refresh(g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
+    frameBuffer.refresh(g_window.SCR_WIDTH, g_window.SCR_HEIGHT, defaultColor.a == 1);
+    subBuffer.refresh(g_window.SCR_WIDTH, g_window.SCR_HEIGHT, defaultColor.a == 1);
     resolutionUpdated = true;
 }
 void Screen::store()
@@ -62,7 +62,7 @@ void Screen::draw()
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(defaultColor.r, defaultColor.g, defaultColor.b, defaultColor.a);
     glClear(GL_COLOR_BUFFER_BIT);
 
     shader.use();
@@ -227,13 +227,28 @@ uint32_t glInputToKeyCode(uint32_t input)
     }
     return key::NIL;
 }
+uint32_t glInputToButtonCode(uint32_t input)
+{
+    switch(input)
+    {
+        case GLFW_MOUSE_BUTTON_1: return button::MOUSE_0;
+        case GLFW_MOUSE_BUTTON_2: return button::MOUSE_1;
+        case GLFW_MOUSE_BUTTON_3: return button::MOUSE_2;
+        case GLFW_MOUSE_BUTTON_4: return button::MOUSE_3;
+        case GLFW_MOUSE_BUTTON_5: return button::MOUSE_4;
+        case GLFW_MOUSE_BUTTON_6: return button::MOUSE_5;
+        case GLFW_MOUSE_BUTTON_7: return button::MOUSE_6;
+        case GLFW_MOUSE_BUTTON_8: return button::MOUSE_7;
+    }
+    return button::NIL;
+}
 
 void Time::update()
 {
-    double currentFrame = glfwGetTime();
+    runtime = glfwGetTime();
     lastDeltaTime = deltaTime;
-    deltaTime = deltaTime * 0.75f + (currentFrame - lastFrame) * 0.25f;
-    lastFrame = currentFrame;
+    deltaTime = deltaTime * 0.75f + (runtime - lastFrame) * 0.25f;
+    lastFrame = runtime;
     timer += deltaTime;
     averageFrameRate = (averageFrameRate + (1/deltaTime))/2;
 }
@@ -278,7 +293,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
             GLFWmonitor *monitor = glfwGetPrimaryMonitor();
             const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, g_window.vsyncEnabled ? mode->refreshRate : GLFW_DONT_CARE);
 
         }
         else
@@ -293,19 +308,19 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     if(action == GLFW_REPEAT)
         return;
 
-    for(GLenum k = GLFW_MOUSE_BUTTON_1; k <= GLFW_MOUSE_BUTTON_LAST; k++)
+    for(GLenum k = 0; k <= GLFW_MOUSE_BUTTON_LAST; k++)
     {
-        g_mouse.parse(k, glfwGetMouseButton(window, k));
+        g_mouse.parse(glInputToButtonCode(k), glfwGetMouseButton(window, k));
     }
 
     if(action == GLFW_RELEASE)
     {
-        g_mouse.parse(button, false);
+        g_mouse.parse(glInputToButtonCode(button), false);
     }
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    g_window.mousePosition = {(float)xpos, (float)ypos};
+    g_window.cursorPosition = {(float)xpos, (float)ypos};
 }
 void framebuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 {
@@ -332,6 +347,9 @@ Window::Window(std::string name, uint32_t width, uint32_t height)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
     data = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, name.c_str(), NULL, NULL);
     if(data == NULL)
     {
@@ -340,6 +358,7 @@ Window::Window(std::string name, uint32_t width, uint32_t height)
     }
 
     glfwMakeContextCurrent((GLFWwindow *)data);
+    glfwShowWindow((GLFWwindow *)data);
     glfwSetWindowPos((GLFWwindow *)data, 0, 25);
     
     glfwSetFramebufferSizeCallback((GLFWwindow *)data, framebuffer_size_callback);
@@ -351,13 +370,18 @@ Window::Window(std::string name, uint32_t width, uint32_t height)
     
     double xPos, yPos;
     glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
-    mousePosition = {(float)xPos, (float)yPos};
+    cursorPosition = {(float)xPos, (float)yPos};
     g_window = *this;
     g_window.screen.initialize(DirectionalLight{Vector3(0, 0, 1), color::WHITE, 1}, Shader("screen_vertex", "screen_frag"));
+    g_window.screen.defaultColor = color::RED;
 }
 bool Window::closing()
 {
     return glfwWindowShouldClose((GLFWwindow *)data);
+}
+bool Window::decorated()
+{
+    return glfwGetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED);
 }
 bool Window::throwError()
 {
@@ -418,15 +442,19 @@ void Window::close()
 {
     glfwSetWindowShouldClose((GLFWwindow *)data, true);
 }
+void Window::enableDecoration(bool enable)
+{
+    glfwSetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED, enable);
+}
 void Window::enableVSync(bool enable)
 {
-    glfwSwapInterval(enable);
+    glfwSwapInterval(vsyncEnabled = enable);
 }
-void Window::hideMouse(bool enable)
+void Window::hideCursor(bool enable)
 {
     glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
-void Window::lockMouse(bool enable)
+void Window::lockCursor(bool enable)
 {
     glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
@@ -435,9 +463,50 @@ void Window::refresh()
     glfwSwapBuffers((GLFWwindow *)g_window.data);
     glfwPollEvents();
 }
+void Window::setCursor(const Vector2& position)
+{
+    glfwSetCursorPos((GLFWwindow *)data, position.x, position.y);
+}
+void Window::setDefaultBackgroundColor(const Color &color)
+{
+    screen.defaultColor = color;
+    screen.refreshResolution();
+}
+void Window::setIcon(const char *path)
+{
+    GLFWimage images[1];
+
+    stbi_set_flip_vertically_on_load(false);
+    images[0].pixels = stbi_load((g_source + "resources/images/" + path).c_str(), &images[0].width, &images[0].height, 0, 4);
+    glfwSetWindowIcon((GLFWwindow *)data, 1, images); 
+    stbi_image_free(images[0].pixels);
+    stbi_set_flip_vertically_on_load(true);
+}
+void Window::setOpacity(float opacity)
+{
+    glfwSetWindowOpacity((GLFWwindow *)data, opacity);
+}
+void Window::setPosition(const Vector2I& position)
+{
+    glfwSetWindowPos((GLFWwindow *)data, position.x, position.y);
+}
+void Window::setTitle(const char *title)
+{
+    glfwSetWindowTitle((GLFWwindow *)data, title);
+}
 void Window::terminate()
 {
     glfwTerminate();
+}
+float Window::getOpacity()
+{
+    return glfwGetWindowOpacity((GLFWwindow *)data);
+}
+Vector2I Window::monitorCenter()
+{
+    Vector2I result;
+    glfwGetMonitorPhysicalSize(glfwGetPrimaryMonitor(), &result.x, &result.y);
+    return result * 2;
 }
 
 bool createWindow(const char *name, uint32_t width, uint32_t height)
@@ -451,8 +520,8 @@ bool createWindow(const char *name, uint32_t width, uint32_t height)
     mesh::set("square", shape::square());
     mesh::set("cube", shape::cube());
 
-    g_keyboard.initialize(key::MENU);
-    g_mouse.initialize(GLFW_MOUSE_BUTTON_LAST);
+    g_keyboard.initialize(key::LAST);
+    g_mouse.initialize(button::MOUSE_LAST);
 
     return true;
 }

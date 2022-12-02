@@ -284,8 +284,8 @@ example/CMakeFiles/vellichor_lib.dir/clean:
 # All Build rule for target.
 example/CMakeFiles/main.dir/all: src/CMakeFiles/venus_lib.dir/all
 example/CMakeFiles/main.dir/all: src/CMakeFiles/file_lib.dir/all
-example/CMakeFiles/main.dir/all: vendor/CMakeFiles/vendor_lib.dir/all
 example/CMakeFiles/main.dir/all: src/CMakeFiles/ecs_lib.dir/all
+example/CMakeFiles/main.dir/all: vendor/CMakeFiles/vendor_lib.dir/all
 example/CMakeFiles/main.dir/all: example/CMakeFiles/vellichor_lib.dir/all
 	$(MAKE) $(MAKESILENT) -f example\CMakeFiles\main.dir\build.make example/CMakeFiles/main.dir/depend
 	$(MAKE) $(MAKESILENT) -f example\CMakeFiles\main.dir\build.make example/CMakeFiles/main.dir/build

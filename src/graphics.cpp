@@ -22,18 +22,19 @@ void FrameBuffer::remove()
     }
     glDeleteFramebuffers(1, &data);
 }
-void FrameBuffer::refresh(uint16_t width, uint16_t height)
+void FrameBuffer::refresh(uint16_t width, uint16_t height, bool opaque)
 {
     for(auto texture : textures)
     {
         glBindTexture(texture.second.type, texture.second.data);
         if(texture.second.type == GL_TEXTURE_2D_MULTISAMPLE)
         {
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, width, height, GL_TRUE);
+            texture.second.component = opaque ? GL_RGB : GL_RGBA;
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, texture.second.component, width, height, GL_TRUE);
         }
         else
         {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, texture.second.component, width, height, 0, texture.second.component, GL_UNSIGNED_BYTE, NULL);
         }
     }
     for(auto renderBuffer : renderBuffers)
@@ -64,13 +65,13 @@ void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t h
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapping);
     glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, type, texture, 0);
 
-    if(component != GL_RGB)
-    {
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-    }
+    // if(component != GL_RGB)
+    // {
+    //     glDrawBuffer(GL_NONE);
+    //     glReadBuffer(GL_NONE);
+    // }
     
-    textures.insert({name, TextureBuffer{texture, type}});
+    textures.insert({name, TextureBuffer{texture, type, component}});
     unbind();
 }
 

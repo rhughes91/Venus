@@ -23,7 +23,7 @@ struct Color
 namespace color
 {
     const Color
-    CLEAR(1, 1, 1, 0),
+    CLEAR(0, 0, 0, 0),
     BLACK(0, 0, 0, 1),
     SKY_BLUE(0.5f, 0.8f, 0.92f, 1),
     BLUE(0, 0, 1, 1),

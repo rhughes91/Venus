@@ -9,7 +9,7 @@
 // TextureBuffer (struct): wrapper for graphical texture data
 struct TextureBuffer
 {
-    uint32_t data, type;
+    uint32_t data, type, component;
 };
 
 // FrameBuffer (struct): wrapper for graphical framebuffer data :: allows for simpler editing of the framebuffer data
@@ -21,7 +21,7 @@ struct FrameBuffer
 
     void initialize();
     void remove();
-    void refresh(uint16_t width, uint16_t height);
+    void refresh(uint16_t width, uint16_t height, bool opaque);
     bool complete();
 
     void addTexture(const std::string& name, uint16_t width, uint16_t height, uint32_t component, uint32_t componentType, uint32_t attachment, uint32_t scaling, uint32_t wrapping, bool multisampled);

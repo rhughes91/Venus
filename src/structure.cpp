@@ -53,6 +53,13 @@ void InputManager::initialize(int end)
         inputs.insert({i, Key{i}});
     }
 }
+void InputManager::initialize(int start, int end)
+{
+    for(uint32_t i = start; i <= end; i++)
+    {
+        inputs.insert({i, Key{i}});
+    }
+}
 void InputManager::parse(int32_t input, bool pressed)
 {
     Key& key = inputs[input];

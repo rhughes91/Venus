@@ -16,6 +16,7 @@ struct DirectionalLight
 struct Screen
 {
     bool fullscreen = false;
+    Color defaultColor;
     uint32_t camera;
 
     bool resolutionUpdated;
@@ -43,28 +44,40 @@ class Window
 {
     public:
         Screen screen;
-        Vector2I mousePosition;
+        Vector2I cursorPosition;
         uint16_t SCR_WIDTH = 0;
         uint16_t SCR_HEIGHT = 0;
 
         void *data;
-        bool active;
+        bool active, vsyncEnabled;
 
         Window() {};
         Window(std::string name, uint32_t width, uint32_t height);
 
         bool closing();
+        bool decorated();
         bool throwError();
 
+        void centerWindow()
+        {
+            setPosition(monitorCenter() - Vector2I(0.5*SCR_WIDTH, 0.5*SCR_HEIGHT));
+        }
         void close();
+        void enableDecoration(bool enable);
         void enableVSync(bool enable);
-        void hideMouse(bool enable);
-        void lockMouse(bool enable);
+        void hideCursor(bool enable);
+        void lockCursor(bool enable);
         void refresh();
         void remove()
         {
             screen.remove();
         }
+        void setCursor(const Vector2& position);
+        void setDefaultBackgroundColor(const Color &color);
+        void setIcon(const char *path);
+        void setOpacity(float opacity);
+        void setPosition(const Vector2I& position);
+        void setTitle(const char *title);
         void terminate();
 
         float aspectRatioInv()
@@ -75,15 +88,26 @@ class Window
         {
             return (float)SCR_HEIGHT/(float)SCR_WIDTH;
         }
-    
-        Vector2 mouseUniformScreenPosition()
+        float getOpacity();
+
+        Vector2 cursorUniformScreenPosition()
         {
-            return {((float)mousePosition.x/(float)SCR_WIDTH)*2 - 1, -((float)mousePosition.y/(float)SCR_HEIGHT)*2 + 1};
+            return {((float)cursorPosition.x/(float)SCR_WIDTH)*2 - 1, -((float)cursorPosition.y/(float)SCR_HEIGHT)*2 + 1};
         }
-        Vector2 mouseScreenPosition()
+        Vector2 cursorScreenPosition()
         {
-            return mouseUniformScreenPosition() * Vector2{aspectRatioInv(), 1};
+            return cursorUniformScreenPosition() * Vector2{aspectRatioInv(), 1};
         }
+        Vector2I center()
+        {
+            return Vector2I(monitorCenter() - Vector2I(0.5*SCR_WIDTH, 0.5*SCR_HEIGHT));
+        }
+        Vector2I monitorCenter();
+        Vector2I resolution()
+        {
+            return Vector2I(SCR_WIDTH, SCR_HEIGHT);
+        }
+        
     private:
         void configureGLAD();
 };

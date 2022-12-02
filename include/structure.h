@@ -53,6 +53,7 @@ struct InputManager
     std::set<Key> heldKeys;
 
     void initialize(int end);                // initialized key values from 0 to 'end'
+    void initialize(int start, int end);     // initialized key values from 'start' to 'end'
     void parse(int32_t input, bool pressed); // determines whether the input is being pressed, held, or released
     void refresh();                          // clears pressed and released keys after one frame, and erases held keys if they are released
 };
@@ -65,6 +66,7 @@ struct Time
     double lastFrame = 0.0f;
     double averageFrameRate = 0.0f;
     double timer = 0;
+    double runtime = 0;
 
     Time() {}
 
