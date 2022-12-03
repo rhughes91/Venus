@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libvellichor_lib.a CMakeFiles/vellichor_lib.dir/vellichor.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libvellichor_lib.a

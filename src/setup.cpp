@@ -3,6 +3,9 @@
 #include "GLFW/glfw3.h"
 #include "image/stb_image.h"
 
+#include <algorithm>
+#include <windows.h>
+
 #include "setup.h"
 #include "input.h"
 #include "structure.h"
@@ -458,6 +461,10 @@ void Window::lockCursor(bool enable)
 {
     glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
+void Window::maximize()
+{
+    glfwMaximizeWindow((GLFWwindow *)data);
+}
 void Window::refresh()
 {
     glfwSwapBuffers((GLFWwindow *)g_window.data);
@@ -477,7 +484,7 @@ void Window::setIcon(const char *path)
     GLFWimage images[1];
 
     stbi_set_flip_vertically_on_load(false);
-    images[0].pixels = stbi_load((g_source + "resources/images/" + path).c_str(), &images[0].width, &images[0].height, 0, 4);
+    images[0].pixels = stbi_load((g_source + std::string("resources/images/") + path).c_str(), &images[0].width, &images[0].height, 0, 4);
     glfwSetWindowIcon((GLFWwindow *)data, 1, images); 
     stbi_image_free(images[0].pixels);
     stbi_set_flip_vertically_on_load(true);
@@ -511,6 +518,13 @@ Vector2I Window::monitorCenter()
 
 bool createWindow(const char *name, uint32_t width, uint32_t height)
 {
+    TCHAR buffer[260] = { 0 };
+    GetModuleFileName(NULL, buffer, 256);
+
+    std::string source = std::string(buffer);
+    std::replace(source.begin(), source.end(), '\\', '/');
+    g_source = source.substr(0, source.find_last_of("/")) + "/";
+
     Window(name, width, height);
     if(!g_window.active)
         return false;

@@ -1,6 +1,7 @@
 #include "file_util.h"
 #include "shader.h"
 #include "structure.h"
+#include <windows.h>
 
 Time g_time;
 ObjectManager g_manager;

@@ -309,7 +309,7 @@ ObjectManager::ObjectManager()
         });
 
         system = registerSystem<CollisionHandler>();
-        system -> setUpdate([]
+        system -> setLateUpdate([]
         (System &system)
         {
             for(auto const &entity : system.m_entities)

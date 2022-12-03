@@ -24,7 +24,7 @@ std::string loadFileToString(const std::string &fileName)
     }
     else
     {
-        std::cout << "ERROR :: " << fileName << " could not be opened.";
+        std::cout << "ERROR :: " << g_source+fileName << " could not be opened." << std::endl;
     }
     return content;
 }

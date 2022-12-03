@@ -67,6 +67,7 @@ class Window
         void enableVSync(bool enable);
         void hideCursor(bool enable);
         void lockCursor(bool enable);
+        void maximize();
         void refresh();
         void remove()
         {

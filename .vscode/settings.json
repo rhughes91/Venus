@@ -73,6 +73,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "*.rh": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "codecvt": "cpp"
     }
 }
