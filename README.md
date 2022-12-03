@@ -8,12 +8,13 @@ to create a portable Windows buid. The commands to use CMake make use of the [Mi
 A supplementary script is provided to export built projects into a separate **Builds** folder. This folder will be generated in the same directory that the **Venus** directory is placed. The command `build-tools/main {Project Name}` will begin that export, provided that the project has been built by CMake. This command must be run inside the **project** file you wish to build, otherwise it will fail. These exported files can be safely zipped and distributed to run on other Windows machines.
 
 ### CMake Commands
-*(Re)build CMake Pipeline:*
+
+*(Re)build CMake Pipeline:*  
 ``bash
 cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build/{Project Name}/cmake
 ``
 
-*Build project:*
+*Build project:*  
 ``bash
 cmake --build build/{Project Name}/cmake
 ``
