@@ -5,10 +5,17 @@
 
 int main(int argc, char *argv[])
 {
-    std::string relativePath = argv[2];
-    if(relativePath.size() < 8 || std::string(relativePath).substr(0, 8) != "projects")
+    if(argc == 3)
     {
-        std::cout << "Invalid build location." << std::endl;
+        std::string relativePath = argv[2];
+        if(relativePath.size() < 8 || std::string(relativePath).substr(0, 8) != "projects")
+        {
+            std::cout << "Invalid build location." << std::endl;
+            return 0;
+        }
+    }
+    else if(argc < 2)
+    {
         return 0;
     }
 
