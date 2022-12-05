@@ -153,7 +153,8 @@ src/CMakeFiles/venus_lib.dir/global.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
- C:/Projects/Venus/include/color.h C:/Projects/Venus/include/structure.h \
+ C:/Projects/Venus/include/color.h C:/Projects/Venus/include/component.h \
+ C:/Projects/Venus/include/structure.h \
  C:/msys64/mingw64/include/c++/12.1.0/array \
  C:/msys64/mingw64/include/c++/12.1.0/compare \
  C:/msys64/mingw64/include/c++/12.1.0/bitset \
@@ -193,7 +194,8 @@ src/CMakeFiles/venus_lib.dir/global.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
- C:/msys64/mingw64/include/windows.h \
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/graphics.h \
+ C:/Projects/Venus/include/shader.h C:/msys64/mingw64/include/windows.h \
  C:/msys64/mingw64/include/sdkddkver.h C:/msys64/mingw64/include/excpt.h \
  C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/stdarg.h \
  C:/msys64/mingw64/include/stdarg.h \

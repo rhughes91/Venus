@@ -36,7 +36,6 @@ set(CMAKE_MAKEFILE_DEPENDS
   "C:/Projects/Venus/include/CMakeLists.txt"
   "C:/Projects/Venus/projects/CMakeLists.txt"
   "C:/Projects/Venus/projects/SageHaven/CMakeLists.txt"
-  "C:/Projects/Venus/projects/Vellichor/CMakeLists.txt"
   "C:/Projects/Venus/src/CMakeLists.txt"
   "C:/Projects/Venus/vendor/CMakeLists.txt"
   )
@@ -55,7 +54,6 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "vendor/CMakeFiles/CMakeDirectoryInformation.cmake"
   "projects/CMakeFiles/CMakeDirectoryInformation.cmake"
   "projects/SageHaven/CMakeFiles/CMakeDirectoryInformation.cmake"
-  "projects/Vellichor/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
@@ -66,6 +64,4 @@ set(CMAKE_DEPEND_INFO_FILES
   "vendor/CMakeFiles/vendor_lib.dir/DependInfo.cmake"
   "projects/SageHaven/CMakeFiles/SageHaven_lib.dir/DependInfo.cmake"
   "projects/SageHaven/CMakeFiles/SageHaven.dir/DependInfo.cmake"
-  "projects/Vellichor/CMakeFiles/Vellichor_lib.dir/DependInfo.cmake"
-  "projects/Vellichor/CMakeFiles/Vellichor.dir/DependInfo.cmake"
   )

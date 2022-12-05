@@ -5,11 +5,11 @@
 
 namespace alignment
 {
-    enum Horizontal
+    enum horizontal
     {
         LEFT, CENTER, RIGHT, JUSTIFIED
     };
-    enum Vertical
+    enum vertical
     {
         BOTTOM, MIDDLE, TOP
     };
@@ -18,11 +18,11 @@ namespace alignment
 // Alignment (struct): holds basic data to determine how a UI entity should be rendered to the screen
 struct Alignment
 {
-    alignment::Horizontal hAlignment;
-    alignment::Vertical vAlignment;
+    alignment::vertical vAlignment;
+    alignment::horizontal hAlignment;
 
-    Alignment() : hAlignment(alignment::CENTER), vAlignment(alignment::MIDDLE) {}
-    Alignment(alignment::Horizontal hAlignment__, alignment::Vertical vAlignment__) : hAlignment(hAlignment__), vAlignment(vAlignment__) {}
+    Alignment() : vAlignment(alignment::MIDDLE), hAlignment(alignment::CENTER) {}
+    Alignment(alignment::vertical vAlignment__, alignment::horizontal hAlignment__) : vAlignment(vAlignment__), hAlignment(hAlignment__) {}
 };
 
 // Rect (struct): screen-space equivalent of Transform :: holds position, rotation, scale, and alignment of an entity
@@ -51,11 +51,7 @@ struct Rect
     }
 
     // checks whether the provided position 'vec' is within the bounds of the Rect
-    bool contains(const Vector2& vec)
-    {
-        Vector2 pos = relativePosition();
-        return pos.x - scale.x/2 <= vec.x && pos.x + scale.x/2 >= vec.x && pos.y - scale.y/2 <= vec.y && pos.y + scale.y/2 >= vec.y;
-    }
+    bool contains(const Vector2& vec);
 
     // determines this Rect's 'position' relative to its 'alignment'
     Vector2 relativePosition();

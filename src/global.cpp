@@ -4,38 +4,15 @@
 #include <windows.h>
 
 Time g_time;
-ObjectManager g_manager;
-InputManager g_keyboard, g_mouse;
 
-std::string g_source;
+float event::delta()
+{
+    return g_time.deltaTime;
+}
+
 std::unordered_map<std::string, Mesh> g_loadedMeshes;
 std::unordered_map<std::string, uint32_t> g_loadedTextures;
 std::unordered_map<std::string, Shader> g_loadedShaders;
-
-void object::load()
-{
-    g_manager.load();
-}
-void object::start()
-{
-    g_manager.start();
-}
-void object::destroy()
-{
-    g_manager.destroy();
-}
-void object::update()
-{
-    g_manager.update();
-}
-void object::lateUpdate()
-{
-    g_manager.lateUpdate();
-}
-void object::fixedUpdate()
-{
-    g_manager.fixedUpdate();
-}
 
 Mesh &mesh::set(const std::string &path)
 {
@@ -88,3 +65,4 @@ void shader::remove()
         pair.second.remove();
     }
 }
+

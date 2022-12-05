@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <fstream>
 #include <limits>
+#include <windows.h>
 
 #include "file_util.h"
 #include "shader.h"
@@ -49,6 +50,16 @@ std::vector<std::string> loadFileToStringVector(const std::string &fileName)
         std::cout << "ERROR :: " << fileName << " could not be opened.";
     }
     return content;
+}
+
+std::string getCurrentDirectoryName()
+{
+    TCHAR buffer[260] = { 0 };
+    GetModuleFileName(NULL, buffer, 256);
+
+    std::string source = std::string(buffer);
+    std::replace(source.begin(), source.end(), '\\', '/');
+    return source.substr(0, source.find_last_of("/")) + "/";
 }
 
 Mesh loadObjFile(const std::string &fileName, Vector2 tiling)

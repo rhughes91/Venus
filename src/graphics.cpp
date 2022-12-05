@@ -37,6 +37,7 @@ void FrameBuffer::refresh(uint16_t width, uint16_t height, bool opaque)
             glTexImage2D(GL_TEXTURE_2D, 0, texture.second.component, width, height, 0, texture.second.component, GL_UNSIGNED_BYTE, NULL);
         }
     }
+    
     for(auto renderBuffer : renderBuffers)
     {
         glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer.second);
@@ -48,39 +49,51 @@ void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t h
     uint32_t texture;
     GLenum type = multisampled ? GL_TEXTURE_2D_MULTISAMPLE:GL_TEXTURE_2D;
     bind(GL_FRAMEBUFFER);
+
     glGenTextures(1, &texture);
     glBindTexture(type, texture);
+    
     if(multisampled)
     {
         glTexImage2DMultisample(type, 4, component, width, height, GL_TRUE);
     }
     else
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, scaling);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, scaling);
-        glTexImage2D(type, 0, component, width, height, 0, component, GL_UNSIGNED_BYTE, NULL);      
-    }
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapping);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapping);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, type, texture, 0);
+        glTexImage2D(type, 0, component, width, height, 0, component, GL_UNSIGNED_BYTE, NULL);
 
-    // if(component != GL_RGB)
-    // {
-    //     glDrawBuffer(GL_NONE);
-    //     glReadBuffer(GL_NONE);
-    // }
+        glTexParameteri(type, GL_TEXTURE_MIN_FILTER, scaling);
+        glTexParameteri(type, GL_TEXTURE_MAG_FILTER, scaling);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapping);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapping);
+    }
+    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, type, texture, 0);
     
     textures.insert({name, TextureBuffer{texture, type, component}});
+    unbind();
+}
+void FrameBuffer::addRenderBuffer(const std::string& name, uint16_t width, uint16_t height)
+{
+    uint32_t renderBuffer;
+    bind(GL_FRAMEBUFFER);
+    
+    glGenRenderbuffers(1, &renderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
+    renderBuffers.insert({name, renderBuffer});
+    
     unbind();
 }
 
 void FrameBuffer::bind(uint32_t type)
 {
     glBindFramebuffer(type, data);
+    // std::cout << data << " one " << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
 }
 void FrameBuffer::unbind()
 {
+    // std::cout << data << " two " << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);  
 }
 void FrameBuffer::bindTexture(const std::string& name)
@@ -91,6 +104,10 @@ bool FrameBuffer::complete()
 {
     bind(GL_FRAMEBUFFER);
     bool complete = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+    // if(!complete)
+    // {
+    //     std::cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
+    // }
     unbind();
     return complete;
 }
@@ -159,6 +176,11 @@ void texture::set(const std::string &path, const std::vector<std::string> &subPa
 }
 uint32_t texture::get(const std::string &path)
 {
+    if(!g_loadedTextures.count(path))
+    {
+        std::cout << "ERROR :: Texture at \'" << path << "\' could not be found." << std::endl;
+        return g_loadedTextures.at("default.png");
+    }
     return g_loadedTextures.at(path);
 }
 std::vector<uint32_t> texture::get(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)

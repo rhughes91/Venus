@@ -21,14 +21,22 @@ namespace key
         F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, 
         GLOBAL_0, GLOBAL_1, GLOBAL_2, GLOBAL_3, GLOBAL_4, DEL, LAST = DEL
     };
+
+    bool pressed(KeyCode id);
+    bool held(KeyCode id);
+    bool released(KeyCode id);
 }
 
-namespace button
+namespace mouse
 {
     enum ButtonCode
     {
-        NIL, MOUSE_0, MOUSE_1, MOUSE_2, MOUSE_3, MOUSE_4, MOUSE_5, MOUSE_6, MOUSE_7, MOUSE_8, MOUSE_LEFT = MOUSE_0, MOUSE_RIGHT = MOUSE_1, MOUSE_MIDDLE = MOUSE_2, MOUSE_LAST = MOUSE_8
+        NIL, BUTTON_0, BUTTON_1, BUTTON_2, BUTTON_3, BUTTON_4, BUTTON_5, BUTTON_6, BUTTON_7, BUTTON_8, LEFT = BUTTON_0,RIGHT = BUTTON_1, MIDDLE = BUTTON_2, LAST = BUTTON_8
     };
+
+    bool pressed(ButtonCode id);
+    bool held(ButtonCode id);
+    bool released(ButtonCode id);
 }
 
 #endif

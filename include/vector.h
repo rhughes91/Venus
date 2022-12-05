@@ -1060,8 +1060,10 @@ namespace vec2
     const Vector2 up(0, 1);
     const Vector2 down(0, -1);
 
-    Vector2 sign(const Vector2 &vector);  // returns the "math::sign" of each of its components as a new Vector2
-    Vector2 sign0(const Vector2 &vector); // returns the "math::sign0" of each of its components as a new Vector2
+    Vector2 abs(const Vector2 &vector);                 // returns "math::abs" of each of its components as a new Vector2
+    Vector2 pow(const Vector2 &vector, float exponent); // returns "std::pow" of each of its components as a new Vector2
+    Vector2 sign(const Vector2 &vector);                // returns the "math::sign" of each of its components as a new Vector2
+    Vector2 sign0(const Vector2 &vector);               // returns the "math::sign0" of each of its components as a new Vector2
 }
 namespace vec3
 {
@@ -1115,6 +1117,7 @@ namespace std
 
 }
 std::string to_string(const Vector3& vector);
+std::ostream& operator<<(std::ostream& os, const Vector2& obj);
 std::ostream& operator<<(std::ostream& os, const Vector3& obj);
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj);
 std::ostream& operator<<(std::ostream& os, const mat4x4& obj);

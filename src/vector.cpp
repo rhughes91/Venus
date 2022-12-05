@@ -2,6 +2,14 @@
 #include "color.h"
 #include <iomanip>
 
+Vector2 vec2::abs(const Vector2 &vector)
+{
+    return Vector2(math::abs(vector.x), math::abs(vector.y));
+}
+Vector2 vec2::pow(const Vector2 &vector, float exponent)
+{
+    return Vector2(std::pow(vector.x, exponent), std::pow(vector.y, exponent));
+}
 Vector2 vec2::sign(const Vector2 &vector)
 {
     return Vector2(math::sign(vector.x), math::sign(vector.y));

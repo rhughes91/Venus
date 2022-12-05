@@ -168,32 +168,6 @@ vendor_lib/fast:
 .PHONY : vendor_lib/fast
 
 #=============================================================================
-# Target rules for targets named SageHaven_lib
-
-# Build rule for target.
-SageHaven_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 SageHaven_lib
-.PHONY : SageHaven_lib
-
-# fast build rule for target.
-SageHaven_lib/fast:
-	$(MAKE) $(MAKESILENT) -f projects\SageHaven\CMakeFiles\SageHaven_lib.dir\build.make projects/SageHaven/CMakeFiles/SageHaven_lib.dir/build
-.PHONY : SageHaven_lib/fast
-
-#=============================================================================
-# Target rules for targets named SageHaven
-
-# Build rule for target.
-SageHaven: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 SageHaven
-.PHONY : SageHaven
-
-# fast build rule for target.
-SageHaven/fast:
-	$(MAKE) $(MAKESILENT) -f projects\SageHaven\CMakeFiles\SageHaven.dir\build.make projects/SageHaven/CMakeFiles/SageHaven.dir/build
-.PHONY : SageHaven/fast
-
-#=============================================================================
 # Target rules for targets named Vellichor_lib
 
 # Build rule for target.
@@ -227,8 +201,6 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
-	@echo ... SageHaven
-	@echo ... SageHaven_lib
 	@echo ... Vellichor
 	@echo ... Vellichor_lib
 	@echo ... ecs_lib

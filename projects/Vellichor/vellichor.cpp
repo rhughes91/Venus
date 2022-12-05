@@ -1,16 +1,31 @@
 #include "vellichor.h"
 
-extern Window g_window;
-extern InputManager g_keyboard;
-extern InputManager g_mouse;
-
-void createWorld()
+void createWorld(const Material& objectDefault)
 {
     Mesh& square = mesh::get("square");
     Mesh& cube = mesh::get("cube");
 
-    Material objectDefault = Material {shader::get("obj_shader"), 1, 1, 0.5f, color::WHITE, 32.0f};
-    Material objectDull = Material {shader::get("obj_shader"), 1.0f, 1.0f, 0.1f, color::WHITE, 8.0f, false};
+    Material objectDull = Material
+    (shader::get("obj_shader"), [] (const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+    {
+        Shader shader = model.material.shader;
+        shader.use();
+        
+        shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+        shader.setMat4("view", camera.view.matrix, true);
+        shader.setMat4("projection", camera.projection.matrix, true);
+        shader.setVec3("scale", transform.scale);
+        
+        shader.setVec3("lightPos", Vector3(-60, 20, -20));
+        shader.setVec3("viewPos", cameraTransform.position);
+        shader.setVec4("objColor", model.color);
+
+        shader.setBool("advanced", false);
+        shader.setFloat("material.shininess", 8);
+        shader.setVec3("material.ambientStrength", 1);
+        shader.setVec3("material.diffuseStrength", 1);
+        shader.setVec3("material.specularStrength", 0.1f);
+    });
 
     Mesh shelfMesh = loadObjFile("shelf.obj");
     Mesh winMesh = loadObjFile("window.obj");
@@ -44,7 +59,7 @@ void createWorld()
 
     Object win("window");
     win.addComponent<Transform>(Transform(Vector3(-9.0f, -2.5f, start), 1));
-    win.addComponent<Model>({Color(0.4f, 0.4f, 0.4f, 1.0f), objectDull, winMesh, texture::get("Vellichor/window_texture.png")});
+    win.addComponent<Model>({color::WHITE * 0.8f, Material(shader::get("simple_shader")), winMesh, texture::get("Vellichor/window_texture.png")});
     shelfArray.addChild(win);
 
     Object back("back");
@@ -106,26 +121,28 @@ void createWorld()
     }
 
     Object wall("wall");
-    wall.addComponent<Transform>(Transform(Vector3(50.5f, -5, -60), 1));
-    wall.addComponent<Model>({color::WHITE, objectDull, wallMesh, texture::get("Vellichor/wall_texture.png")});
+    wall.addComponent<Transform>(Transform(Vector3(50.5f, -5, 60), 1 , Quaternion(math::radians(180), vec3::up)));
+    wall.addComponent<Model>(Model {color::WHITE, Material(shader::get("simple_shader")), wallMesh, texture::get("Vellichor/wall_texture.png")});
 
     Object wall2 = wall.clone();
     wall2.getComponent<Transform>() = Transform(Vector3(-9.5f, -5, 0), 1 , Quaternion(math::radians(90), vec3::up));
+    wall2.getComponent<Model>().color *= 1.15f;
 
     Object wall3 = wall.clone();
     wall3.getComponent<Transform>() = Transform(Vector3(110.5f, -5, 0), 1 , Quaternion(math::radians(90), vec3::down));
-    wall3.getComponent<Model>().material = Material {shader::get("obj_shader"), 0.5f, 0.0f, 0.0f, color::WHITE, 64.0f};
+    wall3.getComponent<Model>().color *= 1.3f;
 
     Object wall4 = wall.clone();
-    wall4.getComponent<Transform>() = Transform(Vector3(50.5f, -5, 60), 1 , Quaternion(math::radians(180), vec3::up));
+    wall4.getComponent<Transform>() = Transform(Vector3(50.5f, -5, -60), 1);
+    wall4.getComponent<Model>().color *= 1.45f;
 
     Object floor("floor");
     floor.addComponent<Transform>(Transform(Vector3(50.5f, -32.5f, 0), 120, Quaternion(math::radians(90), vec3::left)));
-    floor.addComponent<Model>({Color(0.2f, 0.02f, 0.03f, 1), Material {shader::get("obj_shader"), 1, 0, 0, color::WHITE, 64.0f}, shape::square(24), texture::get("Vellichor/carpet_texture.png")});
+    floor.addComponent<Model>({Color(0.2f, 0.02f, 0.03f, 1), Material(shader::get("simple_shader")), shape::square(24), texture::get("Vellichor/carpet_texture.png")});
 
     Object ceiling("ceiling");
     ceiling.addComponent<Transform>(Transform(Vector3(50.5f, 19.5f, 0), 120, Quaternion(math::radians(90), vec3::right)));
-    ceiling.addComponent<Model>({Color(0.025f, 0.01f, 0.01f, 1), Material {shader::get("obj_shader"), 1, 0, 0, color::WHITE, 64.0f}, shape::square(24), texture::get("default.png")});
+    ceiling.addComponent<Model>({Color(0.025f, 0.01f, 0.01f, 1), Material(shader::get("simple_shader")), shape::square(24), texture::get("default.png")});
 }
 
 void register8DStates(AnimationState& state)
@@ -201,7 +218,7 @@ void vellichor::initialize()
         Vector2 lastMousePosition;
         Vector3 cameraPosition, bufferDirection = vec3::forward, lastCamera = vec3::forward, direction = vec3::forward, force, forceDirection;
 
-        float speed = 2.0f, rotationalSpeed = 0, radius = 6, angle = 0, mouseSensitivity = 0.5f;
+        float speed = 2.0f, rotationalSpeed = 0, radius = 6, angle = 0, mouseSensitivity = 0.5f, lastDelta;
         Vector3 circularMotion = Vector3(radius * std::sin(angle), 0, radius * std::cos(angle));
     };
     Event& event = object::initializeScript<Event>();
@@ -215,19 +232,22 @@ void vellichor::initialize()
             texture::set("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"}, texture::PNG);
             texture::set("Vellichor/Mother/Idle/mother_idle00", {"00"}, texture::PNG);
 
-            g_window.enableVSync(true);
-            g_window.lockCursor(true);
-            // g_window.enableDecoration(false);
-            g_window.setDefaultBackgroundColor(color::BLACK);
-
             Event& data = script.data<Event>();
-            data.lastMousePosition = g_window.cursorScreenPosition();
-            
-            createWorld();
+            data.lastMousePosition = window::cursorScreenPosition();
 
-            Material uiMaterial =    Material {shader::get("ui_shader")};
-            Material playerMat =     Material {shader::get("obj_shader"), 1.0f, 0.2f, 0.1f, color::WHITE, 64.0f};
-            Material objectDefault = Material {shader::get("obj_shader"), 1, 1, 0.5f, color::WHITE, 32.0f};
+            Material playerMat = 
+            Material (shader::get("obj_shader"), [] (const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+            {
+                shader::advanced(transform, model, camera, cameraTransform, 1, 0.2f, 0.1f, 64);
+            });
+            Material objectDefault = 
+            Material(shader::get("obj_shader"), [] (const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+            {
+                shader::advanced(transform, model, camera, cameraTransform, 1, 1, 0.5f, 32);
+            });
+            Material uiMaterial = Material {shader::get("ui_shader"), shader::simple};
+
+            createWorld(objectDefault);
 
             // Object mother("mother");
             // mother.addComponent<Transform>(Transform(Vector3(0, 2.5f, 15), Vector3(5.0f, 5.0f, 0), Quaternion(math::radians(90), vec3::up)));
@@ -240,16 +260,16 @@ void vellichor::initialize()
             (Entity entity, Entity compare, int triggered)
             {
                 float climbSpeed = 2, maxHeight = 0.6f, minHeight = -31.5f;
-                if(g_keyboard.inputs[key::SPACE].held)
+                if(key::held(key::SPACE))
                 {
                     Transform &transform = object::getComponent<Transform>(entity);
-                    Vector3 newTransform = transform.position + Vector3(0, climbSpeed * g_time.deltaTime, 0);
+                    Vector3 newTransform = transform.position + Vector3(0, climbSpeed * event::delta(), 0);
                     transform.position = Vector3(newTransform.x, math::clamp(newTransform.y, minHeight, maxHeight), newTransform.z);
                 }
-                if(g_keyboard.inputs[key::LEFT_SHIFT].held)
+                if(key::held(key::LEFT_SHIFT))
                 {
                     Transform &transform = object::getComponent<Transform>(entity);
-                    Vector3 newTransform = transform.position - Vector3(0, climbSpeed * g_time.deltaTime, 0);
+                    Vector3 newTransform = transform.position - Vector3(0, climbSpeed * event::delta(), 0);
                     transform.position = Vector3(newTransform.x, math::clamp(newTransform.y, minHeight, maxHeight), newTransform.z);
                 }
             });
@@ -262,8 +282,9 @@ void vellichor::initialize()
 
             Object camera("camera");
             data.camera = &camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, Vector3(0, -0.15, -1), vec3::up));
-            data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(data.violetTransform -> position + Vector3(0, 1.25f, data.radius))});
-            g_window.screen.camera = camera.data;
+            data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(data.violetTransform -> position + Vector3(0, 1.25f, 0))});
+            data.cameraPosition =  data.cameraTransform -> position;
+            window::setCamera(camera.data);
 
             violet.addComponent<Billboard>(Billboard{camera.data});
             // mother.addComponent<Billboard>(Billboard{camera.data});
@@ -275,30 +296,31 @@ void vellichor::initialize()
         {
             Event& data = script.data<Event>();
 
-            data.violetTransform -> position += data.forceDirection * data.speed * g_time.deltaTime;
+            float delta = data.lastDelta * 0.75 + event::delta() * 0.25;
+            data.violetTransform -> position += data.forceDirection * data.speed * delta;
             data.spotTransform -> position = data.violetTransform -> position + Vector3(0, 3, 0);
 
             Vector3 playerOffset = data.violetTransform -> position + Vector3(0, 1.25f, 0);
             Vector3 target = Vector3(data.radius * std::sin(data.angle), 0, data.radius * std::cos(data.angle));
 
-            data.cameraTransform -> position = vec3::lerp(data.cameraPosition, playerOffset, 1-std::pow(0.6, g_time.deltaTime * 30)) + target;
+            data.cameraTransform -> position = vec3::lerp(data.cameraPosition, playerOffset, 1-std::pow(0.6, event::delta() * 30)) + target;
             data.cameraPosition = playerOffset;
             data.camera -> front = (data.violetTransform -> position - target - playerOffset).normalized();
             data.circularMotion = target;
 
-            // g_window.setPosition(Vector2I((float)(50 * std::cos(g_time.runtime*2)), (float)(50 * std::sin(g_time.runtime*2))) + g_window.center());
-            if(g_keyboard.inputs[key::Q].pressed)
+            if(key::pressed(key::Q))
             {
-                g_window.setTitle("(◕‿◕✿)");
+                window::setTitle("(◕‿◕✿)");
             }
-            else if(g_keyboard.inputs[key::E].pressed)
+            else if(key::pressed(key::E))
             {
-                g_window.setTitle("ლ(ಠ益ಠლ)");
+                window::setTitle("ლ(ಠ益ಠლ)");
             }
-            else if(g_keyboard.inputs[key::TAB].pressed)
+            else if(key::pressed(key::TAB))
             {
-                // g_window.set
+                // window::set
             }
+            data.lastDelta = delta;
         });
 
         // FIXED UPDATE (50 FPS)
@@ -311,7 +333,7 @@ void vellichor::initialize()
             AnimationState& move = data.animator -> get("move");
 
             Vector3 camDirection = -data.camera -> front.xz().normalized();
-            data.force = Vector3(g_keyboard.inputs[key::D].held - g_keyboard.inputs[key::A].held, 0, g_keyboard.inputs[key::S].held - g_keyboard.inputs[key::W].held).normalized();
+            data.force = Vector3(key::held(key::D) - key::held(key::A), 0, key::held(key::S) - key::held(key::W)).normalized();
             if(data.force == 0)
             {
                 data.forceDirection = 0;
@@ -327,8 +349,8 @@ void vellichor::initialize()
                 data.forceDirection = Vector3(std::sin(theta1+theta2), 0, std::cos(theta1+theta2));
             }
 
-            data.angle = math::modf(data.angle + (data.lastMousePosition - g_window.cursorScreenPosition()).x * data.mouseSensitivity, 2*M_PI);
-            data.lastMousePosition = g_window.cursorScreenPosition();
+            data.angle = math::modf(data.angle + (data.lastMousePosition - window::cursorScreenPosition()).x * data.mouseSensitivity, 2*M_PI);
+            data.lastMousePosition = window::cursorScreenPosition();
 
             data.animator -> setParameter("moving", data.force != vec3::zero);
             idle.setParameter("force", data.direction);

@@ -7,6 +7,9 @@
 
 #include "vector.h"
 #include "color.h"
+#include "component.h"
+
+struct Model;
 
 // Shader (struct): wrapper for graphical shader data :: allows for .hlsl files to be updated and used
 struct Shader
@@ -35,6 +38,17 @@ struct Shader
         uint32_t compileShader(const std::string &contents, uint32_t type) const;
 };
 
+// shader (namespace): global methods for loading and accessing shader data from .hlsl files
+namespace shader
+{
+    Shader &set(const std::string& path, const Shader& shader);
+    Shader &get(const std::string& path);
+    void remove();
+
+    void simple(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform);
+    void advanced(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess);
+};
+
 // Material (struct): holds the information necessary to render an entity to a complex Shader
 struct Material
 {
@@ -46,20 +60,18 @@ struct Material
 
     // determines whether the object responds to point and spot lights
     bool useAdvancedLighting = true;
+    void(*run)(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform);
 
-    Material(const Shader &shader__ = Shader(), const Vector3 &ambientStrength__ = vec3::zero, const Vector3 &diffuseStrength__ = vec3::zero, const Vector3 &specularStrength__ = vec3::zero, const Color &specular__ = color::WHITE, float shininess__ = 0, bool useAdvancedLighting__ = true)  :
-    shader(shader__), ambientStrength(ambientStrength__), diffuseStrength(diffuseStrength__), specularStrength(specularStrength__), specular(specular__), shininess(shininess__), useAdvancedLighting(useAdvancedLighting__) {}
+    Material(const Shader &shader__ = Shader()) : shader(shader__)
+    {
+        run = shader::simple;
+    }
+
+    Material(const Shader& shader__, void(*runFunction)(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)) : shader(shader__)
+    {
+        run = runFunction;
+    }
 };
-
-// shader (namespace): global methods for loading and accessing shader data from .hlsl files
-namespace shader
-{
-    Shader &set(const std::string& path, const Shader& shader);
-    Shader &get(const std::string& path);
-
-    void remove();
-};
-
 
 // Vertex (struct): holds basic vertex data as it is stored in a .obj file
 struct Vertex

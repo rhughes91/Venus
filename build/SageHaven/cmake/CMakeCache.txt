@@ -239,16 +239,14 @@ CMAKE_STRIP:FILEPATH=C:/msys64/mingw64/bin/strip.exe
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
-RMV_CONSOLE:BOOL=OFF
-
 //Value Computed by CMake
-Venus_BINARY_DIR:STATIC=C:/Projects/Venus/build/SageHaven/cmake/projects/Vellichor
+Venus_BINARY_DIR:STATIC=C:/Projects/Venus/build/SageHaven/cmake/projects/SageHaven
 
 //Value Computed by CMake
 Venus_IS_TOP_LEVEL:STATIC=OFF
 
 //Value Computed by CMake
-Venus_SOURCE_DIR:STATIC=C:/Projects/Venus/projects/Vellichor
+Venus_SOURCE_DIR:STATIC=C:/Projects/Venus/projects/SageHaven
 
 
 ########################
@@ -357,7 +355,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=7
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=6
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

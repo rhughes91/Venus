@@ -1,8 +1,6 @@
 project(Venus)
 
 
-get_filename_component(FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
 # additional '.cpp' files can be placed in the variable below
 set(PROJECT_SRC "")
 
@@ -11,19 +9,25 @@ if(PROJECT_SRC STREQUAL "")
     set(EMPTY_PROJ TRUE)
 endif()
 
-if(NOT EMPTY_PROJ)
-    add_library(${FILE_NAME}_lib ${PROJECT_SRC})
-    target_include_directories(${FILE_NAME}_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include)
-endif()
+get_filename_component(PARENT_DIR ${CMAKE_BINARY_DIR} DIRECTORY)
+get_filename_component(PARENT_DIR_NAME ${PARENT_DIR} NAME)
+get_filename_component(FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${FILE_NAME})
-add_executable(${FILE_NAME} main.cpp)
+if(${FILE_NAME} STREQUAL ${PARENT_DIR_NAME})
+    if(NOT EMPTY_PROJ)
+        add_library(${FILE_NAME}_lib ${PROJECT_SRC})
+        target_include_directories(${FILE_NAME}_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include)
+    endif()
 
-# This command will suppress the default Windows console; nothing can be printed to the console, and no console will show up when the built '.exe' file is run.
-# target_link_options(${FILE_NAME} PRIVATE -mwindows)
+    set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${FILE_NAME})
+    add_executable(${FILE_NAME} main.cpp)
 
-if(EMPTY_PROJ)
-    target_link_libraries(${FILE_NAME} PRIVATE venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
-else()
-    target_link_libraries(${FILE_NAME} PRIVATE ${FILE_NAME}_lib venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
+    # This command will suppress the default Windows console; nothing can be printed to the console, and no console will show up when the built '.exe' file is run.
+    # target_link_options(${FILE_NAME} PRIVATE -mwindows)
+
+    if(EMPTY_PROJ)
+        target_link_libraries(${FILE_NAME} PRIVATE venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
+    else()
+        target_link_libraries(${FILE_NAME} PRIVATE ${FILE_NAME}_lib venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
+    endif()
 endif()

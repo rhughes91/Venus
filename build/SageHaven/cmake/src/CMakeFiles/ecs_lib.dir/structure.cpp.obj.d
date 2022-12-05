@@ -186,7 +186,8 @@ src/CMakeFiles/ecs_lib.dir/structure.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
  C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/graphics.h \
- C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/structure.h \
+ C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/component.h \
+ C:/Projects/Venus/include/structure.h \
  C:/msys64/mingw64/include/c++/12.1.0/queue \
  C:/msys64/mingw64/include/c++/12.1.0/deque \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_deque.h \
@@ -197,4 +198,4 @@ src/CMakeFiles/ecs_lib.dir/structure.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
- C:/Projects/Venus/include/ui.h
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/ui.h

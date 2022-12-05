@@ -165,6 +165,7 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
  C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/color.h \
+ C:/Projects/Venus/include/component.h \
  C:/Projects/Venus/include/structure.h \
  C:/msys64/mingw64/include/c++/12.1.0/array \
  C:/msys64/mingw64/include/c++/12.1.0/compare \
@@ -194,4 +195,5 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/set \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/component.h

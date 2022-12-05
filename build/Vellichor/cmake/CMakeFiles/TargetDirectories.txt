@@ -12,10 +12,6 @@ C:/Projects/Venus/build/Vellichor/cmake/vendor/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/Vellichor/cmake/vendor/CMakeFiles/rebuild_cache.dir
 C:/Projects/Venus/build/Vellichor/cmake/projects/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/Vellichor/cmake/projects/CMakeFiles/rebuild_cache.dir
-C:/Projects/Venus/build/Vellichor/cmake/projects/SageHaven/CMakeFiles/SageHaven_lib.dir
-C:/Projects/Venus/build/Vellichor/cmake/projects/SageHaven/CMakeFiles/SageHaven.dir
-C:/Projects/Venus/build/Vellichor/cmake/projects/SageHaven/CMakeFiles/edit_cache.dir
-C:/Projects/Venus/build/Vellichor/cmake/projects/SageHaven/CMakeFiles/rebuild_cache.dir
 C:/Projects/Venus/build/Vellichor/cmake/projects/Vellichor/CMakeFiles/Vellichor_lib.dir
 C:/Projects/Venus/build/Vellichor/cmake/projects/Vellichor/CMakeFiles/Vellichor.dir
 C:/Projects/Venus/build/Vellichor/cmake/projects/Vellichor/CMakeFiles/edit_cache.dir

@@ -7,5 +7,6 @@
 #include "machine.h"
 #include "setup.h"
 #include "structure.h"
+#include "ui.h"
 
 #endif

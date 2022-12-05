@@ -19,6 +19,57 @@ struct Color
     }
 };
 
+inline Color operator +(const Color &color1, const Color &color2) {return Color(color1.r+color2.r, color1.g+color2.g, color1.b+color2.b, color1.a+color2.a);}
+inline Color operator -(const Color &color1, const Color &color2) {return Color(color1.r-color2.r, color1.g-color2.g, color1.b-color2.b, color1.a-color2.a);}
+inline Color operator +(const Color &color, float num) {return Color(color.r+num, color.g+num, color.b+num, color.a);}
+inline Color operator -(const Color &color, float num) {return Color(color.r-num, color.g-num, color.b-num, color.a);}
+inline Color operator *(const Color &color, float num) {return Color(color.r*num, color.g*num, color.b*num, color.a);}
+inline Color operator /(const Color &color, float num) {return Color(color.r/num, color.g/num, color.b/num, color.a);}
+inline Color &operator +=(Color &color1, const Color &color2)
+{
+    color1.r += color2.r;
+    color1.g += color2.g;
+    color1.b += color2.b;
+    color1.a += color2.a;
+    return color1;
+}
+inline Color &operator -=(Color &color1, const Color &color2)
+{
+    color1.r -= color2.r;
+    color1.g -= color2.g;
+    color1.b -= color2.b;
+    color1.a -= color2.a;
+    return color1;
+}
+inline Color &operator +=(Color &color1, float num)
+{
+    color1.r += num;
+    color1.g += num;
+    color1.b += num;
+    return color1;
+}
+inline Color &operator -=(Color &color1, float num)
+{
+    color1.r -= num;
+    color1.g -= num;
+    color1.b -= num;
+    return color1;
+}
+inline Color &operator *=(Color &color1, float num)
+{
+    color1.r *= num;
+    color1.g *= num;
+    color1.b *= num;
+    return color1;
+}
+inline Color &operator /=(Color &color1, float num)
+{
+    color1.r /= num;
+    color1.g /= num;
+    color1.b /= num;
+    return color1;
+}
+
 // color (namespace): provides easy access to basic colors
 namespace color
 {

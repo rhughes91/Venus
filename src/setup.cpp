@@ -3,24 +3,22 @@
 #include "GLFW/glfw3.h"
 #include "image/stb_image.h"
 
-#include <algorithm>
-#include <windows.h>
-
-#include "setup.h"
+#include "file_util.h"
 #include "input.h"
+#include "setup.h"
 #include "structure.h"
 
+InputManager g_keyboard, g_mouse;
 Window g_window;
 
-extern std::string g_source;
-extern InputManager g_keyboard, g_mouse;
+std::string g_source;
 
 void Screen::clear(const Color& color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screenShader__)
+void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screenShader__, uint32_t width, uint32_t height)
 {
     dirLight = dirLight__;
     gamma = 1.5f;
@@ -29,14 +27,20 @@ void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screen
     subBuffer.initialize();
     depthBuffer.initialize();
 
-    frameBuffer.addTexture("multiTexture", g_window.SCR_WIDTH, g_window.SCR_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, 0, GL_REPEAT, true);
-    subBuffer.addTexture("texture", g_window.SCR_WIDTH, g_window.SCR_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_REPEAT, false);
+    frameBuffer.addTexture("multiTexture", width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, 0, GL_REPEAT, true);
+    subBuffer.addTexture("texture", width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_REPEAT, false);
     
-    frameBuffer.addRenderBuffer("renderBuffer");
+    frameBuffer.addRenderBuffer("renderBuffer", width, height);
 
     shader = screenShader__;
     shader.use();
     shader.setInt("screenTexture", 0);
+
+    if(!frameBuffer.complete())
+        std::cout << "ERROR :: Screen framebuffer is not complete." << std::endl;
+
+    if(!subBuffer.complete())
+        std::cout << "ERROR :: Screen subbuffer is not complete." << std::endl;
 }
 void Screen::remove()
 {
@@ -45,15 +49,15 @@ void Screen::remove()
     depthBuffer.remove();
     shader.remove();
 }
-void Screen::refreshResolution()
+void Screen::refreshResolution(uint32_t width, uint32_t height)
 {
-    frameBuffer.refresh(g_window.SCR_WIDTH, g_window.SCR_HEIGHT, defaultColor.a == 1);
-    subBuffer.refresh(g_window.SCR_WIDTH, g_window.SCR_HEIGHT, defaultColor.a == 1);
+    frameBuffer.refresh(g_window.width, g_window.height, defaultColor.a == 1);
+    subBuffer.refresh(g_window.width, g_window.height, defaultColor.a == 1);
     resolutionUpdated = true;
 }
 void Screen::store()
 {
-    glViewport(0, 0, g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
+    glViewport(0, 0, g_window.width, g_window.height);
     frameBuffer.bind(GL_FRAMEBUFFER);
     glEnable(GL_DEPTH_TEST);
 }
@@ -61,7 +65,7 @@ void Screen::draw()
 {
     frameBuffer.bind(GL_READ_FRAMEBUFFER);
     subBuffer.bind(GL_DRAW_FRAMEBUFFER);
-    glBlitFramebuffer(0, 0, g_window.SCR_WIDTH, g_window.SCR_HEIGHT, 0, 0, g_window.SCR_WIDTH, g_window.SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBlitFramebuffer(0, 0, g_window.width, g_window.height, 0, 0, g_window.width, g_window.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
@@ -79,18 +83,6 @@ void object::render()
     g_manager.render();
     g_window.screen.draw();
 }
-void FrameBuffer::addRenderBuffer(const std::string& name)
-{
-    uint32_t renderBuffer;
-    bind(GL_FRAMEBUFFER);
-
-    glGenRenderbuffers(1, &renderBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
-    renderBuffers.insert({name, renderBuffer});
-    unbind();
-}
 void Mesh::draw(const uint32_t texture) const
 {
     glActiveTexture(GL_TEXTURE0);
@@ -101,6 +93,41 @@ void Mesh::draw(const uint32_t texture) const
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, count);
+}
+
+void shader::simple(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+{
+    Shader shader = model.material.shader;
+    shader.use();
+    
+    shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+    shader.setMat4("view", camera.view.matrix, true);
+    shader.setMat4("projection", camera.projection.matrix, true);
+    shader.setVec3("scale", transform.scale);
+    
+    shader.setVec3("lightPos", Vector3(-60, 20, -20));
+    shader.setVec3("viewPos", cameraTransform.position);
+    shader.setVec4("objColor", model.color);
+}
+void shader::advanced(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess)
+{
+    Shader shader = model.material.shader;
+    shader.use();
+    
+    shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+    shader.setMat4("view", camera.view.matrix, true);
+    shader.setMat4("projection", camera.projection.matrix, true);
+    shader.setVec3("scale", transform.scale);
+    
+    shader.setVec3("lightPos", Vector3(-60, 20, -20));
+    shader.setVec3("viewPos", cameraTransform.position);
+    shader.setVec4("objColor", model.color);
+
+    shader.setBool("advanced", true);
+    shader.setFloat("material.shininess", shininess);
+    shader.setVec3("material.ambientStrength", ambient);
+    shader.setVec3("material.diffuseStrength", diffuse);
+    shader.setVec3("material.specularStrength", specular);
 }
 
 uint32_t glInputToKeyCode(uint32_t input)
@@ -234,23 +261,23 @@ uint32_t glInputToButtonCode(uint32_t input)
 {
     switch(input)
     {
-        case GLFW_MOUSE_BUTTON_1: return button::MOUSE_0;
-        case GLFW_MOUSE_BUTTON_2: return button::MOUSE_1;
-        case GLFW_MOUSE_BUTTON_3: return button::MOUSE_2;
-        case GLFW_MOUSE_BUTTON_4: return button::MOUSE_3;
-        case GLFW_MOUSE_BUTTON_5: return button::MOUSE_4;
-        case GLFW_MOUSE_BUTTON_6: return button::MOUSE_5;
-        case GLFW_MOUSE_BUTTON_7: return button::MOUSE_6;
-        case GLFW_MOUSE_BUTTON_8: return button::MOUSE_7;
+        case GLFW_MOUSE_BUTTON_1: return mouse::BUTTON_0;
+        case GLFW_MOUSE_BUTTON_2: return mouse::BUTTON_1;
+        case GLFW_MOUSE_BUTTON_3: return mouse::BUTTON_2;
+        case GLFW_MOUSE_BUTTON_4: return mouse::BUTTON_3;
+        case GLFW_MOUSE_BUTTON_5: return mouse::BUTTON_4;
+        case GLFW_MOUSE_BUTTON_6: return mouse::BUTTON_5;
+        case GLFW_MOUSE_BUTTON_7: return mouse::BUTTON_6;
+        case GLFW_MOUSE_BUTTON_8: return mouse::BUTTON_7;
     }
-    return button::NIL;
+    return mouse::NIL;
 }
 
 void Time::update()
 {
     runtime = glfwGetTime();
     lastDeltaTime = deltaTime;
-    deltaTime = deltaTime * 0.75f + (runtime - lastFrame) * 0.25f;
+    deltaTime = (runtime - lastFrame);
     lastFrame = runtime;
     timer += deltaTime;
     averageFrameRate = (averageFrameRate + (1/deltaTime))/2;
@@ -276,9 +303,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         g_keyboard.parse(glInputToKeyCode(key), false);
     }
 
-    if(key == GLFW_KEY_F && action == GLFW_PRESS)
+    if(key == GLFW_KEY_F && action == GLFW_PRESS && !g_window.screen.fullscreen)
     {
-        if(!glfwGetWindowAttrib(window, GLFW_MAXIMIZED))
+        if(window::minimized())
         {
             glfwMaximizeWindow(window);
         }
@@ -289,21 +316,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
     else if(key == GLFW_KEY_F11 && action == GLFW_PRESS)
     {
-        if(g_window.screen.fullscreen = !g_window.screen.fullscreen)
-        {
-            g_window.screen.m_lastResolution = Vector2(g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
-            glfwGetWindowPos(window, &g_window.screen.lastPosition.x, &g_window.screen.lastPosition.y);
-
-            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, g_window.vsyncEnabled ? mode->refreshRate : GLFW_DONT_CARE);
-
-        }
-        else
-        {
-            glfwSetWindowMonitor(window, nullptr, 0, 0, g_window.screen.m_lastResolution.x, g_window.screen.m_lastResolution.y, GLFW_DONT_CARE);
-            glfwSetWindowPos(window, g_window.screen.lastPosition.x, g_window.screen.lastPosition.y);
-        }
+        window::fullscreen(!g_window.screen.fullscreen);
     }
 }
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -329,21 +342,22 @@ void framebuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height
 {
     if(width && height)
     {
-        g_window.SCR_WIDTH = width;
-        g_window.SCR_HEIGHT = height;
-        g_window.screen.refreshResolution();
+        g_window.width = width;
+        g_window.height = height;
+        g_window.screen.refreshResolution(width, height);
     }
 
     glViewport(0, 0, width, height);
 }
 
-Window::Window(std::string name, uint32_t width, uint32_t height)
+Window::Window(std::string name, uint32_t width__, uint32_t height__)
 {
     if(g_window.data != NULL)
         return;
 
-    SCR_WIDTH = width;
-    SCR_HEIGHT = height;
+    width = width__;
+    height = height__;
+    screen.defaultColor = color::RED;
     
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -353,7 +367,7 @@ Window::Window(std::string name, uint32_t width, uint32_t height)
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    data = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, name.c_str(), NULL, NULL);
+    data = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
     if(data == NULL)
     {
         std::cout << "ERROR :: Failed to create GLFW window" << std::endl;
@@ -374,19 +388,80 @@ Window::Window(std::string name, uint32_t width, uint32_t height)
     double xPos, yPos;
     glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
     cursorPosition = {(float)xPos, (float)yPos};
-    g_window = *this;
-    g_window.screen.initialize(DirectionalLight{Vector3(0, 0, 1), color::WHITE, 1}, Shader("screen_vertex", "screen_frag"));
-    g_window.screen.defaultColor = color::RED;
+    screen.initialize(DirectionalLight{Vector3(0, 0, 1), color::WHITE, 1}, Shader("screen_vertex", "screen_frag"), width, height);
 }
-bool Window::closing()
+void Window::configureGLAD()
 {
-    return glfwWindowShouldClose((GLFWwindow *)data);
+    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "ERROR :: Failed to initialize GLAD" << std::endl;
+        glfwTerminate();
+        data = NULL;
+        return;
+    }
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_MULTISAMPLE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glViewport(0, 0, g_window.width, g_window.height);
+    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    active = true;
 }
-bool Window::decorated()
+
+bool key::pressed(key::KeyCode id)
 {
-    return glfwGetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED);
+    return g_keyboard.inputs[id].pressed;
 }
-bool Window::throwError()
+bool key::held(key::KeyCode id)
+{
+    return g_keyboard.inputs[id].held;
+}
+bool key::released(key::KeyCode id)
+{
+    return g_keyboard.inputs[id].released;
+}
+bool mouse::pressed(mouse::ButtonCode id)
+{
+    return g_mouse.inputs[id].pressed;
+}
+bool mouse::held(mouse::ButtonCode id)
+{
+    return g_mouse.inputs[id].held;
+}
+bool mouse::released(mouse::ButtonCode id)
+{
+    return g_mouse.inputs[id].held;
+}
+
+bool window::active()
+{
+    return g_window.active;
+}
+bool window::closing()
+{
+    return glfwWindowShouldClose((GLFWwindow *)g_window.data);
+}
+bool window::decorated()
+{
+    return glfwGetWindowAttrib((GLFWwindow *)g_window.data, GLFW_DECORATED);
+}
+bool window::maximized()
+{
+    return glfwGetWindowAttrib((GLFWwindow *)g_window.data, GLFW_MAXIMIZED);
+}
+bool window::minimized()
+{
+    return !glfwGetWindowAttrib((GLFWwindow *)g_window.data, GLFW_MAXIMIZED);
+}
+bool window::resolutionUpdated()
+{
+    return g_window.screen.resolutionUpdated;
+}
+bool window::throwError()
 {
     uint32_t error = glGetError();
     std::string errorMessage;
@@ -420,122 +495,199 @@ bool Window::throwError()
     std::cout << errorMessage << std::endl;
     return error;
 }
-void Window::configureGLAD()
+void window::centerWindow()
 {
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    setPosition(monitorCenter() - Vector2I(0.5*g_window.width, 0.5*g_window.height));
+}
+void window::clearScreen(const Color& color)
+{
+    g_window.screen.clear(color);
+}
+void window::close()
+{
+    glfwSetWindowShouldClose((GLFWwindow *)g_window.data, true);
+}
+void window::enableDecoration(bool enable)
+{
+    glfwSetWindowAttrib((GLFWwindow *)g_window.data, GLFW_DECORATED, enable);
+}
+void window::enableVSync(bool enable)
+{
+    glfwSwapInterval(g_window.vsyncEnabled = enable);
+}
+void window::fullscreen(bool enable)
+{
+    if(enable && !g_window.screen.fullscreen)
     {
-        std::cout << "ERROR :: Failed to initialize GLAD" << std::endl;
-        glfwTerminate();
-        data = NULL;
-        return;
+        g_window.screen.fullscreen = true;
+        g_window.screen.m_lastResolution = Vector2(g_window.width, g_window.height);
+        glfwGetWindowPos((GLFWwindow *)g_window.data, &g_window.screen.lastPosition.x, &g_window.screen.lastPosition.y);
+
+        GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor((GLFWwindow *)g_window.data, monitor, 0, 0, mode->width, mode->height, g_window.vsyncEnabled ? mode->refreshRate : GLFW_DONT_CARE);
     }
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_MULTISAMPLE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glViewport(0, 0, g_window.SCR_WIDTH, g_window.SCR_HEIGHT);
-    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-    active = true;
+    else if(!enable && g_window.screen.fullscreen)
+    {
+        g_window.screen.fullscreen = false;
+        glfwSetWindowMonitor((GLFWwindow *)g_window.data, nullptr, 0, 0, g_window.screen.m_lastResolution.x, g_window.screen.m_lastResolution.y, GLFW_DONT_CARE);
+        glfwSetWindowPos((GLFWwindow *)g_window.data, g_window.screen.lastPosition.x, g_window.screen.lastPosition.y);
+    }
 }
-void Window::close()
+void window::hideCursor(bool enable)
 {
-    glfwSetWindowShouldClose((GLFWwindow *)data, true);
+    glfwSetInputMode((GLFWwindow *)g_window.data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
-void Window::enableDecoration(bool enable)
+void window::lockCursor(bool enable)
 {
-    glfwSetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED, enable);
+    glfwSetInputMode((GLFWwindow *)g_window.data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
-void Window::enableVSync(bool enable)
+void window::maximize()
 {
-    glfwSwapInterval(vsyncEnabled = enable);
+    if(g_window.screen.fullscreen)
+    {
+        glfwSetWindowMonitor((GLFWwindow *)g_window.data, nullptr, 0, 0, g_window.screen.m_lastResolution.x, g_window.screen.m_lastResolution.y, GLFW_DONT_CARE);
+        glfwSetWindowPos((GLFWwindow *)g_window.data, g_window.screen.lastPosition.x, g_window.screen.lastPosition.y);
+        g_window.screen.fullscreen = false;
+    }
+
+    glfwMaximizeWindow((GLFWwindow *)g_window.data);
 }
-void Window::hideCursor(bool enable)
+void window::minimize()
 {
-    glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
+    if(g_window.screen.fullscreen)
+    {
+        glfwSetWindowMonitor((GLFWwindow *)g_window.data, nullptr, 0, 0, g_window.screen.m_lastResolution.x, g_window.screen.m_lastResolution.y, GLFW_DONT_CARE);
+        glfwSetWindowPos((GLFWwindow *)g_window.data, g_window.screen.lastPosition.x, g_window.screen.lastPosition.y);
+        g_window.screen.fullscreen = false;
+    }
+
+    glfwRestoreWindow((GLFWwindow *)g_window.data);
 }
-void Window::lockCursor(bool enable)
-{
-    glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-}
-void Window::maximize()
-{
-    glfwMaximizeWindow((GLFWwindow *)data);
-}
-void Window::refresh()
+void window::refresh()
 {
     glfwSwapBuffers((GLFWwindow *)g_window.data);
     glfwPollEvents();
 }
-void Window::setCursor(const Vector2& position)
+void window::remove()
 {
-    glfwSetCursorPos((GLFWwindow *)data, position.x, position.y);
+    g_window.screen.remove();
 }
-void Window::setDefaultBackgroundColor(const Color &color)
+void window::setCamera(uint32_t newCamera)
 {
-    screen.defaultColor = color;
-    screen.refreshResolution();
+    g_window.screen.camera = newCamera;
 }
-void Window::setIcon(const char *path)
+void window::setCursor(const Vector2& position)
+{
+    glfwSetCursorPos((GLFWwindow *)g_window.data, position.x, position.y);
+}
+void window::setDefaultBackgroundColor(const Color &color)
+{
+    g_window.screen.defaultColor = color;
+    g_window.screen.refreshResolution(g_window.width, g_window.height);
+}
+void window::setIcon(const char *path)
 {
     GLFWimage images[1];
 
     stbi_set_flip_vertically_on_load(false);
     images[0].pixels = stbi_load((g_source + std::string("resources/images/") + path).c_str(), &images[0].width, &images[0].height, 0, 4);
-    glfwSetWindowIcon((GLFWwindow *)data, 1, images); 
+    glfwSetWindowIcon((GLFWwindow *)g_window.data, 1, images); 
     stbi_image_free(images[0].pixels);
     stbi_set_flip_vertically_on_load(true);
 }
-void Window::setOpacity(float opacity)
+void window::setOpacity(float opacity)
 {
-    glfwSetWindowOpacity((GLFWwindow *)data, opacity);
+    glfwSetWindowOpacity((GLFWwindow *)g_window.data, opacity);
 }
-void Window::setPosition(const Vector2I& position)
+void window::setPosition(const Vector2I& position)
 {
-    glfwSetWindowPos((GLFWwindow *)data, position.x, position.y);
+    glfwSetWindowPos((GLFWwindow *)g_window.data, position.x, position.y);
 }
-void Window::setTitle(const char *title)
+void window::setTitle(const char *title)
 {
-    glfwSetWindowTitle((GLFWwindow *)data, title);
+    glfwSetWindowTitle((GLFWwindow *)g_window.data, title);
 }
-void Window::terminate()
+void window::storeRender()
+{
+    g_window.screen.store();
+}
+void window::drawRender()
+{
+    g_window.screen.draw();
+}
+void window::terminate()
 {
     glfwTerminate();
 }
-float Window::getOpacity()
+float window::aspectRatioInv()
 {
-    return glfwGetWindowOpacity((GLFWwindow *)data);
+    return (float)g_window.width/(float)g_window.height;
 }
-Vector2I Window::monitorCenter()
+float window::aspectRatio()
+{
+    return (float)g_window.height/(float)g_window.width;
+}
+float window::getOpacity()
+{
+    return glfwGetWindowOpacity((GLFWwindow *)g_window.data);
+}
+float window::height()
+{
+    return g_window.height;
+}
+float window::width()
+{
+    return g_window.width;
+}
+Vector2 window::cursorUniformScreenPosition()
+{
+    return {((float)g_window.cursorPosition.x/(float)g_window.width)*2 - 1, -((float)g_window.cursorPosition.y/(float)g_window.height)*2 + 1};
+}
+Vector2 window::cursorScreenPosition()
+{
+    return cursorUniformScreenPosition() * Vector2{aspectRatioInv(), 1};
+}
+Vector2I window::center()
+{
+    return Vector2I(monitorCenter() - Vector2I(0.5*g_window.width, 0.5*g_window.height));
+}
+Vector2I window::resolution()
+{
+    return Vector2I(g_window.width, g_window.height);
+}
+Vector2I window::monitorCenter()
 {
     Vector2I result;
     glfwGetMonitorPhysicalSize(glfwGetPrimaryMonitor(), &result.x, &result.y);
     return result * 2;
 }
+uint32_t window::camera()
+{
+    return g_window.screen.camera;
+}
+DirectionalLight& window::lighting()
+{
+    return g_window.screen.dirLight;
+}
 
 bool createWindow(const char *name, uint32_t width, uint32_t height)
 {
-    TCHAR buffer[260] = { 0 };
-    GetModuleFileName(NULL, buffer, 256);
-
-    std::string source = std::string(buffer);
-    std::replace(source.begin(), source.end(), '\\', '/');
-    g_source = source.substr(0, source.find_last_of("/")) + "/";
-
-    Window(name, width, height);
+    if(g_window.active)
+        return false;
+    
+    g_source = getCurrentDirectoryName();
+    g_window = Window(name, width, height);
     if(!g_window.active)
         return false;
-
+    
     stbi_set_flip_vertically_on_load(true);
     texture::set("", {"default"}, texture::PNG);
-    mesh::set("square", shape::square());
+    g_window.screen.quad = mesh::set("square", shape::square());
     mesh::set("cube", shape::cube());
 
     g_keyboard.initialize(key::LAST);
-    g_mouse.initialize(button::MOUSE_LAST);
-
+    g_mouse.initialize(mouse::LAST);
+    
     return true;
 }

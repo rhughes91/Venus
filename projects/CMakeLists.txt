@@ -14,8 +14,6 @@ FOREACH(child ${children})
     ENDIF()
 ENDFOREACH()
 
-message(${dirlist})
-
-FOREACH(subdir ${dirlist})
-    ADD_SUBDIRECTORY(${subdir})
-ENDFOREACH()
+get_filename_component(PARENT_DIR ${CMAKE_BINARY_DIR} DIRECTORY)
+get_filename_component(PARENT_DIR_NAME ${PARENT_DIR} NAME)
+ADD_SUBDIRECTORY(${PARENT_DIR_NAME})

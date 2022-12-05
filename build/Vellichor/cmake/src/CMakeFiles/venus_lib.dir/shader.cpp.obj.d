@@ -155,4 +155,4 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
- C:/Projects/Venus/include/color.h
+ C:/Projects/Venus/include/color.h C:/Projects/Venus/include/component.h

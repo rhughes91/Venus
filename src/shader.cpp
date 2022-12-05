@@ -8,10 +8,6 @@ Shader::Shader(std::string vertexPath, std::string fragmentPath)
 {
     m_vertexPath = vertexPath;
     m_fragmentPath = fragmentPath;
-    initialize(0, 0);
-}
-void Shader::initialize(int32_t numPoints, int32_t numSpots)
-{
     ID = glCreateProgram();
     uint32_t shader;
     if(shader = compileShader
@@ -100,7 +96,7 @@ uint32_t Shader::compileShader(const std::string &contents, uint32_t type) const
     if(!success)
     {
         glGetShaderInfoLog(shader, 512, NULL, infoLog);
-        std::cout << "ERROR::"<<"SHADER"<<"::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR :: Shader compilated failed: " << infoLog << std::endl;
         return 0;
     }
     return shader;

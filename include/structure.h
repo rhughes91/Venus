@@ -9,6 +9,7 @@
 #include <unordered_map>
 
 #include "vector.h"
+#include "setup.h"
 
 using Entity = uint32_t;
 using Path = std::pair<std::string, std::string>;
@@ -79,6 +80,11 @@ struct Time
     }
 };
 
+namespace event
+{
+    float delta();
+}
+
 
 using ComponentType = uint8_t;
 const ComponentType MAX_COMPONENTS = 32;
@@ -92,7 +98,7 @@ using Signature = std::bitset<MAX_COMPONENTS>;
  */
 
 // ENTITY MANAGEMENT
-const uint16_t MAX_ENTITIES = 100;
+const uint16_t MAX_ENTITIES = 200;
 
 // EntityManager (class): regulates how Entities are created and destroyed, and attaches "Signature" bitset that tracks attached components
 class EntityManager
@@ -511,6 +517,7 @@ class SystemManager
             {
                 system.second -> load(*system.second);
             }
+            
         }
         void start()
         {
@@ -722,20 +729,19 @@ class ObjectManager
 
 
 extern ObjectManager g_manager;
-extern Time g_time;
 
 // SYSTEMS: base Systems for the engine :: static variables are stored in these structures
 
-struct Graphics : System {};
-struct UIManager : System {};
-struct CollisionHandler : System {};
-struct PhysicsHandler : System {};
-struct MovementHandler : System {};
-struct SpotLightHandler : System {};
-struct BillboardHandler : System {};
-struct CameraManager : System {};
 struct AnimationManager : System {};
+struct BillboardHandler : System {};
 struct ButtonManager : System {};
+struct CameraManager : System {};
+struct CollisionManager : System {};
+struct Graphics : System {};
+struct MovementManager : System {};
+struct PhysicsManager : System {};
+struct SpotLightManager : System {};
+struct UIManager : System {};
 
 
 template<typename T>

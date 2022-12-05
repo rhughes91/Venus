@@ -1,15 +1,11 @@
 #include "platformer.h"
 
-extern Window g_window;
-extern InputManager g_keyboard;
-extern InputManager g_mouse;
-
 void project::initialize()
 {
     
     struct Movement : Script
     {
-        uint32_t keyLeft = key::LEFT, keyRight = key::RIGHT, keyJump = key::C;
+        key::KeyCode keyLeft = key::LEFT, keyRight = key::RIGHT, keyJump = key::C;
         float height = 3.5f, gravity = 50;
         int gForce = -1;
 
@@ -27,14 +23,14 @@ void project::initialize()
             {
                 auto& physics = object::getComponent<Physics2D>(entity);
 
-                if(g_keyboard.inputs[key::Z].pressed)
+                if(key::pressed(key::Z))
                     movement.gForce *= -1;
 
-                if(g_keyboard.inputs[movement.keyJump].pressed)
+                if(key::pressed(movement.keyJump))
                 {
                     movement.jumpBuffer.prime();
                 }
-                else if(!g_keyboard.inputs[movement.keyJump].held)
+                else if(!key::held(movement.keyJump))
                 {
                     movement.jumpBuffer.reset();
                 }
@@ -42,7 +38,7 @@ void project::initialize()
                 if((physics.collisions[physics::DOWN] && movement.gForce < 0) || (physics.collisions[physics::UP] && movement.gForce > 0))
                     movement.coyoteBuffer.prime();
 
-                physics.addForce(Vector2((g_keyboard.inputs[movement.keyRight].held-g_keyboard.inputs[movement.keyLeft].held) * 50, 0));
+                physics.addForce(Vector2((key::held(movement.keyRight)-key::held(movement.keyLeft)) * 50, 0));
                 physics.addForce(Vector2(0, movement.gravity*movement.gForce*physics.mass));
                 
                 if(movement.jumpBuffer.primed && movement.coyoteBuffer.primed)
@@ -70,7 +66,6 @@ void project::initialize()
     
     struct Event : Script
     {
-        Shader uiShader;
         Transform *playerTransform, *cameraTransform;
         Physics2D *cameraPhysics;
     };
@@ -82,7 +77,17 @@ void project::initialize()
         {
             auto& data = script.data<Event>();
 
-            Material defaultMaterial = Material(shader::get("obj_shader"));
+            Material defaultMaterial = Material(shader::get("simple_shader"));
+
+            Object test("button");
+            test.addComponent<Rect>(Rect(Alignment(alignment::TOP, alignment::LEFT), Vector2(0.1f, 0), 0.5f));
+            test.addComponent<Button>(Button([]
+                (Entity entity)
+                {
+                    std::cout << "test" << std::endl;
+                }
+            ));
+            test.addComponent<Model>(Model(color::WHITE, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("default.png")));
 
             Object player("player");
             data.playerTransform = &player.addComponent<Transform>(Vector3(0, 0, 0));
@@ -100,15 +105,7 @@ void project::initialize()
 
             floor.clone().getComponent<Transform>() = Transform(Vector3(0, 29, 0), Vector3(100, 1, 0));
             floor.clone().getComponent<Transform>() = Transform(Vector3(0, -29, 0), Vector3(100, 1, 0));
-
             floor.clone().getComponent<Transform>() = Transform(Vector3(5, 2, 0), Vector3(5, 1, 0));
-
-            // Object bouncePad = floor.clone();
-            // bouncePad.getComponent<Transform>() = Transform(Vector3(-8, 0, 0), Vector3(1, 1, 0));
-            // bouncePad.getComponent<BoxCollider>().setTrigger(physics::collisionBounce);
-
-            // data.vertTransform = &(floor.clone().getComponent<Transform>() = Transform(Vector3(-15, 5, 0), Vector3(10, 1, 0)));
-            // data.horiTransform = &(floor.clone().getComponent<Transform>() = Transform(Vector3(15, 4.5f, 0), Vector3(1, 10, 0)));
 
             Object wall("wall");
             wall.addComponent<Transform>(Transform(Vector3(-59.5f, 4.5f, 0), Vector3(1, 10, 0)));
@@ -128,16 +125,16 @@ void project::initialize()
             Camera& cam = camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, vec3::back, vec3::up));
             data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(0, 0, 20)});
             data.cameraPhysics = &camera.addComponent<Physics2D>(Physics2D(1, 0.1f));
-            g_window.screen.camera = camera.data;
+            window::setCamera(camera.data);
+        });
+        
+        script.lateUpdate([]
+        (System& script)
+        {
+            auto& data = script.data<Event>();
+
+            Vector3 difference = (data.playerTransform -> position - data.cameraTransform -> position).normalized();
+            data.cameraPhysics -> velocity = vec3::pow(vec3::abs(difference), 0.75f) * vec3::sign0(difference) * Vector3(75, 125);
         });
     }
-
-    script.lateUpdate([]
-    (System& script)
-    {
-        auto& data = script.data<Event>();
-
-        Vector3 difference = (data.playerTransform -> position - data.cameraTransform -> position).normalized();
-        data.cameraPhysics -> velocity = vec3::pow(vec3::abs(difference), 0.75f) * vec3::sign0(difference) * Vector3(75, 125);
-    });
 }

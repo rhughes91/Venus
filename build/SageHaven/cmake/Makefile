@@ -193,32 +193,6 @@ SageHaven/fast:
 	$(MAKE) $(MAKESILENT) -f projects\SageHaven\CMakeFiles\SageHaven.dir\build.make projects/SageHaven/CMakeFiles/SageHaven.dir/build
 .PHONY : SageHaven/fast
 
-#=============================================================================
-# Target rules for targets named Vellichor_lib
-
-# Build rule for target.
-Vellichor_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 Vellichor_lib
-.PHONY : Vellichor_lib
-
-# fast build rule for target.
-Vellichor_lib/fast:
-	$(MAKE) $(MAKESILENT) -f projects\Vellichor\CMakeFiles\Vellichor_lib.dir\build.make projects/Vellichor/CMakeFiles/Vellichor_lib.dir/build
-.PHONY : Vellichor_lib/fast
-
-#=============================================================================
-# Target rules for targets named Vellichor
-
-# Build rule for target.
-Vellichor: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 Vellichor
-.PHONY : Vellichor
-
-# fast build rule for target.
-Vellichor/fast:
-	$(MAKE) $(MAKESILENT) -f projects\Vellichor\CMakeFiles\Vellichor.dir\build.make projects/Vellichor/CMakeFiles/Vellichor.dir/build
-.PHONY : Vellichor/fast
-
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
@@ -229,8 +203,6 @@ help:
 	@echo ... rebuild_cache
 	@echo ... SageHaven
 	@echo ... SageHaven_lib
-	@echo ... Vellichor
-	@echo ... Vellichor_lib
 	@echo ... ecs_lib
 	@echo ... file_lib
 	@echo ... vendor_lib

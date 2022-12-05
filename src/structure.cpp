@@ -7,19 +7,48 @@
 #include "structure.h"
 #include "ui.h"
 
-extern ObjectManager g_manager;
-extern Window g_window;
-extern InputManager g_keyboard, g_mouse;
+ObjectManager g_manager;
 
+void object::load()
+{
+    g_manager.load();
+}
+void object::start()
+{
+    g_manager.start();
+}
+void object::destroy()
+{
+    g_manager.destroy();
+}
+void object::update()
+{
+    g_manager.update();
+}
+void object::lateUpdate()
+{
+    g_manager.lateUpdate();
+}
+void object::fixedUpdate()
+{
+    g_manager.fixedUpdate();
+}
 
 Camera::Camera(float speed__, Color color__, Vector3 front__, Vector3 up__) : speed(speed__), backgroundColor(color__), front(front__), up(up__)
 {
-    projection = mat4::inter(math::radians(45.0f), 2.5f, g_window.aspectRatioInv(), 0.01f, 200.0f, 1.0f);
+    projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, 1.0f);
 }
 
+bool Rect::contains(const Vector2& vec)
+{
+    Vector2 pos = relativePosition();
+    Vector2 target = vec - Vector2((window::width() - window::height())/window::height() * pos.x, 0);
+
+    return pos.x - scale.x/2 <= target.x && pos.x + scale.x/2 >= target.x && pos.y + scale.x/2 >= target.y && pos.y - scale.y/2 <= target.y;
+}
 Vector2 Rect::relativePosition()
 {
-    return position + relativeOrigin - scale * vec2::sign(relativeOrigin) * Vector2(g_window.aspectRatio(), 1) * 0.5f;
+    return (position + relativeOrigin - scale * relativeOrigin * Vector2(window::aspectRatio(), 1) * 0.5f);
 }
 
 Object object::find(std::string name)
@@ -90,7 +119,7 @@ void InputManager::refresh()
 
 void Timer::update(float max)
 {
-    timer += math::clamp(g_time.deltaTime, 0.f, max);
+    timer += math::clamp(event::delta(), 0.f, max);
 }
 
 uint32_t Animation::step()
@@ -200,34 +229,25 @@ ObjectManager::ObjectManager()
         registerComponent<Billboard>();
 
         std::shared_ptr<System> system;
-
-        system = registerSystem<SpotLightHandler>();
-        system -> setUpdate([]
+        
+        system = registerSystem<AnimationManager>();
+        system -> setFixedUpdate([]
         (System &system)
         {
-            Shader& shader = shader::get("obj_shader");
-            shader.use();
-            shader.setInt("totalSpotLights", system.m_entities.size());
-
-            uint32_t iterator = 0;
-            for(const auto& entity : system.m_entities)
+            for(auto const &entity : system.m_entities)
             {
-                Transform& transform = object::getComponent<Transform>(entity);
-                SpotLight& light = object::getComponent<SpotLight>(entity);
+                object::getComponent<Model>(entity).texture = object::getComponent<Animator>(entity).transition().transition().step();
+            }
+        });
 
-                std::string name = "spotLights[" + std::to_string(iterator) + "]";
-                shader.setVec3(name + ".position", transform.position);
-                shader.setVec3(name + ".direction", light.direction);
-                shader.setVec4(name + ".color", light.color);
-                shader.setFloat(name + ".strength", light.strength);
-                
-                shader.setFloat(name + ".constant", light.constant);
-                shader.setFloat(name + ".linear", light.linear);
-                shader.setFloat(name + ".quadratic", light.quadratic);
-
-                shader.setFloat(name + ".cutOff", light.cutoff);
-                shader.setFloat(name + ".outerCutOff", light.outerCutOff);
-                iterator++;
+        system = registerSystem<BillboardHandler>();
+        system -> setLateUpdate([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                Transform &transform = object::getComponent<Transform>(entity);
+                transform.rotation = Quaternion(object::getComponent<Camera>(object::getComponent<Billboard>(entity).target).view).normalized().inverted();
             }
         });
 
@@ -235,17 +255,110 @@ ObjectManager::ObjectManager()
         system -> setUpdate([]
         (System &system)
         {
-            // for(auto const &entity : system.m_entities)
-            // {
-            //     Rect& rect = object::getComponent<Rect>(entity);
-            //     if(g_mouse.inputs[GLFW_MOUSE_BUTTON_LEFT].pressed && rect.contains(g_window.mouseScreenPosition()))
-            //     {
-            //         object::getComponent<Button>(entity).trigger(entity);
-            //     }
-            // }
+            for(auto const &entity : system.m_entities)
+            {
+                Rect& rect = object::getComponent<Rect>(entity);
+                if(mouse::pressed(mouse::LEFT) && rect.contains(window::cursorScreenPosition()))
+                {
+                    object::getComponent<Button>(entity).trigger(entity);
+                }
+            }
         });
 
-        system = registerSystem<PhysicsHandler>();
+        system = registerSystem<CameraManager>();
+        system -> setLateUpdate([]
+        (System &system)
+        {
+            for(const auto& entity : system.m_entities)
+            {
+                Camera& camera = object::getComponent<Camera>(entity);
+                camera.view = mat4::lookAt(object::getComponent<Transform>(entity).position, -camera.front, vec3::up);
+
+                if(window::resolutionUpdated())
+                {
+                    camera.projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, camera.projectionLevel);
+                }
+            }
+        });
+
+        system = registerSystem<CollisionManager>();
+        system -> setLateUpdate([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
+                if(collider.mobile)
+                {
+                    Transform& transform = object::getComponent<Transform>(entity);
+                    Model& model = object::getComponent<Model>(entity);
+                    Vector3 boxDim = model.data.dimensions * transform.scale * collider.scale * 0.5f;
+                    Vector3 position = transform.position;
+                    bool triggered = false;
+
+                    for(auto const &compare : system.m_entities)
+                    {
+                        if(compare == entity)
+                            continue;
+
+                        BoxCollider& collider2 = object::getComponent<BoxCollider>(compare);
+                        Transform& transform2 = object::getComponent<Transform>(compare);
+                        Model& collisionModel = object::getComponent<Model>(compare);
+                        Vector3 boxDim2 = collisionModel.data.dimensions * transform2.scale * collider2.scale * 0.5f;
+                        Vector3 position2 = transform2.position, hit;
+                        
+                        // Box box = Box(position2-boxDim2, position2+boxDim2);
+                        int precision = 6;
+                        if
+                        (
+                            (math::roundTo(position.x + boxDim.x, precision) >= math::roundTo(position2.x - boxDim2.x, precision) && math::roundTo(position.x - boxDim.x, precision) <= math::roundTo(position2.x + boxDim2.x, precision) &&
+                            math::roundTo(position.y + boxDim.y, precision) >= math::roundTo(position2.y - boxDim2.y, precision) && math::roundTo(position.y - boxDim.y, precision) <= math::roundTo(position2.y + boxDim2.y, precision) &&
+                            math::roundTo(position.z + boxDim.z, precision) >= math::roundTo(position2.z - boxDim2.z, precision) && math::roundTo(position.z - boxDim.z, precision) <= math::roundTo(position2.z + boxDim2.z, precision))
+                        )
+                        {
+                            collider.trigger(entity, compare, triggered);
+                            collider2.trigger(compare, entity, triggered);
+                            triggered = true;
+                        }
+                        // else if(box.CheckLineBox(collider.storedPosition, position, hit))
+                        // {
+                        //     std::cout << collider.storedPosition << " : " << position << std::endl;
+                        // }
+                    }
+                    if(!triggered)
+                    {
+                        collider.miss(entity);
+                    }
+                }
+            }
+        });
+        system -> setRender([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<BoxCollider>(entity).storedPosition = object::getComponent<Transform>(entity).position;
+            }
+        });
+
+        system = registerSystem<Graphics>();
+        system -> setRender([]
+        (System &system)
+        {
+            Camera& camera = object::getComponent<Camera>(window::camera());
+            Transform& cameraTransform = object::getComponent<Transform>(window::camera());
+            
+            window::clearScreen(camera.backgroundColor);
+            for(auto const &entity : system.m_entities)
+            {
+                Transform& transform = object::getComponent<Transform>(entity);
+                Model& model = object::getComponent<Model>(entity);
+                model.material.run(transform, model, camera, cameraTransform);
+                model.draw();
+            }
+        });
+
+        system = registerSystem<PhysicsManager>();
         system -> setStart([]
         (System &system)
         {
@@ -308,109 +421,43 @@ ObjectManager::ObjectManager()
             }
         });
 
-        system = registerSystem<CollisionHandler>();
-        system -> setLateUpdate([]
+        system = registerSystem<SpotLightManager>();
+        system -> setUpdate([]
         (System &system)
         {
-            for(auto const &entity : system.m_entities)
-            {
-                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
-                if(collider.mobile)
-                {
-                    Transform& transform = object::getComponent<Transform>(entity);
-                    Model& model = object::getComponent<Model>(entity);
-                    Vector3 boxDim = model.data.dimensions * transform.scale * collider.scale * 0.5f;
-                    Vector3 position = transform.position;
-                    bool triggered = false;
+            Shader& shader = shader::get("obj_shader");
+            shader.use();
+            shader.setInt("totalSpotLights", system.m_entities.size());
 
-                    for(auto const &compare : system.m_entities)
-                    {
-                        if(compare == entity)
-                            continue;
-
-                        BoxCollider& collider2 = object::getComponent<BoxCollider>(compare);
-                        Transform& transform2 = object::getComponent<Transform>(compare);
-                        Model& collisionModel = object::getComponent<Model>(compare);
-                        Vector3 boxDim2 = collisionModel.data.dimensions * transform2.scale * collider2.scale * 0.5f;
-                        Vector3 position2 = transform2.position, hit;
-                        
-                        // Box box = Box(position2-boxDim2, position2+boxDim2);
-                        int precision = 6;
-                        if
-                        (
-                            (math::roundTo(position.x + boxDim.x, precision) >= math::roundTo(position2.x - boxDim2.x, precision) && math::roundTo(position.x - boxDim.x, precision) <= math::roundTo(position2.x + boxDim2.x, precision) &&
-                            math::roundTo(position.y + boxDim.y, precision) >= math::roundTo(position2.y - boxDim2.y, precision) && math::roundTo(position.y - boxDim.y, precision) <= math::roundTo(position2.y + boxDim2.y, precision) &&
-                            math::roundTo(position.z + boxDim.z, precision) >= math::roundTo(position2.z - boxDim2.z, precision) && math::roundTo(position.z - boxDim.z, precision) <= math::roundTo(position2.z + boxDim2.z, precision))
-                        )
-                        {
-                            collider.trigger(entity, compare, triggered);
-                            collider2.trigger(compare, entity, triggered);
-                            triggered = true;
-                        }
-                        // else if(box.CheckLineBox(collider.storedPosition, position, hit))
-                        // {
-                        //     std::cout << collider.storedPosition << " : " << position << std::endl;
-                        // }
-                    }
-                    if(!triggered)
-                    {
-                        collider.miss(entity);
-                    }
-                }
-            }
-        });
-        system -> setRender([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                object::getComponent<BoxCollider>(entity).storedPosition = object::getComponent<Transform>(entity).position;
-            }
-        });
-
-        system = registerSystem<BillboardHandler>();
-        system -> setLateUpdate([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                Transform &transform = object::getComponent<Transform>(entity);
-                transform.rotation = Quaternion(object::getComponent<Camera>(object::getComponent<Billboard>(entity).target).view).normalized().inverted();
-                // transform.lightSpaceRotation = (Quaternion(mat4::lookAt(Vector3(-60, 20, -20), -Vector3(1, -0.5f, 0), vec3::down)).normalized()).inverted();
-            }
-        });
-
-        system = registerSystem<CameraManager>();
-        system -> setLateUpdate([]
-        (System &system)
-        {
+            uint32_t iterator = 0;
             for(const auto& entity : system.m_entities)
             {
-                Camera& camera = object::getComponent<Camera>(entity);
-                camera.view = mat4::lookAt(object::getComponent<Transform>(entity).position, -camera.front, vec3::up);
+                Transform& transform = object::getComponent<Transform>(entity);
+                SpotLight& light = object::getComponent<SpotLight>(entity);
 
-                if(g_window.screen.resolutionUpdated)
-                {
-                    camera.projection = mat4::inter(math::radians(45.0f), 2.5f, g_window.aspectRatioInv(), 0.01f, 200.0f, camera.projectionLevel);
-                }
+                std::string name = "spotLights[" + std::to_string(iterator) + "]";
+                shader.setVec3(name + ".position", transform.position);
+                shader.setVec3(name + ".direction", light.direction);
+                shader.setVec4(name + ".color", light.color);
+                shader.setFloat(name + ".strength", light.strength);
+                
+                shader.setFloat(name + ".constant", light.constant);
+                shader.setFloat(name + ".linear", light.linear);
+                shader.setFloat(name + ".quadratic", light.quadratic);
+
+                shader.setFloat(name + ".cutOff", light.cutoff);
+                shader.setFloat(name + ".outerCutOff", light.outerCutOff);
+                iterator++;
             }
         });
-
-        system = registerSystem<AnimationManager>();
-        system -> setFixedUpdate([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                object::getComponent<Model>(entity).texture = object::getComponent<Animator>(entity).transition().transition().step();
-            }
-        });
+        
 
         system = registerSystem<UIManager>();
         system -> setRender([]
         (System &system)
         {
             glDisable(GL_DEPTH_TEST);
+            Vector2 aspectRatio = Vector2(window::aspectRatio(), 1);
             for(auto const &entity :system.m_entities)
             {
                 Rect& transform = object::getComponent<Rect>(entity);
@@ -418,9 +465,8 @@ ObjectManager::ObjectManager()
 
                 Shader shader = model.material.shader;
                 shader.use();
-                shader.setFloat("aspectRatio", g_window.aspectRatio());
                 shader.setVec2("position", transform.relativePosition());
-                shader.setVec2("scale", transform.scale);
+                shader.setVec2("scale", transform.scale * aspectRatio);
                 shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, true);
 
                 model.draw();
@@ -428,44 +474,11 @@ ObjectManager::ObjectManager()
             glEnable(GL_DEPTH_TEST);
         });
 
-        system = registerSystem<Graphics>();
-        system -> setRender([]
-        (System &system)
-        {
-            Camera& camera = object::getComponent<Camera>(g_window.screen.camera);
-            Transform& camTransform = object::getComponent<Transform>(g_window.screen.camera);
-
-            g_window.screen.clear(camera.backgroundColor);
-            for(auto const &entity : system.m_entities)
-            {
-                Transform& transform = object::getComponent<Transform>(entity);
-                Model& model = object::getComponent<Model>(entity);
-
-                Shader shader = model.material.shader;
-                shader.use();
-                
-                shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
-                shader.setMat4("view", camera.view.matrix, true);
-                shader.setMat4("projection", camera.projection.matrix, true);
-                shader.setVec3("scale", transform.scale);
-                shader.setVec3("lightPos", Vector3(-60, 20, -20));
-                shader.setVec3("viewPos", camTransform.position);
-                shader.setVec4("objColor", model.color);
-
-                shader.setBool("advanced", model.material.useAdvancedLighting);
-                shader.setFloat("material.shininess", model.material.shininess);
-                shader.setVec3("material.ambientStrength", model.material.ambientStrength);
-                shader.setVec3("material.diffuseStrength", model.material.diffuseStrength);
-                shader.setVec3("material.specularStrength", model.material.specularStrength);
-                
-                model.draw();
-            }
-        });
 
         Signature signature;
         signature.set(getComponentType<Transform>());
         signature.set(getComponentType<SpotLight>());
-        setSystemSignature<SpotLightHandler>(signature);
+        setSystemSignature<SpotLightManager>(signature);
 
         signature.reset();
         signature.set(getComponentType<Model>());
@@ -485,13 +498,13 @@ ObjectManager::ObjectManager()
         signature.reset();
         signature.set(getComponentType<Physics2D>());
         signature.set(getComponentType<Transform>());
-        setSystemSignature<PhysicsHandler>(signature);
+        setSystemSignature<PhysicsManager>(signature);
 
         signature.reset();
         signature.set(getComponentType<Transform>());
         signature.set(getComponentType<Model>());
         signature.set(getComponentType<BoxCollider>());
-        setSystemSignature<CollisionHandler>(signature);
+        setSystemSignature<CollisionManager>(signature);
 
         signature.reset();
         signature.set(getComponentType<Rect>());
