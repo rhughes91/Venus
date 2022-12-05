@@ -79,15 +79,19 @@ void project::initialize()
 
             Material defaultMaterial = Material(shader::get("simple_shader"));
 
-            Object test("button");
-            test.addComponent<Rect>(Rect(Alignment(alignment::TOP, alignment::LEFT), Vector2(0.1f, 0), 0.5f));
-            test.addComponent<Button>(Button([]
+            Object jump("button");
+            jump.addComponent<Rect>(Rect(Alignment(alignment::BOTTOM, alignment::CENTER), Vector2(0, 0.025f), Vector2(0.5f, 0.125f)));
+            jump.addComponent<Button>(Button([]
                 (Entity entity)
                 {
-                    std::cout << "test" << std::endl;
+                    Physics2D& physics = object::find("player").getComponent<Physics2D>();
+                    auto& movement = object::find("player").getComponent<Movement>().data<Movement>();
+
+                    physics.velocity.y = 0;
+                    physics.addImpulse(vec3::up * -movement.gForce * std::sqrt(movement.height*2*movement.gravity));
                 }
             ));
-            test.addComponent<Model>(Model(color::WHITE, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("default.png")));
+            jump.addComponent<Model>(Model(color::BLACK, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("default.png")));
 
             Object player("player");
             data.playerTransform = &player.addComponent<Transform>(Vector3(0, 0, 0));
@@ -122,7 +126,7 @@ void project::initialize()
             }
 
             Object camera("camera");
-            Camera& cam = camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, vec3::back, vec3::up));
+            camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, vec3::back, vec3::up));
             data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(0, 0, 20)});
             data.cameraPhysics = &camera.addComponent<Physics2D>(Physics2D(1, 0.1f));
             window::setCamera(camera.data);

@@ -44,7 +44,7 @@ bool Rect::contains(const Vector2& vec)
     Vector2 pos = relativePosition();
     Vector2 target = vec - Vector2((window::width() - window::height())/window::height() * pos.x, 0);
 
-    return pos.x - scale.x/2 <= target.x && pos.x + scale.x/2 >= target.x && pos.y + scale.x/2 >= target.y && pos.y - scale.y/2 <= target.y;
+    return pos.x - scale.x/2 <= target.x && pos.x + scale.x/2 >= target.x && pos.y + scale.y/2 >= target.y && pos.y - scale.y/2 <= target.y;
 }
 Vector2 Rect::relativePosition()
 {
@@ -468,6 +468,8 @@ ObjectManager::ObjectManager()
                 shader.setVec2("position", transform.relativePosition());
                 shader.setVec2("scale", transform.scale * aspectRatio);
                 shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, true);
+
+                shader.setVec4("objColor", model.color);
 
                 model.draw();
             }

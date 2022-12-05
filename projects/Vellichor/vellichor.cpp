@@ -211,6 +211,8 @@ void vellichor::initialize()
 {
     struct Event : Script
     {
+        Object defaultCamera, test;
+
         Animator *animator;
         Camera *camera;
         Transform *violetTransform, *cameraTransform, *spotTransform;
@@ -284,7 +286,11 @@ void vellichor::initialize()
             data.camera = &camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, Vector3(0, -0.15, -1), vec3::up));
             data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(data.violetTransform -> position + Vector3(0, 1.25f, 0))});
             data.cameraPosition =  data.cameraTransform -> position;
+            data.defaultCamera = camera;
             window::setCamera(camera.data);
+
+            Object cameraTwo = data.test = camera.clone();
+            cameraTwo.getComponent<Transform>().position -= Vector3(0, 0, -data.radius);
 
             violet.addComponent<Billboard>(Billboard{camera.data});
             // mother.addComponent<Billboard>(Billboard{camera.data});
@@ -318,7 +324,19 @@ void vellichor::initialize()
             }
             else if(key::pressed(key::TAB))
             {
-                // window::set
+                if(window::camera() == data.test.data)
+                {
+                    window::setCamera(data.defaultCamera.data);
+                }
+                else
+                {
+                    window::setCamera(data.test.data);
+                }
+            }
+
+            if(window::camera() == data.test.data)
+            {
+                object::getComponent<Transform>(data.test.data).position += Vector3(key::held(key::RIGHT) - key::held(key::LEFT), key::held(key::SLASH) - key::held(key::PERIOD), key::held(key::DOWN) - key::held(key::UP)).normalized() * event::delta();
             }
             data.lastDelta = delta;
         });

@@ -210,7 +210,8 @@ projects/Vellichor/CMakeFiles/Vellichor.dir/main.cpp.obj: C:/Projects/Venus/proj
   C:/msys64/mingw64/include/c++/12.1.0/set \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
+  C:/Projects/Venus/include/ui.h
 
 
 C:/msys64/mingw64/include/sec_api/stdio_s.h:
@@ -632,3 +633,5 @@ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_queue.h:
 C:/msys64/mingw64/include/c++/12.1.0/set:
 
 C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h:
+
+C:/Projects/Venus/include/ui.h:
