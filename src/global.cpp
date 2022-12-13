@@ -9,24 +9,28 @@ float event::delta()
 {
     return g_time.deltaTime;
 }
+float event::time()
+{
+    return g_time.runtime;
+}
 
 std::unordered_map<std::string, Mesh> g_loadedMeshes;
 std::unordered_map<std::string, uint32_t> g_loadedTextures;
 std::unordered_map<std::string, Shader> g_loadedShaders;
 
-Mesh &mesh::set(const std::string &path)
+Mesh &mesh::load(const std::string &path)
 {
     return(g_loadedMeshes[path] = loadObjFile(path, 1));
 }
-Mesh &mesh::set(const std::string& path, const Mesh& mesh)
+Mesh &mesh::load(const std::string& path, const Mesh& mesh)
 {
     return(g_loadedMeshes[path] = mesh);
 }
-void mesh::set(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
+void mesh::load(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
 {
     for (std::string subPath : subPaths)
     {
-        mesh::set(path + subPath + "." + type);
+        mesh::load(path + subPath + "." + type);
     }
 }
 Mesh &mesh::get(const std::string &path)
@@ -50,7 +54,7 @@ void mesh::remove()
     }
 }
 
-Shader &shader::set(const std::string& path, const Shader& shader)
+Shader &shader::load(const std::string& path, const Shader& shader)
 {
     return(g_loadedShaders[path] = shader);
 }

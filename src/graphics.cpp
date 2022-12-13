@@ -125,22 +125,24 @@ uint32_t texture::typeToModifier(texture::Type type)
     }
     return GL_SRGB;
 }
-void texture::set(const std::string &path, int32_t screenChannel)
+void texture::load(const std::string &path, texture::Type type)
 {
+    int32_t screenChannel = texture::typeToModifier(type);
+
     int32_t width, height, channels;
     unsigned char *data = stbi_load((g_source + "resources/images/" + path).c_str(), &width, &height, &channels, 0);
 
     uint32_t channel;
     switch (channels)
     {
-    case 1:
-        channel = GL_RED;
+        case 1:
+            channel = GL_RED;
         break;
-    case 3:
-        channel = GL_RGB;
+        case 3:
+            channel = GL_RGB;
         break;
-    case 4:
-        channel = GL_RGBA;
+        case 4:
+            channel = GL_RGBA;
         break;
     }
     uint32_t texture;
@@ -167,11 +169,11 @@ void texture::set(const std::string &path, int32_t screenChannel)
     stbi_image_free(data);
     g_loadedTextures[path] = texture;
 }
-void texture::set(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
+void texture::load(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
 {
     for (std::string subPath : subPaths)
     {
-        texture::set(path + subPath + "." + texture::typeToString(type), texture::typeToModifier(type));
+        texture::load(path + subPath + "." + texture::typeToString(type), type);
     }
 }
 uint32_t texture::get(const std::string &path)

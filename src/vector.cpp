@@ -2,6 +2,22 @@
 #include "color.h"
 #include <iomanip>
 
+bool math::quadPointIntersect(const Quad& quad, const Vector2& point)
+{
+    float precision = 2;
+    float triArea = math::roundTo(math::triArea(quad.p1, quad.p2, point) + math::triArea(quad.p2, quad.p3, point) + math::triArea(quad.p3, quad.p4, point) + math::triArea(quad.p4, quad.p1, point), precision);
+    // std::cout << quad.p1 << " : " << quad.p2 << " : " << quad.p3 << " : " << quad.p4 << std::endl;
+    return math::roundTo(math::quadArea(quad), precision) >= triArea;
+}
+float math::quadArea(const Quad& quad)
+{
+    return 0.5 * ((quad.p1.x*quad.p2.y + quad.p2.x*quad.p3.y + quad.p3.x*quad.p4.y + quad.p4.x*quad.p1.y) - (quad.p2.x*quad.p1.y + quad.p3.x*quad.p2.y + quad.p4.x*quad.p3.y + quad.p1.x*quad.p4.y));
+}
+float math::triArea(const Vector2& p1, const Vector2& p2, const Vector2& p3)
+{
+    return 0.5f * math::abs(p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) +  p3.x * (p1.y - p2.y));
+}
+
 Vector2 vec2::abs(const Vector2 &vector)
 {
     return Vector2(math::abs(vector.x), math::abs(vector.y));
@@ -9,6 +25,26 @@ Vector2 vec2::abs(const Vector2 &vector)
 Vector2 vec2::pow(const Vector2 &vector, float exponent)
 {
     return Vector2(std::pow(vector.x, exponent), std::pow(vector.y, exponent));
+}
+Vector2 vec2::radians(const Vector2& vector)
+{
+    return Vector2(math::radians(vector.x), math::radians(vector.y));
+}
+Vector2 vec2::degrees(const Vector2& vector)
+{
+    return Vector2(math::degrees(vector.x), math::degrees(vector.y));
+}
+Vector2 vec2::rotatedAround(const Vector2& vector, const Vector2& origin, float theta)
+{
+    // translate point to origin
+    Vector2 temp = vector - origin;
+
+    // now apply rotation
+    Vector2 rotated = Vector2(temp.x*cos(theta) - temp.y*sin(theta), temp.x*sin(theta) + temp.y*cos(theta));
+    // std::cout << theta << std::endl;
+
+    // translate back
+    return rotated + origin;
 }
 Vector2 vec2::sign(const Vector2 &vector)
 {
@@ -106,6 +142,11 @@ std::ostream& operator<<(std::ostream& os, const Quaternion& obj)
 std::ostream& operator<<(std::ostream& os, const mat4x4& obj)
 {
     os << std::setprecision(5) << std::fixed << (std::string)obj;
+    return os;
+}
+std::ostream& operator<<(std::ostream& os, const Quad& obj)
+{
+    os << std::setprecision(5) << std::fixed << "[" <<obj.p1 << ", " << obj.p2 << ", " << obj.p3 << ", " << obj.p4 << "]";
     return os;
 }
 

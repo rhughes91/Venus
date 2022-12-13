@@ -9,7 +9,7 @@ int main()
         // window::enableDecoration(false);
         // window::maximize();
         window::enableVSync(true);
-        window::setDefaultBackgroundColor(color::CLEAR);
+        // window::setDefaultBackgroundColor(color::CLEAR);
 
         beginEventLoop();
     }

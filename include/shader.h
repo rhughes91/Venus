@@ -41,7 +41,7 @@ struct Shader
 // shader (namespace): global methods for loading and accessing shader data from .hlsl files
 namespace shader
 {
-    Shader &set(const std::string& path, const Shader& shader);
+    Shader &load(const std::string& path, const Shader& shader);
     Shader &get(const std::string& path);
     void remove();
 
@@ -106,9 +106,9 @@ namespace shape
 // mesh (namespace): global methods for loading and accessing mesh data from .obj files
 namespace mesh
 {
-    Mesh &set(const std::string& path);
-    Mesh &set(const std::string& path, const Mesh& mesh);
-    void set(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
+    Mesh &load(const std::string& path);
+    Mesh &load(const std::string& path, const Mesh& mesh);
+    void load(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
     Mesh &get(const std::string& path);
     std::vector<Mesh> get(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
 

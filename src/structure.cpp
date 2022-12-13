@@ -43,8 +43,10 @@ bool Rect::contains(const Vector2& vec)
 {
     Vector2 pos = relativePosition();
     Vector2 target = vec - Vector2((window::width() - window::height())/window::height() * pos.x, 0);
+    float angle = rotation.euler().x*2 - M_PI;
 
-    return pos.x - scale.x/2 <= target.x && pos.x + scale.x/2 >= target.x && pos.y + scale.y/2 >= target.y && pos.y - scale.y/2 <= target.y;
+    Vector2 ul = pos - scale * 0.5f, br = pos + scale * 0.5f;
+    return math::quadPointIntersect(Quad(vec2::rotatedAround(ul, pos, angle), vec2::rotatedAround(Vector2(br.x, ul.y), pos, angle), vec2::rotatedAround(br, pos, angle), vec2::rotatedAround(Vector2(ul.x, br.y), pos, angle)), target);
 }
 Vector2 Rect::relativePosition()
 {
@@ -146,7 +148,7 @@ void anim::keep(Animation& current, Animation& last)
     current.frame = (last.frame < current.frames.size() ? last.frame:0);
 }
 
-void physics::collisionHandler(Entity entity, Entity collision, int triggered)
+void physics::collisionTrigger(Entity entity, Entity collision, int triggered)
 {
     Physics2D& physics = object::getComponent<Physics2D>(entity);
     if(!triggered)
@@ -258,9 +260,28 @@ ObjectManager::ObjectManager()
             for(auto const &entity : system.m_entities)
             {
                 Rect& rect = object::getComponent<Rect>(entity);
+                Button& button = object::getComponent<Button>(entity);
                 if(mouse::pressed(mouse::LEFT) && rect.contains(window::cursorScreenPosition()))
                 {
-                    object::getComponent<Button>(entity).trigger(entity);
+                    button.trigger(entity);
+                }
+                else
+                {
+                    for(auto key : button.keyInputs)
+                    {
+                        if(key::pressed((key::KeyCode)key))
+                        {
+                            button.trigger(entity);
+                        }
+                    }
+
+                    for(auto click : button.buttonInputs)
+                    {
+                        if(mouse::pressed((mouse::ButtonCode)click))
+                        {
+                            button.trigger(entity);
+                        }
+                    }
                 }
             }
         });
@@ -282,7 +303,7 @@ ObjectManager::ObjectManager()
         });
 
         system = registerSystem<CollisionManager>();
-        system -> setLateUpdate([]
+        system -> setUpdate([]
         (System &system)
         {
             for(auto const &entity : system.m_entities)
@@ -451,7 +472,6 @@ ObjectManager::ObjectManager()
             }
         });
         
-
         system = registerSystem<UIManager>();
         system -> setRender([]
         (System &system)
@@ -465,8 +485,9 @@ ObjectManager::ObjectManager()
 
                 Shader shader = model.material.shader;
                 shader.use();
+                shader.setFloat("aspect", window::aspectRatio());
                 shader.setVec2("position", transform.relativePosition());
-                shader.setVec2("scale", transform.scale * aspectRatio);
+                shader.setVec2("scale", transform.scale);
                 shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, true);
 
                 shader.setVec4("objColor", model.color);

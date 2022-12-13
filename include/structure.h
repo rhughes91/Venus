@@ -83,6 +83,7 @@ struct Time
 namespace event
 {
     float delta();
+    float time();
 }
 
 
@@ -599,7 +600,7 @@ class ObjectManager
         // protocol for when an entity is removed from the ECS :: entity data is erased if it found
         void destroyEntity(Entity entity)
         {
-            return m_entityManager -> destroyEntity(entity);
+            m_entityManager -> destroyEntity(entity);
             m_componentManager -> entityDestroyed(entity);
             m_systemManager -> entityDestroyed(entity);
         }
@@ -872,6 +873,11 @@ class Object
             return copy;
         }
 
+        void destroy()
+        {
+            g_manager.destroyEntity(data);
+        }
+
         template<typename T>
         T& addComponent(T component)
         {
@@ -924,71 +930,10 @@ struct Billboard
     Entity target;
 };
 
-// Button (struct): triggers its 'trigger' function when its attached Rect component is clicked on
-struct Button
-{
-    void(*trigger)(Entity entity);
 
-    Button(void(*trigger__)(Entity entity) = [](Entity entity){}) : trigger(trigger__) {}
-};
 
 
 // PHYSICS COMPONENTS
-
-
-// struct Box
-// { 
-//     Vector3 min, max;
-//     Box(const Vector3 &vmin, const Vector3 &vmax) 
-//     { 
-//         min = vmin;
-//         max = vmax;
-//     } 
-//     Vector3 bounds[2];
-    
-//     bool CheckLineBox(Vector3 L1, Vector3 L2, Vector3& Hit)
-//     {
-//         if (L2.x < min.x && L1.x < min.x) return false;
-//         if (L2.x > max.x && L1.x > max.x) return false;
-//         if (L2.y < min.y && L1.y < min.y) return false;
-//         if (L2.y > max.y && L1.y > max.y) return false;
-//         if (L2.z < min.z && L1.z < min.z) return false;
-//         if (L2.z > max.z && L1.z > max.z) return false;
-//         if (L1.x > min.x && L1.x < max.x &&
-//             L1.y > min.y && L1.y < max.y &&
-//             L1.z > min.z && L1.z < max.z)
-//         {
-//             Hit = L1;
-//             return true;
-//         }
-//         if ((GetIntersection(L1.x - min.x, L2.x - min.x, L1, L2, Hit) && InBox(Hit, min, max, 1))
-//         || (GetIntersection(L1.y - min.y, L2.y - min.y, L1, L2, Hit) && InBox(Hit, min, max, 2))
-//         || (GetIntersection(L1.z - min.z, L2.z - min.z, L1, L2, Hit) && InBox(Hit, min, max, 3))
-//         || (GetIntersection(L1.x - max.x, L2.x - max.x, L1, L2, Hit) && InBox(Hit, min, max, 1))
-//         || (GetIntersection(L1.y - max.y, L2.y - max.y, L1, L2, Hit) && InBox(Hit, min, max, 2))
-//         || (GetIntersection(L1.z - max.z, L2.z - max.z, L1, L2, Hit) && InBox(Hit, min, max, 3)))
-//             return true;
-
-//         return false;
-//     }
-
-//     bool GetIntersection(float fDst1, float fDst2, Vector3 P1, Vector3 P2, Vector3& Hit)
-//     {
-//         if ((fDst1 * fDst2) > 0) return false;
-//         if (fDst1 == fDst2) return false;
-//         Hit = P1 + (P2 - P1) * (-fDst1 / (fDst2 - fDst1));
-//         return true;
-//     }
-
-//     bool InBox(Vector3 Hit, Vector3 min, Vector3 max, int Axis)
-//     {
-//         if (Axis == 1 && Hit.z >= min.z && Hit.z <= max.z && Hit.y >= min.y && Hit.y <= max.y) return true;
-//         if (Axis == 2 && Hit.z >= min.z && Hit.z <= max.z && Hit.x >= min.x && Hit.x <= max.x) return true;
-//         if (Axis == 3 && Hit.x >= min.x && Hit.x <= max.x && Hit.y >= min.y && Hit.y <= max.y) return true;
-//         return false;
-//     }
-
-// };
 
 // BoxCollider (struct): calls 'trigger' function whenever another BoxCollider intersects with this one :: otherwise, miss function is called
 struct BoxCollider
@@ -1090,7 +1035,7 @@ namespace object
 namespace physics
 {
     enum Direction {UP, RIGHT, DOWN, LEFT};
-    void collisionHandler(Entity entity, Entity collision, int triggered);
+    void collisionTrigger(Entity entity, Entity collision, int triggered);
     void collisionMiss(Entity entity);
 }
 

@@ -1,28 +1,20 @@
 src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:\Projects\Venus\src\event.cpp C:/Projects/Venus/include/input.h \
- C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/stdint.h \
- C:/msys64/mingw64/include/stdint.h C:/msys64/mingw64/include/crtdefs.h \
- C:/msys64/mingw64/include/corecrt.h C:/msys64/mingw64/include/_mingw.h \
- C:/msys64/mingw64/include/_mingw_mac.h \
- C:/msys64/mingw64/include/_mingw_secapi.h \
- C:/msys64/mingw64/include/vadefs.h \
- C:/msys64/mingw64/include/sdks/_mingw_ddk.h \
- C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/stddef.h \
- C:/msys64/mingw64/include/stddef.h C:/Projects/Venus/include/setup.h \
- C:/Projects/Venus/include/graphics.h \
- C:/msys64/mingw64/include/c++/12.1.0/vector \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_algobase.h \
+ C:/msys64/mingw64/include/c++/12.1.0/array \
+ C:/msys64/mingw64/include/c++/12.1.0/compare \
+ C:/msys64/mingw64/include/c++/12.1.0/initializer_list \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/c++config.h \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/os_defines.h \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/cpu_defines.h \
  C:/msys64/mingw64/include/c++/12.1.0/pstl/pstl_config.h \
+ C:/msys64/mingw64/include/c++/12.1.0/type_traits \
  C:/msys64/mingw64/include/c++/12.1.0/bits/functexcept.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_defines.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_algobase.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/cpp_type_traits.h \
  C:/msys64/mingw64/include/c++/12.1.0/ext/type_traits.h \
  C:/msys64/mingw64/include/c++/12.1.0/ext/numeric_traits.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_pair.h \
- C:/msys64/mingw64/include/c++/12.1.0/type_traits \
  C:/msys64/mingw64/include/c++/12.1.0/bits/move.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/utility.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_iterator_base_types.h \
@@ -33,6 +25,17 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/ptr_traits.h \
  C:/msys64/mingw64/include/c++/12.1.0/debug/debug.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/predefined_ops.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/range_access.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/stdint.h \
+ C:/msys64/mingw64/include/stdint.h C:/msys64/mingw64/include/crtdefs.h \
+ C:/msys64/mingw64/include/corecrt.h C:/msys64/mingw64/include/_mingw.h \
+ C:/msys64/mingw64/include/_mingw_mac.h \
+ C:/msys64/mingw64/include/_mingw_secapi.h \
+ C:/msys64/mingw64/include/vadefs.h \
+ C:/msys64/mingw64/include/sdks/_mingw_ddk.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/stddef.h \
+ C:/msys64/mingw64/include/stddef.h \
+ C:/msys64/mingw64/include/c++/12.1.0/vector \
  C:/msys64/mingw64/include/c++/12.1.0/bits/allocator.h \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/c++allocator.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/new_allocator.h \
@@ -44,7 +47,6 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/ext/alloc_traits.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/alloc_traits.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
- C:/msys64/mingw64/include/c++/12.1.0/initializer_list \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/functional_hash.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/hash_bytes.h \
@@ -52,8 +54,8 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/invoke.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_function.h \
  C:/msys64/mingw64/include/c++/12.1.0/backward/binders.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/range_access.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/graphics.h \
  C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
  C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
@@ -167,8 +169,6 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/color.h \
  C:/Projects/Venus/include/component.h \
  C:/Projects/Venus/include/structure.h \
- C:/msys64/mingw64/include/c++/12.1.0/array \
- C:/msys64/mingw64/include/c++/12.1.0/compare \
  C:/msys64/mingw64/include/c++/12.1.0/bitset \
  C:/msys64/mingw64/include/c++/12.1.0/memory \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tempbuf.h \

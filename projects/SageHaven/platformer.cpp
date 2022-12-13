@@ -1,4 +1,5 @@
 #include "platformer.h"
+#include <list>
 
 void project::initialize()
 {
@@ -77,8 +78,9 @@ void project::initialize()
         {
             auto& data = script.data<Event>();
 
-            Material defaultMaterial = Material(shader::get("simple_shader"));
+            texture::load("spacebar.png", texture::PNG);
 
+            Material defaultMaterial = Material(shader::get("simple_shader"));
             Object jump("button");
             jump.addComponent<Rect>(Rect(Alignment(alignment::BOTTOM, alignment::CENTER), Vector2(0, 0.025f), Vector2(0.5f, 0.125f)));
             jump.addComponent<Button>(Button([]
@@ -89,14 +91,14 @@ void project::initialize()
 
                     physics.velocity.y = 0;
                     physics.addImpulse(vec3::up * -movement.gForce * std::sqrt(movement.height*2*movement.gravity));
-                }
+                }, 'J'
             ));
-            jump.addComponent<Model>(Model(color::BLACK, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("default.png")));
-
+            jump.addComponent<Model>(Model(color::WHITE, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("spacebar.png")));
+            
             Object player("player");
-            data.playerTransform = &player.addComponent<Transform>(Vector3(0, 0, 0));
-            auto& collider = player.addComponent<BoxCollider>(BoxCollider(true));
-            collider.setTrigger(physics::collisionHandler);
+            data.playerTransform = &player.addComponent<Transform>(Transform(Vector3(0, 0, 0), 1));
+            BoxCollider& collider = player.addComponent<BoxCollider>(true);
+            collider.setTrigger(physics::collisionTrigger);
             collider.setMiss(physics::collisionMiss);
             player.addComponent<Model>(Model(color::GREY, defaultMaterial, mesh::get("square"), texture::get("default.png")));
             player.addComponent<Movement>();
@@ -126,7 +128,7 @@ void project::initialize()
             }
 
             Object camera("camera");
-            camera.addComponent<Camera>(Camera(2.0f, color::CLEAR, vec3::back, vec3::up));
+            camera.addComponent<Camera>(Camera(2.0f, color::SKY_BLUE, vec3::back, vec3::up));
             data.cameraTransform = &camera.addComponent<Transform>(Transform{Vector3(0, 0, 20)});
             data.cameraPhysics = &camera.addComponent<Physics2D>(Physics2D(1, 0.1f));
             window::setCamera(camera.data);
@@ -137,8 +139,10 @@ void project::initialize()
         {
             auto& data = script.data<Event>();
 
-            Vector3 difference = (data.playerTransform -> position - data.cameraTransform -> position).normalized();
+            Vector3 difference = (vec3::roundTo(data.playerTransform -> position - data.cameraTransform -> position, 4)).normalized();
             data.cameraPhysics -> velocity = vec3::pow(vec3::abs(difference), 0.75f) * vec3::sign0(difference) * Vector3(75, 125);
+
+            // object::find("button").getComponent<Rect>().rotation *= Quaternion(event::delta(), vec3::forward);
         });
     }
 }

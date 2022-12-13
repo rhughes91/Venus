@@ -54,8 +54,8 @@ namespace texture
     }
     uint32_t typeToModifier(Type type);
 
-    void set(const std::string& path, int32_t screenChannel);
-    void set(const std::string& path, const std::vector<std::string>& subPaths, Type type);
+    void load(const std::string& path, Type type);
+    void load(const std::string& path, const std::vector<std::string>& subPaths, Type type);
     uint32_t get(const std::string& path);
     std::vector<uint32_t> get(const std::string& path, const std::vector<std::string>& subPaths, Type type);
 

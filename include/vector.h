@@ -7,8 +7,10 @@
 #define M_PI 3.14159265358979323846
 #include <math.h>
 
+struct Vector2;
 struct Vector4;
 struct Quaternion;
+struct Quad;
 
 // math (namespace): namespace that contains basic float math functions
 namespace math
@@ -57,6 +59,11 @@ namespace math
     {
         return value == 0 ? 0:abs(value)/value;
     }
+
+    float triArea(const Vector2& p1, const Vector2& p2, const Vector2& p3);
+    float quadArea(const Quad& quad);
+    
+    bool quadPointIntersect(const Quad& quad, const Vector2& point);
 }
 
 // Vector2 (structure): structure that holds two variables (x, y) and allows two dimensional vector operations
@@ -969,6 +976,12 @@ struct Quaternion
     {
         return Vector3(q1, q2, q3);
     }
+    Vector3 euler() const
+    {
+        float atanOne = std::atan2(q3, q0);
+        float atanTwo = std::atan2(-q1, q2);
+        return Vector3(atanOne - atanTwo, std::acos(2*(q0*q0 + q3*q3) - 1), atanOne + atanTwo);
+    }
 
     Quaternion normalized() const // returns this quaternion altered to have a magnitude of one
     {
@@ -1051,6 +1064,14 @@ struct Quaternion
 
 };
 
+struct Quad
+{
+    Vector2 p1, p2, p3, p4;
+    
+    Quad() {};
+    Quad(const Vector2& one, const Vector2& two, const Vector2& three, const Vector2& four) : p1(one), p2(two), p3(three), p4(four) {}
+};
+
 namespace vec2
 {
     const Vector2 zero(0, 0);
@@ -1061,7 +1082,10 @@ namespace vec2
     const Vector2 down(0, -1);
 
     Vector2 abs(const Vector2 &vector);                 // returns "math::abs" of each of its components as a new Vector2
+    Vector2 degrees(const Vector2& vector);
     Vector2 pow(const Vector2 &vector, float exponent); // returns "std::pow" of each of its components as a new Vector2
+    Vector2 radians(const Vector2& vector);
+    Vector2 rotatedAround(const Vector2& vector, const Vector2& origin, float theta);
     Vector2 sign(const Vector2 &vector);                // returns the "math::sign" of each of its components as a new Vector2
     Vector2 sign0(const Vector2 &vector);               // returns the "math::sign0" of each of its components as a new Vector2
 }
@@ -1121,5 +1145,6 @@ std::ostream& operator<<(std::ostream& os, const Vector2& obj);
 std::ostream& operator<<(std::ostream& os, const Vector3& obj);
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj);
 std::ostream& operator<<(std::ostream& os, const mat4x4& obj);
+std::ostream& operator<<(std::ostream& os, const Quad& obj);
 
 #endif

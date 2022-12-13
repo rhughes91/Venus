@@ -114,8 +114,10 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
- C:/Projects/Venus/include/input.h C:/Projects/Venus/include/setup.h \
- C:/Projects/Venus/include/graphics.h \
+ C:/Projects/Venus/include/input.h \
+ C:/msys64/mingw64/include/c++/12.1.0/array \
+ C:/msys64/mingw64/include/c++/12.1.0/compare \
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/graphics.h \
  C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
  C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
@@ -175,8 +177,6 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: \
  C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/color.h \
  C:/Projects/Venus/include/component.h \
  C:/Projects/Venus/include/structure.h \
- C:/msys64/mingw64/include/c++/12.1.0/array \
- C:/msys64/mingw64/include/c++/12.1.0/compare \
  C:/msys64/mingw64/include/c++/12.1.0/bitset \
  C:/msys64/mingw64/include/c++/12.1.0/memory \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tempbuf.h \

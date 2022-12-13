@@ -255,7 +255,7 @@ uint32_t glInputToKeyCode(uint32_t input)
         case GLFW_KEY_WORLD_2: return key::GLOBAL_1;
         case GLFW_KEY_MENU: return key::MENU;
     }
-    return key::NIL;
+    return key::UNKNOWN;
 }
 uint32_t glInputToButtonCode(uint32_t input)
 {
@@ -270,7 +270,7 @@ uint32_t glInputToButtonCode(uint32_t input)
         case GLFW_MOUSE_BUTTON_7: return mouse::BUTTON_6;
         case GLFW_MOUSE_BUTTON_8: return mouse::BUTTON_7;
     }
-    return mouse::NIL;
+    return mouse::UNKNOWN;
 }
 
 void Time::update()
@@ -682,9 +682,9 @@ bool createWindow(const char *name, uint32_t width, uint32_t height)
         return false;
     
     stbi_set_flip_vertically_on_load(true);
-    texture::set("", {"default"}, texture::PNG);
-    g_window.screen.quad = mesh::set("square", shape::square());
-    mesh::set("cube", shape::cube());
+    texture::load("", {"default"}, texture::PNG);
+    g_window.screen.quad = mesh::load("square", shape::square());
+    mesh::load("cube", shape::cube());
 
     g_keyboard.initialize(key::LAST);
     g_mouse.initialize(mouse::LAST);

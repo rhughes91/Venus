@@ -14,7 +14,7 @@ void beginEventLoop()
         return;
     }
     
-    Shader& objectShader = shader::set("obj_shader", Shader("object_vertex", "object_frag"));
+    Shader& objectShader = shader::load("obj_shader", Shader("object_vertex", "object_frag"));
     objectShader.use();
     objectShader.setInt("material.diffuse", 0);
     objectShader.setInt("material.specular", 1);
@@ -23,7 +23,7 @@ void beginEventLoop()
     objectShader.setVec4("dirLight.color", light.color);
     objectShader.setFloat("dirLight.strength", light.strength);
 
-    Shader& simpleShader = shader::set("simple_shader", Shader("object_vertex", "simple_frag"));
+    Shader& simpleShader = shader::load("simple_shader", Shader("object_vertex", "simple_frag"));
     simpleShader.use();
     simpleShader.setInt("material.diffuse", 0);
     simpleShader.setInt("material.specular", 1);
@@ -31,7 +31,7 @@ void beginEventLoop()
     simpleShader.setVec4("dirLight.color", light.color);
     simpleShader.setFloat("dirLight.strength", light.strength);
     
-    Shader& uiShader = shader::set("ui_shader", Shader("ui_vertex", "ui_frag"));
+    Shader& uiShader = shader::load("ui_shader", Shader("ui_vertex", "ui_frag"));
     uiShader.use();
     uiShader.setInt("text", 0);
     

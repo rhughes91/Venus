@@ -229,10 +229,10 @@ void vellichor::initialize()
         event.load([]
         (System& script)
         {
-            texture::set("Vellichor/", {"wall_texture", "bookcase_texture", "ladder_texture", "carpet_texture", "window_texture"}, texture::PNG);
-            texture::set("Vellichor/Violet/Idle/violet_idle00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"}, texture::PNG);
-            texture::set("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"}, texture::PNG);
-            texture::set("Vellichor/Mother/Idle/mother_idle00", {"00"}, texture::PNG);
+            texture::load("Vellichor/", {"wall_texture", "bookcase_texture", "ladder_texture", "carpet_texture", "window_texture"}, texture::PNG);
+            texture::load("Vellichor/Violet/Idle/violet_idle00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"}, texture::PNG);
+            texture::load("Vellichor/Violet/Move/violet_move00", {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25"}, texture::PNG);
+            texture::load("Vellichor/Mother/Idle/mother_idle00", {"00"}, texture::PNG);
 
             Event& data = script.data<Event>();
             data.lastMousePosition = window::cursorScreenPosition();
