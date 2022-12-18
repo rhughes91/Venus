@@ -941,16 +941,16 @@ struct BoxCollider
     bool mobile;
     Vector3 scale, storedPosition;
     
-    void (*trigger)(Entity, Entity, int);
+    void (*trigger)(Entity, Entity, bool, int);
     void (*miss)(Entity);
 
     BoxCollider(bool mobile__ = false, const Vector3& scale__ = 1) : mobile(mobile__), scale(scale__)
     {
-        trigger = [](Entity entity, Entity target, int triggerd){};
+        trigger = [](Entity entity, Entity target, bool edge, int triggerd){};
         miss = [](Entity entity){};
     }
 
-    void setTrigger(void (*trigger__)(Entity, Entity, int))
+    void setTrigger(void (*trigger__)(Entity, Entity, bool, int))
     {
         trigger = trigger__;
     }
@@ -1035,7 +1035,7 @@ namespace object
 namespace physics
 {
     enum Direction {UP, RIGHT, DOWN, LEFT};
-    void collisionTrigger(Entity entity, Entity collision, int triggered);
+    void collisionTrigger(Entity entity, Entity collision, bool edge, int triggered);
     void collisionMiss(Entity entity);
 }
 

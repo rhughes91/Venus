@@ -131,7 +131,7 @@ struct Physics2D
 
     Physics2D(float mass__ = 1, const Vector2& drag__ = 1, const Vector2& terminal__ = 0) : mass(mass__), drag(drag__), terminal(terminal__) {time = Timer(1.0/60.0);}
 
-    bool colliding()
+    bool colliding() const
     {
         return collisions[0] || collisions[1] || collisions[2] || collisions[3];
     }
@@ -139,6 +139,7 @@ struct Physics2D
     {
         collisions[0] = collisions[1] = collisions[2] = collisions[3] = false;
     }
+    std::string collisionsToString() const;
 
     void resetVelocity()
     {

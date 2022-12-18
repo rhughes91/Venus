@@ -148,60 +148,62 @@ void anim::keep(Animation& current, Animation& last)
     current.frame = (last.frame < current.frames.size() ? last.frame:0);
 }
 
-void physics::collisionTrigger(Entity entity, Entity collision, int triggered)
+std::string Physics2D::collisionsToString() const
 {
+    return "[UP : " + std::to_string(collisions[physics::UP]) + ", DOWN : " + std::to_string(collisions[physics::DOWN]) + ", LEFT : " + std::to_string(collisions[physics::LEFT]) + ", RIGHT : " + std::to_string(collisions[physics::RIGHT]);
+}
+void physics::collisionTrigger(Entity entity, Entity collision, bool edge, int triggered)
+{    
     Physics2D& physics = object::getComponent<Physics2D>(entity);
     if(!triggered)
-    {
         physics.resetCollisions();
-    }
+
+    if(edge)
+        return;
 
     Transform& transform = object::getComponent<Transform>(entity);
-    Transform& transform2 = object::getComponent<Transform>(collision);
-
+    BoxCollider& collider = object::getComponent<BoxCollider>(entity);
     Model& model = object::getComponent<Model>(entity);
+
+    Vector3 boxDim = model.data.dimensions * transform.scale * collider.scale * 0.5f;
+
+    BoxCollider& collider2 = object::getComponent<BoxCollider>(collision);
+    Transform& transform2 = object::getComponent<Transform>(collision);
     Model& model2 = object::getComponent<Model>(collision);
 
-    BoxCollider& collider = object::getComponent<BoxCollider>(entity);
-    BoxCollider& collider2 = object::getComponent<BoxCollider>(collision);
+    Vector3 position2 = transform2.position;
+    Vector3 boxDim2 = model2.data.dimensions * transform2.scale * collider2.scale * 0.5f;
+    Vector3 delta = (transform.position - collider.storedPosition) - 2*(position2 - collider2.storedPosition);
+
+    bool above = (collider.storedPosition.y - boxDim.y >= collider2.storedPosition.y + boxDim2.y), below = (collider.storedPosition.y + boxDim.y <= collider2.storedPosition.y - boxDim2.y);
+    bool right = (collider.storedPosition.x - boxDim.x >= collider2.storedPosition.x + boxDim2.x), left = (collider.storedPosition.x + boxDim.x <= collider2.storedPosition.x - boxDim2.x);
     
-    Vector3 sign = vec3::sign(transform.position - transform2.position);
-    Vector3 depth = (transform.position-model.data.dimensions*transform.scale*collider.scale*0.5f*sign)-(transform2.position+model2.data.dimensions*transform2.scale*collider2.scale*0.5f*sign);
-    Vector3 depthSign = vec3::sign0(depth);
+    bool vertical = above || below;
+    bool horizontal = right || left;
 
-    if(math::abs(depth.x) <= math::abs(depth.y))
+    if(!horizontal && delta.y < 0)
     {
-        transform.position -= Vector3(depth.x, 0, 0);
-        if(math::sign0(math::roundTo(transform.position.x - collider.storedPosition.x, 6)) != -depthSign.x)
-        {
-            physics.velocity.x = 0;
-        }
-
-        if(depthSign.x <= 0)
-        {
-            physics.collisions[physics::LEFT] = true;
-        }
-        else
-        {
-            physics.collisions[physics::RIGHT] = true;
-        }
+        physics.velocity.y = 0;
+        physics.collisions[physics::DOWN] = true;
+        transform.position.y = position2.y + (boxDim2.y + boxDim.y);
     }
-    else
+    else if(!horizontal && delta.y > 0)
     {
-        transform.position -= Vector3(0, depth.y, 0);
-        if(math::sign0(math::roundTo(transform.position.y - collider.storedPosition.y, 6)) != -depthSign.y)
-        {
-            physics.velocity.y = 0;
-        }
-
-        if(depthSign.y <= 0)
-        {
-            physics.collisions[physics::DOWN] = true;
-        }
-        else
-        {
-            physics.collisions[physics::UP] = true;
-        }
+        physics.velocity.y = 0;
+        physics.collisions[physics::UP] = true;
+        transform.position.y = position2.y - (boxDim2.y + boxDim.y);
+    }
+    else if(!vertical && delta.x < 0)
+    {
+        physics.velocity.x = 0;
+        physics.collisions[physics::LEFT] = true;
+        transform.position.x = position2.x + (boxDim2.x + boxDim.x);
+    }
+    else if(!vertical && delta.x > 0)
+    {
+        physics.velocity.x = 0;
+        physics.collisions[physics::RIGHT] = true;
+        transform.position.x = position2.x - (boxDim2.x + boxDim.x);
     }
 }
 void physics::collisionMiss(Entity entity)
@@ -309,13 +311,14 @@ ObjectManager::ObjectManager()
             for(auto const &entity : system.m_entities)
             {
                 BoxCollider& collider = object::getComponent<BoxCollider>(entity);
+                Transform& transform = object::getComponent<Transform>(entity);
+                bool triggered = false;
                 if(collider.mobile)
                 {
-                    Transform& transform = object::getComponent<Transform>(entity);
                     Model& model = object::getComponent<Model>(entity);
-                    Vector3 boxDim = model.data.dimensions * transform.scale * collider.scale * 0.5f;
+
                     Vector3 position = transform.position;
-                    bool triggered = false;
+                    Vector3 boxDim = (model.data.dimensions * transform.scale * collider.scale + vec3::abs(position - collider.storedPosition)) * 0.5f;
 
                     for(auto const &compare : system.m_entities)
                     {
@@ -324,41 +327,28 @@ ObjectManager::ObjectManager()
 
                         BoxCollider& collider2 = object::getComponent<BoxCollider>(compare);
                         Transform& transform2 = object::getComponent<Transform>(compare);
-                        Model& collisionModel = object::getComponent<Model>(compare);
-                        Vector3 boxDim2 = collisionModel.data.dimensions * transform2.scale * collider2.scale * 0.5f;
-                        Vector3 position2 = transform2.position, hit;
-                        
-                        // Box box = Box(position2-boxDim2, position2+boxDim2);
+                        Model& model2 = object::getComponent<Model>(compare);
+
+                        Vector3 position2 = transform2.position;
+                        Vector3 boxDim2 = model2.data.dimensions * transform2.scale * collider2.scale * 0.5f;
+
                         int precision = 6;
-                        if
-                        (
-                            (math::roundTo(position.x + boxDim.x, precision) >= math::roundTo(position2.x - boxDim2.x, precision) && math::roundTo(position.x - boxDim.x, precision) <= math::roundTo(position2.x + boxDim2.x, precision) &&
-                            math::roundTo(position.y + boxDim.y, precision) >= math::roundTo(position2.y - boxDim2.y, precision) && math::roundTo(position.y - boxDim.y, precision) <= math::roundTo(position2.y + boxDim2.y, precision) &&
-                            math::roundTo(position.z + boxDim.z, precision) >= math::roundTo(position2.z - boxDim2.z, precision) && math::roundTo(position.z - boxDim.z, precision) <= math::roundTo(position2.z + boxDim2.z, precision))
-                        )
-                        {
-                            collider.trigger(entity, compare, triggered);
-                            collider2.trigger(compare, entity, triggered);
+                        Vector3 positive = vec3::roundTo(position + boxDim, precision), negative = vec3::roundTo(position - boxDim, precision);
+                        Vector3 positive2 = vec3::roundTo(position2 + boxDim2, precision), negative2 = vec3::roundTo(position2 - boxDim2, precision);
+                        if(positive.x >= negative2.x && negative.x <= positive2.x && positive.y >= negative2.y && negative.y <= positive2.y && positive.z >= negative2.z && negative.z <= positive2.z)
+                        {                         
+                            bool edge = (positive.x == negative2.x || negative.x == positive2.x || positive.y == negative2.y || negative.y == positive2.y);
+                            collider.trigger(entity, compare, edge, triggered);
+                            collider2.trigger(compare, entity, edge, triggered);
                             triggered = true;
                         }
-                        // else if(box.CheckLineBox(collider.storedPosition, position, hit))
-                        // {
-                        //     std::cout << collider.storedPosition << " : " << position << std::endl;
-                        // }
                     }
                     if(!triggered)
                     {
                         collider.miss(entity);
                     }
                 }
-            }
-        });
-        system -> setRender([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                object::getComponent<BoxCollider>(entity).storedPosition = object::getComponent<Transform>(entity).position;
+                collider.storedPosition = transform.position;
             }
         });
 
@@ -416,19 +406,27 @@ ObjectManager::ObjectManager()
                     }
                     
                     physics.lastDelta = physics.delta;
-                    
-                    if(physics.colliding() && math::sign0(physics.force.x) != math::sign0(physics.velocity.x))
+
+                    if(physics.colliding())
                     {
-                        physics.velocity.x = physics.velocity.x / (1 + physics.drag.x * time);
+                        if(math::sign0(physics.force.x) != math::sign0(physics.velocity.x))
+                        {
+                            physics.velocity.x = physics.velocity.x / (1 + physics.drag.x * time);
+                        }
+                        else if(math::sign0(physics.force.y) != math::sign0(physics.velocity.y))
+                        {
+                            physics.velocity.y = physics.velocity.y / (1 + physics.drag.y * time);
+                        }
                     }
 
                     if(physics.terminal != 0)
                     {
-                        physics.velocity.x = std::min(math::abs(physics.velocity.x + acceleration.x * time), (float)(physics.terminal.x)) * math::sign(physics.velocity.x + acceleration.x * time);
-                        physics.velocity.y = std::min(math::abs(physics.velocity.y + acceleration.y * time), (float)(physics.terminal.y)) * math::sign(physics.velocity.y + acceleration.y * time);
+                        physics.velocity = vec2::min(vec2::abs(physics.velocity + acceleration * time), physics.terminal) * vec2::sign(physics.velocity + acceleration * time);
                     }
                     else
+                    {
                         physics.velocity += acceleration * time;
+                    }
                     
                     physics.velocity += physics.impulse;
 

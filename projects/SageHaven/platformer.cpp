@@ -10,7 +10,7 @@ void project::initialize()
         float height = 3.5f, gravity = 50;
         int gForce = -1;
 
-        Buffer jumpBuffer = Buffer(6), coyoteBuffer = Buffer(4);
+        Buffer jumpBuffer = Buffer(5), coyoteBuffer = Buffer(3);
     };
     Movement& movement = object::initializeScript<Movement>();
     {
@@ -67,7 +67,7 @@ void project::initialize()
     
     struct Event : Script
     {
-        Transform *playerTransform, *cameraTransform;
+        Transform *playerTransform, *cameraTransform, *moveTransform, *hmoveTransform;
         Physics2D *cameraPhysics;
     };
     Event& script = object::initializeScript<Event>();
@@ -94,7 +94,7 @@ void project::initialize()
                 }, 'J'
             ));
             jump.addComponent<Model>(Model(color::WHITE, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("spacebar.png")));
-            
+
             Object player("player");
             data.playerTransform = &player.addComponent<Transform>(Transform(Vector3(0, 0, 0), 1));
             BoxCollider& collider = player.addComponent<BoxCollider>(true);
@@ -102,16 +102,22 @@ void project::initialize()
             collider.setMiss(physics::collisionMiss);
             player.addComponent<Model>(Model(color::GREY, defaultMaterial, mesh::get("square"), texture::get("default.png")));
             player.addComponent<Movement>();
-            player.addComponent<Physics2D>(Physics2D(1, 50, Vector3(10, 57.5f)));
+            player.addComponent<Physics2D>(Physics2D(1, 50, Vector3(10, 100))); // 57.5
 
             Object floor("floor");
-            floor.addComponent<Transform>(Transform(Vector3(0, -1, 0), Vector3(120, 1, 0)));
+            floor.addComponent<Transform>(Transform(Vector3(0, -1.5f, 0), Vector3(120, 2, 0)));
             floor.addComponent<Model>(Model(color::DARK_GREEN, defaultMaterial, mesh::get("square"), texture::get("default.png")));
             floor.addComponent<BoxCollider>();
 
-            floor.clone().getComponent<Transform>() = Transform(Vector3(0, 29, 0), Vector3(100, 1, 0));
+            floor.clone().getComponent<Transform>() = Transform(Vector3(0, 29, 0), Vector3(120, 1, 0));
             floor.clone().getComponent<Transform>() = Transform(Vector3(0, -29, 0), Vector3(100, 1, 0));
-            floor.clone().getComponent<Transform>() = Transform(Vector3(5, 2, 0), Vector3(5, 1, 0));
+
+            data.moveTransform = &(floor.clone().getComponent<Transform>() = Transform(Vector3(5, 2, 0), Vector3(1, 1, 0)));
+            floor.clone().getComponent<Transform>() = Transform(Vector3(4, 2, 0), Vector3(1, 1, 0));
+            floor.clone().getComponent<Transform>() = Transform(Vector3(3, 2, 0), Vector3(1, 1, 0));
+            data.hmoveTransform = &(floor.clone().getComponent<Transform>() = Transform(Vector3(2, 3, 0), Vector3(1, 1, 0)));
+            floor.clone().getComponent<Transform>() = Transform(Vector3(2, 2, 0), Vector3(1, 1, 0));
+            floor.clone().getComponent<Transform>() = Transform(Vector3(1, 2, 0), Vector3(1, 1, 0));
 
             Object wall("wall");
             wall.addComponent<Transform>(Transform(Vector3(-59.5f, 4.5f, 0), Vector3(1, 10, 0)));
@@ -119,6 +125,7 @@ void project::initialize()
             wall.addComponent<BoxCollider>();
 
             wall.clone().getComponent<Transform>() = Transform(Vector3(59.5, 4.5f, 0), Vector3(1, 10, 0));
+            wall.clone().getComponent<Transform>() = Transform(Vector3(59.5, 23.5f, 0), Vector3(1, 10, 0));
 
             for(int i=-1; i<20; i++)
             {
@@ -133,7 +140,14 @@ void project::initialize()
             data.cameraPhysics = &camera.addComponent<Physics2D>(Physics2D(1, 0.1f));
             window::setCamera(camera.data);
         });
-        
+        script.update([]
+        (System& script)
+        {
+            auto& data = script.data<Event>();
+
+            // data.moveTransform -> position.y = std::sin(10*event::time()) + 2;
+            // data.hmoveTransform -> position.x = std::sin(10*event::time()) + 2;
+        });
         script.lateUpdate([]
         (System& script)
         {
@@ -141,8 +155,6 @@ void project::initialize()
 
             Vector3 difference = (vec3::roundTo(data.playerTransform -> position - data.cameraTransform -> position, 4)).normalized();
             data.cameraPhysics -> velocity = vec3::pow(vec3::abs(difference), 0.75f) * vec3::sign0(difference) * Vector3(75, 125);
-
-            // object::find("button").getComponent<Rect>().rotation *= Quaternion(event::delta(), vec3::forward);
         });
     }
 }

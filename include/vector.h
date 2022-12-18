@@ -63,6 +63,7 @@ namespace math
     float triArea(const Vector2& p1, const Vector2& p2, const Vector2& p3);
     float quadArea(const Quad& quad);
     
+    bool lineLineIntersect(const Vector2& p1, const Vector2& p2, const Vector2& q1, const Vector2& q2);
     bool quadPointIntersect(const Quad& quad, const Vector2& point);
 }
 
@@ -1081,13 +1082,14 @@ namespace vec2
     const Vector2 up(0, 1);
     const Vector2 down(0, -1);
 
-    Vector2 abs(const Vector2 &vector);                 // returns "math::abs" of each of its components as a new Vector2
+    Vector2 abs(const Vector2 &vector);                    // returns "math::abs" of each of its components as a new Vector2
     Vector2 degrees(const Vector2& vector);
-    Vector2 pow(const Vector2 &vector, float exponent); // returns "std::pow" of each of its components as a new Vector2
+    Vector2 min(const Vector2 &vec1, const Vector2 &vec2); // returns "std::max" of each of its components as a new Vector2
+    Vector2 pow(const Vector2 &vector, float exponent);    // returns "std::pow" of each of its components as a new Vector2
     Vector2 radians(const Vector2& vector);
     Vector2 rotatedAround(const Vector2& vector, const Vector2& origin, float theta);
-    Vector2 sign(const Vector2 &vector);                // returns the "math::sign" of each of its components as a new Vector2
-    Vector2 sign0(const Vector2 &vector);               // returns the "math::sign0" of each of its components as a new Vector2
+    Vector2 sign(const Vector2 &vector);                   // returns the "math::sign" of each of its components as a new Vector2
+    Vector2 sign0(const Vector2 &vector);                  // returns the "math::sign0" of each of its components as a new Vector2
 }
 namespace vec3
 {

@@ -2,6 +2,14 @@
 #include "color.h"
 #include <iomanip>
 
+// https://www.jeffreythompson.org/collision-detection/line-line.php
+bool math::lineLineIntersect(const Vector2& p1, const Vector2& p2, const Vector2& q1, const Vector2& q2)
+{
+    float uA = ((q2.x-q1.x)*(p1.y-q1.y) - (q2.y-q1.y)*(p1.x-q1.x)) / ((q2.y-q1.y)*(p2.x-p1.x) - (q2.x-q1.x)*(p2.y-p1.y));
+    float uB = ((p2.x-p1.x)*(p1.y-q1.y) - (p2.y-p1.y)*(p1.x-q1.x)) / ((q2.y-q1.y)*(p2.x-p1.x) - (q2.x-q1.x)*(p2.y-p1.y));
+
+    return (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1);
+}
 bool math::quadPointIntersect(const Quad& quad, const Vector2& point)
 {
     float precision = 2;
@@ -21,6 +29,10 @@ float math::triArea(const Vector2& p1, const Vector2& p2, const Vector2& p3)
 Vector2 vec2::abs(const Vector2 &vector)
 {
     return Vector2(math::abs(vector.x), math::abs(vector.y));
+}
+Vector2 vec2::min(const Vector2 &vec1, const Vector2 &vec2)
+{
+    return Vector2(std::min(vec1.x, vec2.x), std::min(vec1.y, vec2.y));
 }
 Vector2 vec2::pow(const Vector2 &vector, float exponent)
 {
@@ -77,7 +89,7 @@ Vector3 vec3::sign0(const Vector3 &vector)
 }
 Vector3 vec3::roundTo(const Vector3& vector, int32_t precision)
 {
-    return Vector3(std::round(vector.x * std::pow(10, precision)) / std::pow(10, precision), std::round(vector.y * std::pow(10, precision)) / std::pow(10, precision), std::round(vector.z * std::pow(10, precision)) / std::pow(10, precision));
+    return Vector3(math::roundTo(vector.x, precision), math::roundTo(vector.y, precision), math::roundTo(vector.z, precision));
 }
 Vector3 vec3::triSurface(const Vector3 &vec1, const Vector3 &vec2, const Vector3 &pThree)
 {
