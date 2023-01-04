@@ -28,6 +28,15 @@ Shader::Shader(std::string vertexPath, std::string fragmentPath)
         glDeleteShader(shader);
     }
     else return;
+
+    GLint success = 0;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if(!success)
+    {
+        std::cout << "ERROR :: Shader compilation failed." << std::endl;
+        return;
+    }
+
     glLinkProgram(ID);
 }
 void Shader::use() const
@@ -45,26 +54,26 @@ void Shader::setBool(const std::string &name, bool value) const
 void Shader::setInt(const std::string &name, int32_t value) const
 { 
     uint32_t transformLoc = glGetUniformLocation(ID, name.c_str());
+    // if(transformLoc == -1) std::cout << ID << " : " << name << "=" << value << std::endl;
     glUniform1i(transformLoc, value); 
 }
 void Shader::setFloat(const std::string &name, float value) const
 {
-    
     uint32_t transformLoc = glGetUniformLocation(ID, name.c_str());
-    // if(transformLoc == -1) std::cout << name << std::endl;
+    // if(transformLoc == -1) std::cout << ID << " : " << name << "=" << value << std::endl;
     glUniform1f(transformLoc, value); 
 } 
 void Shader::setVec2(const std::string &name, const Vector2 &vec2) const
 {
     uint32_t transformLoc = glGetUniformLocation(ID, name.c_str());
-    float vector[] = {vec2.x, vec2.y};
-    glUniform2fv(transformLoc, 1, vector);
+    // if(transformLoc == -1) std::cout << ID << " :: " << name << " = " << vec2 << std::endl;
+    glUniform2f(transformLoc, vec2.x, vec2.y);
 }
 void Shader::setVec3(const std::string &name, const Vector3 &vec3) const
 {
     uint32_t transformLoc = glGetUniformLocation(ID, name.c_str());
-    float vector[] = {vec3.x, vec3.y, vec3.z};
-    glUniform3fv(transformLoc, 1, vector);
+    // if(transformLoc == -1) std::cout << ID << " :: " << name << " = " << vec3 << std::endl;
+    glUniform3f(transformLoc, vec3.x, vec3.y, vec3.z);
 }
 void Shader::setVec3(const std::string &name, const Color &vec3) const
 {
@@ -104,10 +113,10 @@ uint32_t Shader::compileShader(const std::string &contents, uint32_t type) const
 
 Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__) : count(numVertices), dimensions(dimensions__)
 {
-    std::vector<Vector3> positions = std::vector<Vector3>(count);
+    vertices = std::vector<Vector3>(count);
     for(int i=0; i<count; i++)
     {
-        positions[i] = vertices__[i];
+        vertices[i] = vertices__[i];
     }
     std::vector<float> textureCoords = std::vector<float>(2 * count);
     for(int i=0; i<count; i++)
@@ -115,13 +124,13 @@ Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const 
         textureCoords[i*2] = texture__[i*2];
         textureCoords[i*2 + 1] = texture__[i*2 + 1];
     }
-    std::vector<Vertex> vertices;
+    std::vector<Vertex> data;
     for(int i=0; i<count; i+=3)
     {
-        Vector3 normal = vec3::triSurface(positions[i], positions[i+1], positions[i+2]);
+        Vector3 normal = vec3::triSurface(vertices[i], vertices[i+1], vertices[i+2]);
         for(int j=0; j<3; j++)
         {
-            vertices.push_back({positions[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
+            data.push_back({vertices[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
         }
     }
     glGenVertexArrays(1, &VAO);
@@ -130,7 +139,7 @@ Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(Vertex), &data[0], GL_STATIC_DRAW);  
 
     // vertex positions
     glEnableVertexAttribArray(0);	
@@ -142,15 +151,21 @@ Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const 
     glEnableVertexAttribArray(2);	
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3)*2));
 }
-Mesh::Mesh(const std::vector<Vertex> &vertices, const Vector3& dimensions__) : count(vertices.size()), dimensions(dimensions__)
+Mesh::Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : count(vertices__.size()), dimensions(dimensions__)
 {
+    vertices.clear();
+    for(const Vertex &vertex : vertices__)
+    {
+        vertices.push_back(vertex.position);
+    }
+
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, vertices__.size() * sizeof(Vertex), &vertices__[0], GL_STATIC_DRAW);  
 
     // vertex positions
     glEnableVertexAttribArray(0);	
@@ -176,11 +191,9 @@ Mesh shape::square(int32_t tiling)
         Vector3(-0.5f, 0.5f, 0),
         Vector3(-0.5f, -0.5f, 0),
         
-        
         Vector3(0.5f, 0.5f, 0),
         Vector3(-0.5f, 0.5f, 0),
         Vector3(0.5f, -0.5f, 0),
-        
     };
     float textureCorners = tiling;
     float texture[]
@@ -188,14 +201,54 @@ Mesh shape::square(int32_t tiling)
         textureCorners, 0,
         0, textureCorners,
         0, 0,
+        textureCorners, textureCorners,
+        0, textureCorners,
+        textureCorners, 0,
+    };
+    Mesh result = Mesh(vectors, 6, texture, Vector3(1, 1, 0));
+    return result;
+}
+Mesh shape::double_square(int32_t tiling)
+{
+    Vector3 vectors[]
+    {
+        Vector3(1.5f, -0.5f, 0),
+        Vector3(0.5f, 0.5f, 0),
+        Vector3(0.5f, -0.5f, 0),
         
+        Vector3(1.5f, 0.5f, 0),
+        Vector3(0.5f, 0.5f, 0),
+        Vector3(1.5f, -0.5f, 0),
+        
+
+        Vector3(-0.5f, -0.5f, 0),
+        Vector3(-1.5f, 0.5f, 0),
+        Vector3(-1.5f, -0.5f, 0),
+        
+        Vector3(-0.5f, 0.5f, 0),
+        Vector3(-1.5f, 0.5f, 0),
+        Vector3(-0.5f, -0.5f, 0),
+    };
+    float textureCorners = tiling;
+    float texture[]
+    {
+        textureCorners, 0,
+        0, textureCorners,
+        0, 0,
 
         textureCorners, textureCorners,
         0, textureCorners,
         textureCorners, 0,
-        
+
+
+        textureCorners, 0,
+        0, textureCorners,
+        0, 0,
+        textureCorners, textureCorners,
+        0, textureCorners,
+        textureCorners, 0,
     };
-    Mesh result = Mesh(vectors, 6, texture, Vector3(1, 1, 0));
+    Mesh result = Mesh(vectors, 12, texture, Vector3(1, 1, 0));
     return result;
 }
 Mesh shape::cube()

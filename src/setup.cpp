@@ -80,6 +80,7 @@ void Screen::draw()
 void object::render()
 {
     g_window.screen.store();
+    window::clearScreen(object::getComponent<Camera>(window::camera()).backgroundColor);
     g_manager.render();
     g_window.screen.draw();
 }
@@ -104,9 +105,6 @@ void shader::simple(const Transform& transform, const Model& model, const Camera
     shader.setMat4("view", camera.view.matrix, true);
     shader.setMat4("projection", camera.projection.matrix, true);
     shader.setVec3("scale", transform.scale);
-    
-    shader.setVec3("lightPos", Vector3(-60, 20, -20));
-    shader.setVec3("viewPos", cameraTransform.position);
     shader.setVec4("objColor", model.color);
 }
 void shader::advanced(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess)
@@ -273,6 +271,10 @@ uint32_t glInputToButtonCode(uint32_t input)
     return mouse::UNKNOWN;
 }
 
+Time::Time()
+{
+    advanceKey = key::BACKSLASH;
+}
 void Time::update()
 {
     runtime = glfwGetTime();
@@ -412,18 +414,58 @@ void Window::configureGLAD()
     active = true;
 }
 
+bool key::pressed(int32_t id)
+{
+    return g_keyboard.inputs[id].pressed;
+}
 bool key::pressed(key::KeyCode id)
 {
     return g_keyboard.inputs[id].pressed;
+}
+bool key::pressed(key::KeyArray ids)
+{
+    for(const KeyCode &id : ids)
+    {
+        if(g_keyboard.inputs[id].pressed)
+            return true;
+    }
+    return false;
+}
+bool key::held(int32_t id)
+{
+    return g_keyboard.inputs[id].held;
 }
 bool key::held(key::KeyCode id)
 {
     return g_keyboard.inputs[id].held;
 }
+bool key::held(key::KeyArray ids)
+{
+    for(const KeyCode &id : ids)
+    {
+        if(g_keyboard.inputs[id].held)
+            return true;
+    }
+    return false;
+}
+bool key::released(int32_t id)
+{
+    return g_keyboard.inputs[id].released;
+}
 bool key::released(key::KeyCode id)
 {
     return g_keyboard.inputs[id].released;
 }
+bool key::released(key::KeyArray ids)
+{
+    for(const KeyCode &id : ids)
+    {
+        if(g_keyboard.inputs[id].released)
+            return true;
+    }
+    return false;
+}
+
 bool mouse::pressed(mouse::ButtonCode id)
 {
     return g_mouse.inputs[id].pressed;

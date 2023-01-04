@@ -3,6 +3,7 @@
 
 #include <array>
 #include <bitset>
+#include <map>
 #include <memory>
 #include <queue>
 #include <set>
@@ -62,6 +63,9 @@ struct InputManager
 // Time (struct): holds all the timing data that happens between frames :: controls when "fixedUpdate" is run
 struct Time
 {
+    bool frozen;
+    int32_t advanceKey;
+
     double deltaTime = 0.0f;
     double lastDeltaTime = 0.0f;
     double lastFrame = 0.0f;
@@ -69,7 +73,7 @@ struct Time
     double timer = 0;
     double runtime = 0;
 
-    Time() {}
+    Time();
 
     // updates the "fixedUpdate" timer, interpolates deltaTime, and tracks the average framerate
     void update();
@@ -84,6 +88,8 @@ namespace event
 {
     float delta();
     float time();
+
+    void freezeTime(bool freeze);
 }
 
 
@@ -183,7 +189,7 @@ class ComponentArray : public IComponentArray
 {
     public:
         // stores the 'entity' as an index to its respective 'component'
-        void insertData(Entity entity, T component)
+        void insertData(Entity entity, const T& component)
         {
             size_t newIndex = m_size;
             m_entityToIndexMap[entity] = newIndex;
@@ -276,7 +282,7 @@ class ComponentManager
 
         // adds 'entity' to ComponentArray of type 'T'
         template<typename T>
-        void addComponent(Entity entity, T component)
+        void addComponent(Entity entity, const T& component)
         {
             getComponentArray<T>() -> insertData(entity, component);
         }
@@ -443,14 +449,15 @@ class SystemManager
     public:
         // registers values of type 'T' as valid systems, and adds a component of type 'T' to a global entity :: this allows for variables to be stored statically between entities
         template<typename T>
-        std::shared_ptr<T> registerSystem();
+        std::shared_ptr<T> registerSystem(int32_t priority = 0);
 
         // registers values of type 'T' as valid systems
         template<typename T>
-        std::shared_ptr<T> registerClosedSystem()
+        std::shared_ptr<T> registerClosedSystem(int32_t priority = 0)
         {
             auto system = std::make_shared<T>();
             m_systems.insert({typeid(T).name(), system});
+            m_priorities.insert({priority, typeid(T).name()});
             return system;
         }
 
@@ -458,7 +465,12 @@ class SystemManager
         template<typename T>
         bool containsSystem()
         {
-            return m_systems.find(typeid(T).name()) != m_systems.end();
+            for(auto const& system : m_systems)
+            {
+                if(system.first == typeid(T).name())
+                    return true;
+            }
+            return false;
         }
 
         // returns a pointer to the System of type 'T'
@@ -514,59 +526,70 @@ class SystemManager
 
         void load()
         {
-            for(auto &system : m_systems)
+            // for(auto &system : m_systems)
+            // {
+            //     system.second -> load(*system.second);
+            // }
+            for(auto& priority : m_priorities)
             {
-                system.second -> load(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> load(*system);
             }
-            
         }
         void start()
         {
-            for(auto &system : m_systems)
+            for(auto& priority : m_priorities)
             {
-                system.second -> start(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> start(*system);
             }
         }
         void destroy()
         {
-            for(auto &system : m_systems)
+            for(auto& priority : m_priorities)
             {
-                system.second -> destroy(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> destroy(*system);
             }
         }
 
         void render()
         {
-            for(auto &system : m_systems)
+            for(auto& priority : m_priorities)
             {
-                system.second -> render(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> render(*system);
             }
         }
         void update()
         {
-            for(auto &system : m_systems)
+            for(auto& priority : m_priorities)
             {
-                system.second -> update(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> update(*system);
             }
         }
         void lateUpdate()
         {
-            for(auto &system : m_systems)
+            for(auto& priority : m_priorities)
             {
-                system.second -> lateUpdate(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> lateUpdate(*system);
             }
         }
         void fixedUpdate()
         {
-            for(auto &system : m_systems)
+            for(auto& priority : m_priorities)
             {
-                system.second -> fixedUpdate(*system.second);
+                auto& system = m_systems[priority.second];
+                system -> fixedUpdate(*system);
             }
         }
 
     private:
-        std::unordered_map<const char *, Signature> m_signatures{};
-        std::unordered_map<const char *, std::shared_ptr<System>> m_systems{};
+        std::unordered_map<std::string, Signature> m_signatures{};
+        std::unordered_map<std::string, std::shared_ptr<System>> m_systems{};
+        std::multimap<int32_t, std::string> m_priorities{};
 };
 
 // ObjectManager (class): an intermediary class for EntityManager, ComponentManager, and SystemManager :: all methods in this class can be found in the other manager classes
@@ -643,13 +666,13 @@ class ObjectManager
         }
 
         template<typename T>
-        void addGlobalComponent(Entity entity, T component)
+        void addGlobalComponent(Entity entity, const T& component)
         {
             m_componentManager -> addComponent(entity, component);
         }
 
         template<typename T>
-        T& addComponent(Entity entity, T component)
+        T& addComponent(Entity entity, const T& component)
         {
             m_componentManager -> addComponent(entity, component);
             
@@ -688,15 +711,15 @@ class ObjectManager
 
         // SYSTEM
         template<typename T>
-        std::shared_ptr<T> registerSystem()
+        std::shared_ptr<T> registerSystem(int32_t priority = 0)
         {
-            return m_systemManager -> registerSystem<T>();
+            return m_systemManager -> registerSystem<T>(priority);
         }
 
         template<typename T>
-        std::shared_ptr<T> registerClosedSystem()
+        std::shared_ptr<T> registerClosedSystem(int32_t priority)
         {
-            return m_systemManager -> registerClosedSystem<T>();
+            return m_systemManager -> registerClosedSystem<T>(priority);
         }
 
         template<typename T>
@@ -746,11 +769,9 @@ struct UIManager : System {};
 
 
 template<typename T>
-std::shared_ptr<T> SystemManager::registerSystem()
+std::shared_ptr<T> SystemManager::registerSystem(int32_t priority)
 {
-    auto system = std::make_shared<T>();
-    m_systems.insert({typeid(T).name(), system});
-
+    auto system = registerClosedSystem<T>(priority);
     g_manager.registerComponent<T>();
     g_manager.addGlobalComponent<T>(system -> id(), T());
     return system;
@@ -822,6 +843,8 @@ class Object
         std::string name;
         Entity data;
 
+        bool m_mobile = true;
+
         Object() {}
 
         Object(const std::string& name__)
@@ -837,6 +860,7 @@ class Object
                 name += std::to_string(start);
             }
             data = g_manager.createEntity(name);
+            g_manager.addComponent<Object>(data, *this);
         }
 
         Object(const std::string& name__, Entity data__) : name(name__), data(data__) {}
@@ -878,8 +902,18 @@ class Object
             g_manager.destroyEntity(data);
         }
 
+        bool mobile()
+        {
+            return g_manager.getComponent<Object>(data).m_mobile;
+        }
+
+        void mobile(bool mobile__)
+        {
+            g_manager.getComponent<Object>(data).m_mobile = mobile__;
+        }
+
         template<typename T>
-        T& addComponent(T component)
+        T& addComponent(const T& component)
         {
             return g_manager.addComponent<T>(data, component);
         }
@@ -931,24 +965,24 @@ struct Billboard
 };
 
 
-
-
 // PHYSICS COMPONENTS
 
 // BoxCollider (struct): calls 'trigger' function whenever another BoxCollider intersects with this one :: otherwise, miss function is called
 struct BoxCollider
 {
     bool mobile;
-    Vector3 scale, storedPosition;
+    Vector3 scale, offset, storedPosition;
     
     void (*trigger)(Entity, Entity, bool, int);
     void (*miss)(Entity);
 
-    BoxCollider(bool mobile__ = false, const Vector3& scale__ = 1) : mobile(mobile__), scale(scale__)
+    BoxCollider(bool mobile__ = false, const Vector3& scale__ = 1, const Vector3& offset__ = 0) : mobile(mobile__), scale(scale__), offset(offset__)
     {
         trigger = [](Entity entity, Entity target, bool edge, int triggerd){};
         miss = [](Entity entity){};
     }
+    BoxCollider(const Vector3& scale__) : mobile(false), scale(scale__) {}
+    BoxCollider(const Vector3& scale__, const Vector3& offset__) : mobile(false), scale(scale__), offset(offset__) {}
 
     void setTrigger(void (*trigger__)(Entity, Entity, bool, int))
     {
@@ -976,7 +1010,7 @@ namespace object
     Vector3 brightness(int32_t value);
 
     template<typename T>
-    T& addComponent(Entity data, T component)
+    T& addComponent(Entity data, const T& component)
     {
         return g_manager.addComponent<T>(data, component);
     }
@@ -1000,9 +1034,9 @@ namespace object
     }
 
     template<typename T>
-    std::shared_ptr<T> registerSystem()
+    std::shared_ptr<T> registerSystem(int32_t priority)
     {
-        return g_manager.registerSystem<T>();
+        return g_manager.registerSystem<T>(priority);
     }
 
     template<typename T>
@@ -1012,18 +1046,19 @@ namespace object
     }
 
     template<typename T>
-    T& initializeScript()
+    T& initializeScript(int32_t priority = 0)
     {
         if(g_manager.containsSystem<T>())
         {
+            
             return object::find("g_global_event_runner").getComponent<T>();
         }
         else
         {
             g_manager.registerComponent<T>();
+
             T &script = object::find("g_global_event_runner").addComponent<T>();
-            
-            script.initialize(typeid(T).name(), g_manager.registerClosedSystem<T>());
+            script.initialize(typeid(T).name(), g_manager.registerClosedSystem<T>(priority));
             ((Script)script).addRequirement<T>();
         
             return script;

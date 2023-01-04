@@ -1145,6 +1145,7 @@ namespace std
 std::string to_string(const Vector3& vector);
 std::ostream& operator<<(std::ostream& os, const Vector2& obj);
 std::ostream& operator<<(std::ostream& os, const Vector3& obj);
+std::ostream& operator<<(std::ostream& os, const Vector4& obj);
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj);
 std::ostream& operator<<(std::ostream& os, const mat4x4& obj);
 std::ostream& operator<<(std::ostream& os, const Quad& obj);

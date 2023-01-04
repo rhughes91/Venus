@@ -24,9 +24,17 @@ namespace key
         GLOBAL_0, GLOBAL_1, GLOBAL_2, GLOBAL_3, GLOBAL_4, DEL, UNKNOWN, LAST = UNKNOWN
     };
 
+    using KeyArray = std::vector<KeyCode>;
+
+    bool pressed(int32_t id);
     bool pressed(KeyCode id);
+    bool pressed(KeyArray ids);
+    bool held(int32_t id);
     bool held(KeyCode id);
+    bool held(KeyArray ids);
+    bool released(int32_t id);
     bool released(KeyCode id);
+    bool released(KeyArray ids);
 }
 
 namespace mouse

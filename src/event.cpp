@@ -14,22 +14,19 @@ void beginEventLoop()
         return;
     }
     
+    DirectionalLight light = window::lighting();
+
     Shader& objectShader = shader::load("obj_shader", Shader("object_vertex", "object_frag"));
     objectShader.use();
     objectShader.setInt("material.diffuse", 0);
-    objectShader.setInt("material.specular", 1);
-    DirectionalLight light = window::lighting();
+    // objectShader.setInt("material.specular", 1);
     objectShader.setVec3("dirLight.direction", light.direction);
     objectShader.setVec4("dirLight.color", light.color);
     objectShader.setFloat("dirLight.strength", light.strength);
-
+    
     Shader& simpleShader = shader::load("simple_shader", Shader("object_vertex", "simple_frag"));
     simpleShader.use();
-    simpleShader.setInt("material.diffuse", 0);
-    simpleShader.setInt("material.specular", 1);
-    simpleShader.setVec3("dirLight.direction", light.direction);
-    simpleShader.setVec4("dirLight.color", light.color);
-    simpleShader.setFloat("dirLight.strength", light.strength);
+    simpleShader.setInt("material.texture", 0);
     
     Shader& uiShader = shader::load("ui_shader", Shader("ui_vertex", "ui_frag"));
     uiShader.use();
@@ -52,8 +49,11 @@ void beginEventLoop()
             g_time.resetTimer(timeScale);
         }
 
-        object::update();
-        object::lateUpdate();
+        if(!g_time.frozen || key::pressed(g_time.advanceKey))
+        {
+            object::update();
+            object::lateUpdate();
+        }
         object::render();
 
         g_keyboard.refresh();

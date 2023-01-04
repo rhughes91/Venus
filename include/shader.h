@@ -82,24 +82,26 @@ struct Vertex
 };
 
 // Mesh (struct): wrapper for the Vertex Array Object and Vertex Buffer Object necessary to render a mesh
-class Mesh
+struct Mesh
 {
-    public:
-        Mesh() {}
-        Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__);
-        Mesh(const std::vector<Vertex> &vertices, const Vector3& dimensions__);
+    Mesh() {}
+    Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__);
+    Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__);
 
-        void draw(const uint32_t texture) const;
-        void remove();
+    void draw(const uint32_t texture) const;
+    void remove();
 
-        uint32_t VAO, VBO, count;
-        Vector3 dimensions;
+    std::vector<Vector3> vertices;
+    // std::vector<float> texture;
+    uint32_t VAO, VBO, count;
+    Vector3 dimensions;
 };
 
 // shape (namespace): provides basic Mesh shapes without needing to load a file
 namespace shape
 {
     Mesh square(int32_t tiling = 1);
+    Mesh double_square(int32_t tiling = 1);
     Mesh cube();
 }
 

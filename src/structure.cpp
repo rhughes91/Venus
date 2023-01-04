@@ -34,7 +34,7 @@ void object::fixedUpdate()
     g_manager.fixedUpdate();
 }
 
-Camera::Camera(float speed__, Color color__, Vector3 front__, Vector3 up__) : speed(speed__), backgroundColor(color__), front(front__), up(up__)
+Camera::Camera(Color color__, Vector3 front__, Vector3 up__) : backgroundColor(color__), front(front__), up(up__)
 {
     projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, 1.0f);
 }
@@ -173,10 +173,12 @@ void physics::collisionTrigger(Entity entity, Entity collision, bool edge, int t
 
     Vector3 position2 = transform2.position;
     Vector3 boxDim2 = model2.data.dimensions * transform2.scale * collider2.scale * 0.5f;
-    Vector3 delta = (transform.position - collider.storedPosition) - 2*(position2 - collider2.storedPosition);
+    Vector3 delta = (transform.position + collider.offset - collider.storedPosition) - 2*(position2 - collider2.storedPosition);
 
-    bool above = (collider.storedPosition.y - boxDim.y >= collider2.storedPosition.y + boxDim2.y), below = (collider.storedPosition.y + boxDim.y <= collider2.storedPosition.y - boxDim2.y);
-    bool right = (collider.storedPosition.x - boxDim.x >= collider2.storedPosition.x + boxDim2.x), left = (collider.storedPosition.x + boxDim.x <= collider2.storedPosition.x - boxDim2.x);
+    float precision = 6;
+
+    bool above = math::roundTo(collider.storedPosition.y - boxDim.y, precision) >= math::roundTo(collider2.storedPosition.y + boxDim2.y, precision), below = math::roundTo(collider.storedPosition.y + boxDim.y, precision) <= math::roundTo(collider2.storedPosition.y - boxDim2.y, precision);
+    bool right = math::roundTo(collider.storedPosition.x - boxDim.x, precision) >= math::roundTo(collider2.storedPosition.x + boxDim2.x, precision), left = math::roundTo(collider.storedPosition.x + boxDim.x, precision) <= math::roundTo(collider2.storedPosition.x - boxDim2.x, precision);
     
     bool vertical = above || below;
     bool horizontal = right || left;
@@ -185,25 +187,25 @@ void physics::collisionTrigger(Entity entity, Entity collision, bool edge, int t
     {
         physics.velocity.y = 0;
         physics.collisions[physics::DOWN] = true;
-        transform.position.y = position2.y + (boxDim2.y + boxDim.y);
+        transform.position.y = position2.y - collider.offset.y + (boxDim2.y + boxDim.y);
     }
     else if(!horizontal && delta.y > 0)
     {
         physics.velocity.y = 0;
         physics.collisions[physics::UP] = true;
-        transform.position.y = position2.y - (boxDim2.y + boxDim.y);
+        transform.position.y = position2.y - collider.offset.y - (boxDim2.y + boxDim.y);
     }
     else if(!vertical && delta.x < 0)
     {
         physics.velocity.x = 0;
         physics.collisions[physics::LEFT] = true;
-        transform.position.x = position2.x + (boxDim2.x + boxDim.x);
+        transform.position.x = position2.x - collider.offset.x + (boxDim2.x + boxDim.x);
     }
     else if(!vertical && delta.x > 0)
     {
         physics.velocity.x = 0;
         physics.collisions[physics::RIGHT] = true;
-        transform.position.x = position2.x - (boxDim2.x + boxDim.x);
+        transform.position.x = position2.x - collider.offset.x - (boxDim2.x + boxDim.x);
     }
 }
 void physics::collisionMiss(Entity entity)
@@ -219,18 +221,19 @@ ObjectManager::ObjectManager()
         m_componentManager = std::make_unique<ComponentManager>();
         m_systemManager = std::make_unique<SystemManager>();
 
-        Object global("g_global_event_runner");
-
-        registerComponent<Camera>();
-        registerComponent<Transform>();
         registerComponent<Animator>();
-        registerComponent<Model>();
-        registerComponent<SpotLight>();
-        registerComponent<Rect>();
-        registerComponent<Button>();
-        registerComponent<Physics2D>();
-        registerComponent<BoxCollider>();
         registerComponent<Billboard>();
+        registerComponent<BoxCollider>();
+        registerComponent<Button>();
+        registerComponent<Camera>();
+        registerComponent<Model>();
+        registerComponent<Object>();
+        registerComponent<Physics2D>();
+        registerComponent<Rect>();
+        registerComponent<SpotLight>();
+        registerComponent<Transform>();
+
+        Object global("g_global_event_runner");
 
         std::shared_ptr<System> system;
         
@@ -288,8 +291,8 @@ ObjectManager::ObjectManager()
             }
         });
 
-        system = registerSystem<CameraManager>();
-        system -> setLateUpdate([]
+        system = registerSystem<CameraManager>(10);
+        void (*cameraFunction)(System &) = []
         (System &system)
         {
             for(const auto& entity : system.m_entities)
@@ -299,12 +302,23 @@ ObjectManager::ObjectManager()
 
                 if(window::resolutionUpdated())
                 {
-                    camera.projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, camera.projectionLevel);
+                    camera.projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, 1);
                 }
             }
-        });
+        };
+        system -> setLoad(cameraFunction);
+        system -> setLateUpdate(cameraFunction);
 
-        system = registerSystem<CollisionManager>();
+        system = registerSystem<CollisionManager>(1);
+        system -> setLoad([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
+                collider.storedPosition = object::getComponent<Transform>(entity).position + collider.offset;
+            }
+        });
         system -> setUpdate([]
         (System &system)
         {
@@ -317,7 +331,7 @@ ObjectManager::ObjectManager()
                 {
                     Model& model = object::getComponent<Model>(entity);
 
-                    Vector3 position = transform.position;
+                    Vector3 position = transform.position + collider.offset;
                     Vector3 boxDim = (model.data.dimensions * transform.scale * collider.scale + vec3::abs(position - collider.storedPosition)) * 0.5f;
 
                     for(auto const &compare : system.m_entities)
@@ -329,7 +343,7 @@ ObjectManager::ObjectManager()
                         Transform& transform2 = object::getComponent<Transform>(compare);
                         Model& model2 = object::getComponent<Model>(compare);
 
-                        Vector3 position2 = transform2.position;
+                        Vector3 position2 = transform2.position + collider2.offset;
                         Vector3 boxDim2 = model2.data.dimensions * transform2.scale * collider2.scale * 0.5f;
 
                         int precision = 6;
@@ -348,7 +362,7 @@ ObjectManager::ObjectManager()
                         collider.miss(entity);
                     }
                 }
-                collider.storedPosition = transform.position;
+                collider.storedPosition = transform.position + collider.offset;
             }
         });
 
@@ -359,12 +373,10 @@ ObjectManager::ObjectManager()
             Camera& camera = object::getComponent<Camera>(window::camera());
             Transform& cameraTransform = object::getComponent<Transform>(window::camera());
             
-            window::clearScreen(camera.backgroundColor);
             for(auto const &entity : system.m_entities)
             {
-                Transform& transform = object::getComponent<Transform>(entity);
                 Model& model = object::getComponent<Model>(entity);
-                model.material.run(transform, model, camera, cameraTransform);
+                model.material.run(object::getComponent<Transform>(entity), model, camera, cameraTransform);
                 model.draw();
             }
         });
@@ -407,17 +419,15 @@ ObjectManager::ObjectManager()
                     
                     physics.lastDelta = physics.delta;
 
-                    if(physics.colliding())
+                    if((physics.collisions[physics::UP] || physics.collisions[physics::DOWN]) && math::sign0(physics.force.x) != math::sign0(physics.velocity.x))
                     {
-                        if(math::sign0(physics.force.x) != math::sign0(physics.velocity.x))
-                        {
-                            physics.velocity.x = physics.velocity.x / (1 + physics.drag.x * time);
-                        }
-                        else if(math::sign0(physics.force.y) != math::sign0(physics.velocity.y))
-                        {
-                            physics.velocity.y = physics.velocity.y / (1 + physics.drag.y * time);
-                        }
+                        physics.velocity.x = physics.velocity.x / (1 + physics.drag.x * time);
                     }
+                    // else if((physics.collisions[physics::LEFT] || physics.collisions[physics::RIGHT]) && math::sign0(physics.force.y) != math::sign0(physics.velocity.y))
+                    // {
+                    //     std::cout << "bskjn" << std::endl;
+                    //     physics.velocity.y = physics.velocity.y / (1 + physics.drag.y * time);
+                    // }
 
                     if(physics.terminal != 0)
                     {
@@ -469,32 +479,31 @@ ObjectManager::ObjectManager()
                 iterator++;
             }
         });
-        
-        system = registerSystem<UIManager>();
+
+        system = registerSystem<UIManager>(1);
         system -> setRender([]
         (System &system)
         {
             glDisable(GL_DEPTH_TEST);
-            Vector2 aspectRatio = Vector2(window::aspectRatio(), 1);
+
             for(auto const &entity :system.m_entities)
             {
                 Rect& transform = object::getComponent<Rect>(entity);
                 Model& model = object::getComponent<Model>(entity);
 
-                Shader shader = model.material.shader;
+                Shader& shader = model.material.shader;
                 shader.use();
+                
                 shader.setFloat("aspect", window::aspectRatio());
                 shader.setVec2("position", transform.relativePosition());
                 shader.setVec2("scale", transform.scale);
-                shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, true);
-
+                shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
                 shader.setVec4("objColor", model.color);
 
                 model.draw();
             }
             glEnable(GL_DEPTH_TEST);
         });
-
 
         Signature signature;
         signature.set(getComponentType<Transform>());

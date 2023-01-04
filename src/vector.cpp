@@ -133,7 +133,7 @@ std::string to_string(const Vector3& vector)
 
 std::ostream& operator<<(std::ostream& os, const Color& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.r << ", " << obj.g << ", " << obj.b << "]";
+    os << std::setprecision(5) << std::fixed << "[" << obj.r << ", " << obj.g << ", " << obj.b << ", " << obj.a << "]";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Vector2& obj)
@@ -144,6 +144,11 @@ std::ostream& operator<<(std::ostream& os, const Vector2& obj)
 std::ostream& operator<<(std::ostream& os, const Vector3& obj)
 {
     os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << ", " << obj.z << "]";
+    return os;
+}
+std::ostream& operator<<(std::ostream& os, const Vector4& obj)
+{
+    os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << ", " << obj.z << ", " << obj.w << "]";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj)

@@ -93,15 +93,12 @@ struct SpotLight
 // Camera (struct): allows for the scene to be rendered from a certain perspective
 struct Camera
 {
-    float speed;
-    float projectionLevel = 1.0f;
-
     Color backgroundColor;
     Vector3 front, up;
     mat4x4 view, projection;
 
     Camera() {}
-    Camera(float speed__, Color color__, Vector3 front__, Vector3 up__);
+    Camera(Color color__, Vector3 front__, Vector3 up__);
 };
 
 // Transform (struct): holds data about an entity's position, rotation, and scale

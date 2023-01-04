@@ -1,6 +1,7 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include <iostream>
 #include <string>
 
 // Color (struct): structure that holds four variables (r, g, b, a) that represent the four basic color channels (red, green, blue, alpha)
@@ -69,6 +70,8 @@ inline Color &operator /=(Color &color1, float num)
     color1.b /= num;
     return color1;
 }
+
+std::ostream& operator<<(std::ostream& os, const Color& obj);
 
 // color (namespace): provides easy access to basic colors
 namespace color

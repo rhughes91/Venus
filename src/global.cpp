@@ -13,6 +13,10 @@ float event::time()
 {
     return g_time.runtime;
 }
+void event::freezeTime(bool freeze)
+{
+    g_time.frozen = freeze;
+}
 
 std::unordered_map<std::string, Mesh> g_loadedMeshes;
 std::unordered_map<std::string, uint32_t> g_loadedTextures;
