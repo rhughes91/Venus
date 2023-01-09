@@ -46,6 +46,10 @@ Vector2 vec2::degrees(const Vector2& vector)
 {
     return Vector2(math::degrees(vector.x), math::degrees(vector.y));
 }
+Vector2 vec2::lerp(const Vector2& vec1, const Vector2& vec2, float weight)
+{
+    return vec1 + (vec2-vec1) * weight;
+}
 Vector2 vec2::rotatedAround(const Vector2& vector, const Vector2& origin, float theta)
 {
     // translate point to origin
@@ -65,6 +69,26 @@ Vector2 vec2::sign(const Vector2 &vector)
 Vector2 vec2::sign0(const Vector2 &vector)
 {
     return Vector2(math::sign0(vector.x), math::sign0(vector.y));
+}
+
+float cubicBezier(float one, float two, float three, float four, float partition)
+{
+    // std::cout << partition << " : " << std::pow(1-partition, 3)*one << " + " << 3*partition*std::pow(1-partition, 2)*two << " + " << 3*(1-partition)*partition*partition*three << " + " << partition*partition*partition*four << " = " << std::pow(1-partition, 3)*one + 3*partition*std::pow(1-partition, 2)*two + 3*(1-partition)*partition*partition*three + partition*partition*partition*four << std::endl;
+    return std::pow(1-partition, 3)*one + 3*partition*std::pow(1-partition, 2)*two + 3*(1-partition)*partition*partition*three + partition*partition*partition*four;
+}
+std::vector<Vector2> vec2::bezier(const std::vector<Vector2>& points, const std::vector<Vector2>& controls, float partition)
+{
+    if(points.size() < 2 || controls.size() < 2)
+    {
+        return points;
+    }
+
+    std::vector<Vector2> result;
+    for(float i=0; i<=1; i+=partition)
+    {
+        result.push_back(Vector2(cubicBezier(points[0].x, controls[0].x, controls[1].x, points[1].x, i), cubicBezier(points[0].y, controls[0].y, controls[1].y, points[1].y, i)));
+    }
+    return result;
 }
 
 Vector3 vec3::pow(const Vector3 &vector, float exponent)

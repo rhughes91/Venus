@@ -6,8 +6,8 @@ void project::initialize()
     struct SmoothFollower : Script
     {
         Entity target;
-        Vector3 speed;
-        SmoothFollower(Entity target__ = 0, Vector3 speed__ = 0) : target(target__), speed(speed__) {}
+        float speed;
+        SmoothFollower(Entity target__ = 0, float speed__ = 0) : target(target__), speed(speed__) {}
     };
     SmoothFollower& smoothFollower = object::initializeScript<SmoothFollower>();
     {
@@ -17,10 +17,9 @@ void project::initialize()
         {
             for(auto const& entity : script.entities())
             {
+                SmoothFollower& follower = object::getComponent<SmoothFollower>(entity);
                 Vector3& position = object::getComponent<Transform>(entity).position;
-                float z = position.z;
-                position = vec3::lerp(object::getComponent<Transform>(entity).position, object::getComponent<Transform>(object::getComponent<SmoothFollower>(entity).target).position, 1-std::pow(0.001, event::delta()));
-                position.z = z;
+                position = Vector3(vec2::lerp(object::getComponent<Transform>(entity).position, object::getComponent<Transform>(follower.target).position, 1-std::pow(follower.speed, event::delta())), position.z);
             }
         });
     }
@@ -112,8 +111,8 @@ void project::initialize()
             texture::load("Amina/Walk/amina_walk0000.png", texture::PNG);
 
             Material defaultMaterial = Material(shader::get("simple_shader"));
-            Object jump("button");
-            // jump.addComponent<Transform>();
+
+            Object jump("button", false);
             jump.addComponent<Rect>(Rect(Alignment(alignment::BOTTOM, alignment::CENTER), Vector2(0, 0.075f), Vector2(0.5f, 0.125f)));
             jump.addComponent<Button>(Button([]
                 (Entity entity)
@@ -125,9 +124,9 @@ void project::initialize()
                     physics.addImpulse(vec3::up * -movement.gForce * std::sqrt(movement.height*2*movement.gravity));
                 }, 'J'
             ));
-            jump.addComponent<Model>(Model(color::RED, Material(shader::get("ui_shader")), mesh::get("square"), texture::get("spacebar.png")));
+            jump.addComponent<Model>(Model(color::RED, Material(shader::get("ui_shader"), shader::ui), mesh::get("square"), texture::get("spacebar.png")));
 
-            Object floor("floor");
+            Object floor("floor", false);
             floor.addComponent<Transform>(Transform(Vector3(0, -1.5f, 0), Vector3(120, 2, 0)));
             floor.addComponent<Model>(Model(color::DARK_GREEN, defaultMaterial, mesh::get("square"), texture::get("block.png")));
             floor.addComponent<BoxCollider>();
@@ -135,13 +134,13 @@ void project::initialize()
             floor.clone().getComponent<Transform>() = Transform(Vector3(0, 29, 0), Vector3(120, 1, 0));
             floor.clone().getComponent<Transform>() = Transform(Vector3(0, -29, 0), Vector3(100, 1, 0));
 
-            data.moveTransform = &(floor.clone().getComponent<Transform>() = Transform(Vector3(5, 2, 0), Vector3(1, 1, 0)));
-            floor.clone().getComponent<Transform>() = Transform(Vector3(4, 2, 0), Vector3(1, 1, 0));
-            floor.clone().getComponent<Transform>() = Transform(Vector3(3, 2, 0), Vector3(1, 1, 0));
-            floor.clone().getComponent<Transform>() = Transform(Vector3(2, 2, 0), Vector3(1, 1, 0));
-            floor.clone().getComponent<Transform>() = Transform(Vector3(1, 2, 0), Vector3(1, 1, 0));
+            Object tile("tile", false);
+            tile.addComponent<Transform>(Transform(Vector3(3, 2, 0), Vector3(1, 1, 0)));
+            tile.addComponent<Model>(Model(color::DARK_GREEN, defaultMaterial, mesh::get("square"), texture::get("block.png")));
+            tile.addComponent<MeshAddon>(MeshAddon({Vector3(-1, 0), Vector3(-2, 0), Vector3(1, 0), Vector3(2, 0)}));
+            tile.addComponent<BoxCollider>(BoxCollider(Vector3(5, 1, 1)));
 
-            Object wall("wall");
+            Object wall("wall", false);
             wall.addComponent<Transform>(Transform(Vector3(-59.5f, 4.5f, 0), Vector3(1, 10, 0)));
             wall.addComponent<Model>(Model(color::DARK_GREEN, defaultMaterial, mesh::get("square"), texture::get("block.png")));
             wall.addComponent<BoxCollider>();
@@ -158,16 +157,14 @@ void project::initialize()
 
             Object player("player");
             Vector3& playerPosition = player.addComponent<Transform>(Transform(Vector3(0, 0.2125f, 0), 1.5f)).position;
-            BoxCollider& collider = player.addComponent<BoxCollider>(BoxCollider(true, Vector3(0.5f, 0.95f, 1), Vector3(-0.075f, 0, 0)));
-            collider.setTrigger(physics::collisionTrigger);
-            collider.setMiss(physics::collisionMiss);
+            player.addComponent<BoxCollider>(BoxCollider(Vector3(0.5f, 0.95f, 1), Vector3(-0.075f, 0, 0), physics::collisionTrigger, physics::collisionMiss));
             player.addComponent<Model>(Model(color::WHITE, defaultMaterial, mesh::get("square"), texture::get("Amina/Walk/amina_walk0000.png")));
             player.addComponent<Movement>();
             player.addComponent<Physics2D>(Physics2D(1, 50, Vector3(10, 57.5f)));
 
             Object camera("camera");
             camera.addComponent<Transform>(Transform{Vector3(playerPosition.x, playerPosition.y, 20)});
-            camera.addComponent<SmoothFollower>(SmoothFollower(player.data, Vector3(75, 125, 0)));
+            camera.addComponent<SmoothFollower>(SmoothFollower(player.data, 0.001f));
             camera.addComponent<Camera>(Camera(color::SKY_BLUE, vec3::back, vec3::up));
             window::setCamera(camera.data);
         });

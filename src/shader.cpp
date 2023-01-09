@@ -75,7 +75,7 @@ void Shader::setVec3(const std::string &name, const Vector3 &vec3) const
     // if(transformLoc == -1) std::cout << ID << " :: " << name << " = " << vec3 << std::endl;
     glUniform3f(transformLoc, vec3.x, vec3.y, vec3.z);
 }
-void Shader::setVec3(const std::string &name, const Color &vec3) const
+void Shader::setColor3(const std::string &name, const Color &vec3) const
 {
     uint32_t transformLoc = glGetUniformLocation(ID, name.c_str());
     glUniform3f(transformLoc, vec3.r, vec3.g, vec3.b);
@@ -111,61 +111,56 @@ uint32_t Shader::compileShader(const std::string &contents, uint32_t type) const
     return shader;
 }
 
-Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__) : count(numVertices), dimensions(dimensions__)
+Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__) : dimensions(dimensions__)
 {
-    vertices = std::vector<Vector3>(count);
-    for(int i=0; i<count; i++)
-    {
-        vertices[i] = vertices__[i];
-    }
-    std::vector<float> textureCoords = std::vector<float>(2 * count);
-    for(int i=0; i<count; i++)
+    vertices.clear();
+    std::vector<float> textureCoords = std::vector<float>(2 * numVertices);
+    for(int i=0; i<numVertices; i++)
     {
         textureCoords[i*2] = texture__[i*2];
         textureCoords[i*2 + 1] = texture__[i*2 + 1];
     }
-    std::vector<Vertex> data;
-    for(int i=0; i<count; i+=3)
+    for(int i=0; i<numVertices; i+=3)
     {
-        Vector3 normal = vec3::triSurface(vertices[i], vertices[i+1], vertices[i+2]);
+        Vector3 normal = vec3::triSurface(vertices__[i], vertices__[i+1], vertices__[i+2]);
         for(int j=0; j<3; j++)
         {
-            data.push_back({vertices[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
+            vertices.push_back({vertices__[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
         }
     }
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(Vertex), &data[0], GL_STATIC_DRAW);  
-
-    // vertex positions
-    glEnableVertexAttribArray(0);	
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    // vertex normals
-    glEnableVertexAttribArray(1);	
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vector3));
-    // vertex texture coords
-    glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3)*2));
 }
-Mesh::Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : count(vertices__.size()), dimensions(dimensions__)
+Mesh::Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : vertices(vertices__), dimensions(dimensions__) {}
+void Mesh::append(const Transform& parentTransform, const std::vector<Transform>& additions)
 {
-    vertices.clear();
-    for(const Vertex &vertex : vertices__)
+    std::vector<Vertex> newVertices = vertices;
+    for(auto transform : additions)
     {
-        vertices.push_back(vertex.position);
-    }
+        transform.position = (mat4x4)parentTransform.rotation.conjugate() * transform.position;
 
+        transform.position.x /= parentTransform.scale.x == 0 ? 1:parentTransform.scale.x;
+        transform.position.y /= parentTransform.scale.y == 0 ? 1:parentTransform.scale.y;
+        transform.position.z /= parentTransform.scale.z == 0 ? 1:parentTransform.scale.z;
+        
+        transform.position = (mat4x4)parentTransform.rotation * transform.position;
+
+        for(auto vertex : newVertices)
+        {
+            vertex.position = (mat4x4)transform.rotation * (mat4x4)parentTransform.rotation * vertex.position;
+            vertex.position += transform.position;
+            vertex.position = (mat4x4)parentTransform.rotation.conjugate() * vertex.position;
+            vertices.push_back(vertex);
+        }
+    }
+}
+void Mesh::refresh()
+{
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, vertices__.size() * sizeof(Vertex), &vertices__[0], GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
 
     // vertex positions
     glEnableVertexAttribArray(0);	

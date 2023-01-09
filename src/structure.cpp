@@ -213,6 +213,26 @@ void physics::collisionMiss(Entity entity)
     object::getComponent<Physics2D>(entity).resetCollisions();
 }
 
+void Spline::refresh()
+{
+    for(const auto& curve : curves)
+    {
+        std::vector<Vector2> result = vec2::bezier({curve.beginning, curve.end}, curve.controls, 0.01f);
+        points = result;
+    }
+
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vector2), &points[0], GL_STATIC_DRAW);
+    // vertex positions
+    glEnableVertexAttribArray(0);	
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector2), (void*)0);
+}
+
 ObjectManager::ObjectManager()
 {
     if(g_manager.m_entities.size() == 0)
@@ -226,6 +246,8 @@ ObjectManager::ObjectManager()
         registerComponent<BoxCollider>();
         registerComponent<Button>();
         registerComponent<Camera>();
+        registerComponent<Spline>();
+        registerComponent<MeshAddon>();
         registerComponent<Model>();
         registerComponent<Object>();
         registerComponent<Physics2D>();
@@ -237,28 +259,7 @@ ObjectManager::ObjectManager()
 
         std::shared_ptr<System> system;
         
-        system = registerSystem<AnimationManager>();
-        system -> setFixedUpdate([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                object::getComponent<Model>(entity).texture = object::getComponent<Animator>(entity).transition().transition().step();
-            }
-        });
-
-        system = registerSystem<BillboardHandler>();
-        system -> setLateUpdate([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                Transform &transform = object::getComponent<Transform>(entity);
-                transform.rotation = Quaternion(object::getComponent<Camera>(object::getComponent<Billboard>(entity).target).view).normalized().inverted();
-            }
-        });
-
-        system = registerSystem<ButtonManager>();
+        system = registerSystem<ButtonManager>(3);
         system -> setUpdate([]
         (System &system)
         {
@@ -291,97 +292,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        system = registerSystem<CameraManager>(10);
-        void (*cameraFunction)(System &) = []
-        (System &system)
-        {
-            for(const auto& entity : system.m_entities)
-            {
-                Camera& camera = object::getComponent<Camera>(entity);
-                camera.view = mat4::lookAt(object::getComponent<Transform>(entity).position, -camera.front, vec3::up);
-
-                if(window::resolutionUpdated())
-                {
-                    camera.projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, 1);
-                }
-            }
-        };
-        system -> setLoad(cameraFunction);
-        system -> setLateUpdate(cameraFunction);
-
-        system = registerSystem<CollisionManager>(1);
-        system -> setLoad([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
-                collider.storedPosition = object::getComponent<Transform>(entity).position + collider.offset;
-            }
-        });
-        system -> setUpdate([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
-                Transform& transform = object::getComponent<Transform>(entity);
-                bool triggered = false;
-                if(collider.mobile)
-                {
-                    Model& model = object::getComponent<Model>(entity);
-
-                    Vector3 position = transform.position + collider.offset;
-                    Vector3 boxDim = (model.data.dimensions * transform.scale * collider.scale + vec3::abs(position - collider.storedPosition)) * 0.5f;
-
-                    for(auto const &compare : system.m_entities)
-                    {
-                        if(compare == entity)
-                            continue;
-
-                        BoxCollider& collider2 = object::getComponent<BoxCollider>(compare);
-                        Transform& transform2 = object::getComponent<Transform>(compare);
-                        Model& model2 = object::getComponent<Model>(compare);
-
-                        Vector3 position2 = transform2.position + collider2.offset;
-                        Vector3 boxDim2 = model2.data.dimensions * transform2.scale * collider2.scale * 0.5f;
-
-                        int precision = 6;
-                        Vector3 positive = vec3::roundTo(position + boxDim, precision), negative = vec3::roundTo(position - boxDim, precision);
-                        Vector3 positive2 = vec3::roundTo(position2 + boxDim2, precision), negative2 = vec3::roundTo(position2 - boxDim2, precision);
-                        if(positive.x >= negative2.x && negative.x <= positive2.x && positive.y >= negative2.y && negative.y <= positive2.y && positive.z >= negative2.z && negative.z <= positive2.z)
-                        {                         
-                            bool edge = (positive.x == negative2.x || negative.x == positive2.x || positive.y == negative2.y || negative.y == positive2.y);
-                            collider.trigger(entity, compare, edge, triggered);
-                            collider2.trigger(compare, entity, edge, triggered);
-                            triggered = true;
-                        }
-                    }
-                    if(!triggered)
-                    {
-                        collider.miss(entity);
-                    }
-                }
-                collider.storedPosition = transform.position + collider.offset;
-            }
-        });
-
-        system = registerSystem<Graphics>();
-        system -> setRender([]
-        (System &system)
-        {
-            Camera& camera = object::getComponent<Camera>(window::camera());
-            Transform& cameraTransform = object::getComponent<Transform>(window::camera());
-            
-            for(auto const &entity : system.m_entities)
-            {
-                Model& model = object::getComponent<Model>(entity);
-                model.material.run(object::getComponent<Transform>(entity), model, camera, cameraTransform);
-                model.draw();
-            }
-        });
-
-        system = registerSystem<PhysicsManager>();
+        system = registerSystem<PhysicsManager>(6);
         system -> setStart([]
         (System &system)
         {
@@ -450,7 +361,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        system = registerSystem<SpotLightManager>();
+        system = registerSystem<SpotLightManager>(9);
         system -> setUpdate([]
         (System &system)
         {
@@ -480,66 +391,205 @@ ObjectManager::ObjectManager()
             }
         });
 
-        system = registerSystem<UIManager>(1);
+        system = registerSystem<CollisionManager>(12);
+        system -> setLoad([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
+                collider.storedPosition = object::getComponent<Transform>(entity).position + collider.offset;
+            }
+        });
+        system -> setUpdate([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                BoxCollider& collider = object::getComponent<BoxCollider>(entity);
+                Transform& transform = object::getComponent<Transform>(entity);
+                bool triggered = false;
+                if(object::getComponent<Object>(entity).mobile)
+                {
+                    Model& model = object::getComponent<Model>(entity);
+
+                    Vector3 position = transform.position + collider.offset;
+                    Vector3 boxDim = (model.data.dimensions * transform.scale * collider.scale + vec3::abs(position - collider.storedPosition)) * 0.5f;
+
+                    for(auto const &compare : system.m_entities)
+                    {
+                        if(compare == entity)
+                            continue;
+
+                        BoxCollider& collider2 = object::getComponent<BoxCollider>(compare);
+                        Transform& transform2 = object::getComponent<Transform>(compare);
+                        Model& model2 = object::getComponent<Model>(compare);
+
+                        Vector3 position2 = transform2.position + collider2.offset;
+                        Vector3 boxDim2 = model2.data.dimensions * transform2.scale * collider2.scale * 0.5f;
+
+                        int precision = 6;
+                        Vector3 positive = vec3::roundTo(position + boxDim, precision), negative = vec3::roundTo(position - boxDim, precision);
+                        Vector3 positive2 = vec3::roundTo(position2 + boxDim2, precision), negative2 = vec3::roundTo(position2 - boxDim2, precision);
+                        if(positive.x >= negative2.x && negative.x <= positive2.x && positive.y >= negative2.y && negative.y <= positive2.y && positive.z >= negative2.z && negative.z <= positive2.z)
+                        {                     
+                            bool edge = (positive.x == negative2.x || negative.x == positive2.x || positive.y == negative2.y || negative.y == positive2.y);
+                            collider.trigger(entity, compare, edge, triggered);
+                            collider2.trigger(compare, entity, edge, triggered);
+                            triggered = true;
+                        }
+                    }
+                    if(!triggered)
+                    {
+                        collider.miss(entity);
+                    }
+                }
+                collider.storedPosition = transform.position + collider.offset;
+            }
+        });
+
+        system = registerSystem<CameraManager>(15);
+        void (*cameraFunction)(System &) = []
+        (System &system)
+        {
+            for(const auto& entity : system.m_entities)
+            {
+                Camera& camera = object::getComponent<Camera>(entity);
+                camera.view = mat4::lookAt(object::getComponent<Transform>(entity).position, -camera.front, vec3::up);
+
+                if(window::resolutionUpdated())
+                {
+                    camera.projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), 0.01f, 200.0f, 1);
+                }
+            }
+        };
+        system -> setLoad(cameraFunction);
+        system -> setLateUpdate(cameraFunction);
+
+        system = registerSystem<BillboardManager>(18);
+        system -> setLateUpdate([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                Transform &transform = object::getComponent<Transform>(entity);
+                transform.rotation = Quaternion(object::getComponent<Camera>(object::getComponent<Billboard>(entity).target).view).normalized().inverted();
+            }
+        });
+
+        system = registerSystem<AnimationManager>(21);
+        system -> setFixedUpdate([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Model>(entity).texture = object::getComponent<Animator>(entity).transition().transition().step();
+            }
+        });
+
+        system = registerSystem<MeshManager>(24);
+        system -> setStart([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Model>(entity).data.append(object::getComponent<Transform>(entity), object::getComponent<MeshAddon>(entity).additions);
+            }
+        });
+
+        system = registerSystem<GraphicsManager>(27);
+        system -> setStart([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Model>(entity).data.refresh();
+            }
+        });
+        system -> setRender([]
+        (System &system)
+        {
+            Camera& camera = object::getComponent<Camera>(window::camera());
+            Transform& cameraTransform = object::getComponent<Transform>(window::camera());
+            
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Model>(entity).render(entity, camera, cameraTransform);
+            }
+        });
+
+        system = registerSystem<UIManager>(30);
+        system -> setStart([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Model>(entity).data.refresh();
+            }
+        });
         system -> setRender([]
         (System &system)
         {
             glDisable(GL_DEPTH_TEST);
-
             for(auto const &entity :system.m_entities)
             {
-                Rect& transform = object::getComponent<Rect>(entity);
-                Model& model = object::getComponent<Model>(entity);
-
-                Shader& shader = model.material.shader;
-                shader.use();
-                
-                shader.setFloat("aspect", window::aspectRatio());
-                shader.setVec2("position", transform.relativePosition());
-                shader.setVec2("scale", transform.scale);
-                shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
-                shader.setVec4("objColor", model.color);
-
-                model.draw();
+                object::getComponent<Model>(entity).render(entity);
             }
             glEnable(GL_DEPTH_TEST);
         });
 
+        system = registerSystem<SplineManager>(30);
+        system -> setStart([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Spline>(entity).refresh();
+            }
+        });
+        system -> setRender([]
+        (System &system)
+        {
+            glDisable(GL_DEPTH_TEST);
+            
+            for(auto const &entity : system.m_entities)
+            {
+                Rect& transform = object::getComponent<Rect>(entity);
+                Spline& curve = object::getComponent<Spline>(entity);
+                Shader shader = curve.shader;
+                shader.use();
+                
+                shader.setFloat("aspect", window::aspectRatio());
+                shader.setVec2("position", transform.relativePosition());
+                shader.setVec4("objColor", curve.color);
+
+                curve.render();
+            }
+
+            glEnable(GL_DEPTH_TEST);
+        });
+
         Signature signature;
-        signature.set(getComponentType<Transform>());
-        signature.set(getComponentType<SpotLight>());
-        setSystemSignature<SpotLightManager>(signature);
-
-        signature.reset();
-        signature.set(getComponentType<Model>());
-        signature.set(getComponentType<Animator>());
-        setSystemSignature<AnimationManager>(signature);
-
         signature.reset();
         signature.set(getComponentType<Rect>());
         signature.set(getComponentType<Button>());
         setSystemSignature<ButtonManager>(signature);
 
         signature.reset();
-        signature.set(getComponentType<Transform>());
-        signature.set(getComponentType<Model>());
-        setSystemSignature<Graphics>(signature);
-
-        signature.reset();
         signature.set(getComponentType<Physics2D>());
         signature.set(getComponentType<Transform>());
         setSystemSignature<PhysicsManager>(signature);
+        
+        signature.reset();
+        signature.set(getComponentType<Transform>());
+        signature.set(getComponentType<SpotLight>());
+        setSystemSignature<SpotLightManager>(signature);
 
         signature.reset();
         signature.set(getComponentType<Transform>());
         signature.set(getComponentType<Model>());
         signature.set(getComponentType<BoxCollider>());
         setSystemSignature<CollisionManager>(signature);
-
-        signature.reset();
-        signature.set(getComponentType<Rect>());
-        signature.set(getComponentType<Model>());
-        setSystemSignature<UIManager>(signature);
 
         signature.reset();
         signature.set(getComponentType<Camera>());
@@ -549,6 +599,31 @@ ObjectManager::ObjectManager()
         signature.reset();
         signature.set(getComponentType<Billboard>());
         signature.set(getComponentType<Transform>());
-        setSystemSignature<BillboardHandler>(signature);
+        setSystemSignature<BillboardManager>(signature);
+
+        signature.reset();
+        signature.set(getComponentType<Model>());
+        signature.set(getComponentType<Animator>());
+        setSystemSignature<AnimationManager>(signature);
+
+        signature.reset();
+        signature.set(getComponentType<MeshAddon>());
+        signature.set(getComponentType<Model>());
+        setSystemSignature<MeshManager>(signature);
+
+        signature.reset();
+        signature.set(getComponentType<Transform>());
+        signature.set(getComponentType<Model>());
+        setSystemSignature<GraphicsManager>(signature);
+
+        signature.reset();
+        signature.set(getComponentType<Rect>());
+        signature.set(getComponentType<Model>());
+        setSystemSignature<UIManager>(signature);
+
+        signature.reset();
+        signature.set(getComponentType<Rect>());
+        signature.set(getComponentType<Spline>());
+        setSystemSignature<SplineManager>(signature);
     }
 }

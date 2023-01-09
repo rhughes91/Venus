@@ -1,4 +1,4 @@
-#version 460 core
+#version 330 core
 
 #define MAX_POINT 0
 #define MAX_SPOT 32

@@ -37,6 +37,8 @@ struct Screen
     void store();
     void draw();
     void clear(const Color& color);
+
+    int getMaximumSamples();
 };
 
 // Window (struct): determines the appearance of the application Window

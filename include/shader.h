@@ -29,7 +29,7 @@ struct Shader
     void setFloat(const std::string &name, float value) const;
     void setVec2(const std::string &name, const Vector2 &vec2) const;
     void setVec3(const std::string &name, const Vector3 &vec3) const;
-    void setVec3(const std::string &name, const Color &vec3) const;
+    void setColor3(const std::string &name, const Color &vec3) const;
     void setVec4(const std::string &name, const Color &vec4) const;
     void setMat4(const std::string &name, const float *, bool) const;
 
@@ -44,33 +44,6 @@ namespace shader
     Shader &load(const std::string& path, const Shader& shader);
     Shader &get(const std::string& path);
     void remove();
-
-    void simple(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform);
-    void advanced(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess);
-};
-
-// Material (struct): holds the information necessary to render an entity to a complex Shader
-struct Material
-{
-    Shader shader;
-
-    Vector3 ambientStrength, diffuseStrength, specularStrength;
-    Color specular;
-    float shininess;
-
-    // determines whether the object responds to point and spot lights
-    bool useAdvancedLighting = true;
-    void(*run)(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform);
-
-    Material(const Shader &shader__ = Shader()) : shader(shader__)
-    {
-        run = shader::simple;
-    }
-
-    Material(const Shader& shader__, void(*runFunction)(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)) : shader(shader__)
-    {
-        run = runFunction;
-    }
 };
 
 // Vertex (struct): holds basic vertex data as it is stored in a .obj file
@@ -84,17 +57,26 @@ struct Vertex
 // Mesh (struct): wrapper for the Vertex Array Object and Vertex Buffer Object necessary to render a mesh
 struct Mesh
 {
+    std::vector<Vertex> vertices;
+    uint32_t VAO, VBO;
+    Vector3 dimensions;
+
     Mesh() {}
     Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__);
     Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__);
 
+    void append(const Transform& parentTransform, const std::vector<Transform>& additions);
+    void refresh();
     void draw(const uint32_t texture) const;
     void remove();
+};
 
-    std::vector<Vector3> vertices;
-    // std::vector<float> texture;
-    uint32_t VAO, VBO, count;
-    Vector3 dimensions;
+struct MeshAddon
+{
+    std::vector<Transform> additions;
+
+    MeshAddon() {}
+    MeshAddon(const std::vector<Transform>& additions__) : additions(additions__) {}
 };
 
 // shape (namespace): provides basic Mesh shapes without needing to load a file
@@ -115,24 +97,6 @@ namespace mesh
     std::vector<Mesh> get(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
 
     void remove();
-};
-
-
-// Model (struct): holds an entity's Material and Mesh data which allows it to be rendered
-struct Model
-{
-    Color color;
-    Material material;
-    Mesh data;
-    uint32_t texture;
-
-    Model(const Color& color__ = color::WHITE, const Material& material__ = Material(), const Mesh &data__ = Mesh(), uint32_t texture__ = 0) : color(color__), material(material__), data(data__), texture(texture__) {}
-
-    // uses the Material's shader of this Model
-    void draw()
-    {
-        data.draw(texture);
-    }
 };
 
 // loads .obj file at 'filename' :: applied textures will be applied in a checkerboard pattern of size 'tiling'

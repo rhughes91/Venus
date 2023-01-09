@@ -1,4 +1,4 @@
-#version 460 core
+#version 330 core
 
 #define MAX_POINT 0
 #define MAX_SPOT 32
@@ -75,7 +75,7 @@ void main()
     vec4 color =  texture(material.diffuse, TexCoord) * objColor;
 
     float shadow = 0;
-    vec4 result = color * 1.0;
+    vec4 result = color * 0.0;
     result += calcDirLight(dirLight, color, norm, viewDir, shadow);
     if(advanced)
     {

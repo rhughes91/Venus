@@ -44,18 +44,18 @@ void FrameBuffer::refresh(uint16_t width, uint16_t height, bool opaque)
         glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
     }
 }
-void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t height, uint32_t component, uint32_t componentType, uint32_t attachment, uint32_t scaling, uint32_t wrapping, bool multisampled)
+void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t height, uint32_t component, uint32_t componentType, uint32_t attachment, uint32_t scaling, uint32_t wrapping, int samples = 0)
 {
     uint32_t texture;
-    GLenum type = multisampled ? GL_TEXTURE_2D_MULTISAMPLE:GL_TEXTURE_2D;
+    GLenum type = samples ? GL_TEXTURE_2D_MULTISAMPLE:GL_TEXTURE_2D;
     bind(GL_FRAMEBUFFER);
 
     glGenTextures(1, &texture);
     glBindTexture(type, texture);
     
-    if(multisampled)
+    if(samples)
     {
-        glTexImage2DMultisample(type, 4, component, width, height, GL_TRUE);
+        glTexImage2DMultisample(type, samples, component, width, height, GL_TRUE);
     }
     else
     {
@@ -72,14 +72,14 @@ void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t h
     textures.insert({name, TextureBuffer{texture, type, component}});
     unbind();
 }
-void FrameBuffer::addRenderBuffer(const std::string& name, uint16_t width, uint16_t height)
+void FrameBuffer::addRenderBuffer(const std::string& name, uint16_t width, uint16_t height, int samples)
 {
     uint32_t renderBuffer;
     bind(GL_FRAMEBUFFER);
     
     glGenRenderbuffers(1, &renderBuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
     renderBuffers.insert({name, renderBuffer});
     
@@ -100,14 +100,10 @@ void FrameBuffer::bindTexture(const std::string& name)
 {
     glBindTexture(textures[name].type, textures[name].data);
 }
-bool FrameBuffer::complete()
+int FrameBuffer::complete()
 {
     bind(GL_FRAMEBUFFER);
-    bool complete = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
-    // if(!complete)
-    // {
-    //     std::cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
-    // }
+    int complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     unbind();
     return complete;
 }

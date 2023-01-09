@@ -9,6 +9,10 @@ float event::delta()
 {
     return g_time.deltaTime;
 }
+float event::framerate()
+{
+    return g_time.averageFrameRate;
+}
 float event::time()
 {
     return g_time.runtime;

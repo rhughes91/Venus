@@ -12,7 +12,9 @@ struct Color
     {
         r = g = b = a = 0;
     }
-    Color(float r__, float g__, float b__, float a__) : r{r__}, g{g__}, b{b__}, a{a__}{};
+    Color(float value) : r(value), g(value), b(value), a(1) {}
+    Color(float value, float alpha) : r(value), g(value), b(value), a(alpha) {}
+    Color(float red, float green, float blue, float alpha) : r{red}, g{green}, b{blue}, a{alpha}{};
 
     operator std::string() const
     {

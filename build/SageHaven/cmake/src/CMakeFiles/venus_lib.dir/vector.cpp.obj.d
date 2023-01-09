@@ -147,6 +147,11 @@ src/CMakeFiles/venus_lib.dir/vector.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
+ C:/msys64/mingw64/include/c++/12.1.0/vector \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
  C:/Projects/Venus/include/color.h \
  C:/msys64/mingw64/include/c++/12.1.0/iomanip \
  C:/msys64/mingw64/include/c++/12.1.0/locale \

@@ -14,5 +14,5 @@ if(${FILE_NAME} STREQUAL ${PARENT_DIR_NAME})
     add_executable(${FILE_NAME} main.cpp)
 
     # target_link_options(${FILE_NAME} PRIVATE -mwindows)
-    target_link_libraries(${FILE_NAME} PRIVATE ${FILE_NAME}_lib venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
+    target_link_libraries(${FILE_NAME} PRIVATE ${FILE_NAME}_lib venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++ -static)
 endif()

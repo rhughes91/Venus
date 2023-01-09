@@ -87,6 +87,7 @@ struct Time
 namespace event
 {
     float delta();
+    float framerate();
     float time();
 
     void freezeTime(bool freeze);
@@ -757,11 +758,13 @@ extern ObjectManager g_manager;
 // SYSTEMS: base Systems for the engine :: static variables are stored in these structures
 
 struct AnimationManager : System {};
-struct BillboardHandler : System {};
+struct BillboardManager : System {};
 struct ButtonManager : System {};
 struct CameraManager : System {};
 struct CollisionManager : System {};
-struct Graphics : System {};
+struct SplineManager : System {};
+struct GraphicsManager : System {};
+struct MeshManager : System {};
 struct MovementManager : System {};
 struct PhysicsManager : System {};
 struct SpotLightManager : System {};
@@ -842,12 +845,11 @@ class Object
     public:
         std::string name;
         Entity data;
-
-        bool m_mobile = true;
+        bool mobile;
 
         Object() {}
 
-        Object(const std::string& name__)
+        Object(const std::string& name__, bool mobile__ = true) : mobile(mobile__)
         {
             name = name__;
             if(g_manager.m_entities.find(name) != g_manager.m_entities.end())
@@ -889,6 +891,7 @@ class Object
             Object copy;
             copy.name = copyName + std::to_string(start);
             copy.data = g_manager.copyEntity(name, copy.name);
+            copy.mobile = mobile;
             for(Object child : m_children)
             {
                 Object clone = child.clone();
@@ -900,16 +903,6 @@ class Object
         void destroy()
         {
             g_manager.destroyEntity(data);
-        }
-
-        bool mobile()
-        {
-            return g_manager.getComponent<Object>(data).m_mobile;
-        }
-
-        void mobile(bool mobile__)
-        {
-            g_manager.getComponent<Object>(data).m_mobile = mobile__;
         }
 
         template<typename T>
@@ -970,19 +963,12 @@ struct Billboard
 // BoxCollider (struct): calls 'trigger' function whenever another BoxCollider intersects with this one :: otherwise, miss function is called
 struct BoxCollider
 {
-    bool mobile;
     Vector3 scale, offset, storedPosition;
     
     void (*trigger)(Entity, Entity, bool, int);
     void (*miss)(Entity);
 
-    BoxCollider(bool mobile__ = false, const Vector3& scale__ = 1, const Vector3& offset__ = 0) : mobile(mobile__), scale(scale__), offset(offset__)
-    {
-        trigger = [](Entity entity, Entity target, bool edge, int triggerd){};
-        miss = [](Entity entity){};
-    }
-    BoxCollider(const Vector3& scale__) : mobile(false), scale(scale__) {}
-    BoxCollider(const Vector3& scale__, const Vector3& offset__) : mobile(false), scale(scale__), offset(offset__) {}
+    BoxCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0, void (*trigger__)(Entity, Entity, bool, int) = [](Entity entity, Entity target, bool edge, int triggerd){}, void (*miss__)(Entity) = [](Entity entity){}) : scale(scale__), offset(offset__), trigger(trigger__), miss(miss__) {}
 
     void setTrigger(void (*trigger__)(Entity, Entity, bool, int))
     {
@@ -1064,6 +1050,24 @@ namespace object
             return script;
         }
     }
+
+    template<typename S, typename T>
+    S& initializeScript(int32_t priority = 0)
+    {
+        if(g_manager.containsSystem<S>())
+        {
+            return object::getSystem<S>();
+        }
+        else
+        {
+            g_manager.registerComponent<S>();
+            g_manager.registerComponent<T>();
+
+            S& script = object::find("g_global_event_runner").addComponent<S>();
+            script.initialize(typeid(S).name(), g_manager.registerClosedSystem<S>(priority));
+            ((Script)script).addRequirement<T>();
+        }
+    }
 };
 
 // physics (namespace): allows for collision handling with a BoxCollider
@@ -1073,5 +1077,80 @@ namespace physics
     void collisionTrigger(Entity entity, Entity collision, bool edge, int triggered);
     void collisionMiss(Entity entity);
 }
+
+//
+namespace shader
+{
+    void simple(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform);
+    void ui(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform);
+    void advanced(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess);
+}
+
+// Material (struct): holds the information necessary to render an entity to a complex Shader
+struct Material
+{
+    Shader shader;
+
+    Vector3 ambientStrength, diffuseStrength, specularStrength;
+    Color specular;
+    float shininess;
+
+    // determines whether the object responds to point and spot lights
+    bool useAdvancedLighting = true;
+    void(*run)(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform);
+
+    Material(const Shader &shader__ = Shader()) : shader(shader__)
+    {
+        run = shader::simple;
+    }
+
+    Material(const Shader& shader__, void(*runFunction)(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform)) : shader(shader__)
+    {
+        run = runFunction;
+    }
+};
+
+// Model (struct): holds an entity's Material and Mesh data which allows it to be rendered
+struct Model
+{
+    Color color;
+    Material material;
+    Mesh data;
+    uint32_t texture;
+
+    Model(const Color& color__ = color::WHITE, const Material& material__ = Material(), const Mesh &data__ = Mesh(), uint32_t texture__ = 0) : color(color__), material(material__), data(data__), texture(texture__) {}
+
+    // uses the Material's shader of this Model
+    void render(Entity entity, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
+    {
+        material.run(entity, *this, camera, cameraTransform);
+        data.draw(texture);
+    }
+};
+
+struct Curve
+{
+    Vector2 beginning, end;
+    std::vector<Vector2> controls;
+
+    Curve(const Vector2& beginning__, const Vector2& end__, const std::vector<Vector2>& controls__) : beginning(beginning__), end(end__), controls(controls__) {}
+};
+
+struct Spline
+{
+    Color color;
+    Shader shader;
+    std::vector<Curve> curves;
+
+    uint32_t VAO, VBO;
+
+    Spline(const std::vector<Curve>& curves__ = std::vector<Curve>(), const Shader& shader__ = Shader(), const Color& color__ = color::WHITE) : color(color__), shader(shader__), curves(curves__) {};
+
+    void refresh();
+    void render();
+
+    private:
+        std::vector<Vector2> points;
+};
 
 #endif

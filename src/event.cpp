@@ -31,6 +31,8 @@ void beginEventLoop()
     Shader& uiShader = shader::load("ui_shader", Shader("ui_vertex", "ui_frag"));
     uiShader.use();
     uiShader.setInt("text", 0);
+
+    shader::load("spline_shader", Shader("spline_vertex", "spline_frag"));
     
     float timeScale = 0.02f;
     object::load();

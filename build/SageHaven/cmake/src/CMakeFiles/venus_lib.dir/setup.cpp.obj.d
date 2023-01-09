@@ -207,4 +207,4 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/set \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
- C:/Projects/Venus/include/setup.h
+ C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/ui.h

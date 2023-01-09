@@ -22,10 +22,10 @@ struct FrameBuffer
     void initialize();
     void remove();
     void refresh(uint16_t width, uint16_t height, bool opaque);
-    bool complete();
+    int complete();
 
-    void addTexture(const std::string& name, uint16_t width, uint16_t height, uint32_t component, uint32_t componentType, uint32_t attachment, uint32_t scaling, uint32_t wrapping, bool multisampled);
-    void addRenderBuffer(const std::string& name, uint16_t width, uint16_t height);
+    void addTexture(const std::string& name, uint16_t width, uint16_t height, uint32_t component, uint32_t componentType, uint32_t attachment, uint32_t scaling, uint32_t wrapping, int samples);
+    void addRenderBuffer(const std::string& name, uint16_t width, uint16_t height, int samples);
 
     void bind(uint32_t type);
     void unbind();

@@ -6,6 +6,7 @@
 
 #define M_PI 3.14159265358979323846
 #include <math.h>
+#include <vector>
 
 struct Vector2;
 struct Vector4;
@@ -66,6 +67,11 @@ namespace math
     bool lineLineIntersect(const Vector2& p1, const Vector2& p2, const Vector2& q1, const Vector2& q2);
     bool quadPointIntersect(const Quad& quad, const Vector2& point);
 }
+
+// struct fixed
+// {
+
+// };
 
 // Vector2 (structure): structure that holds two variables (x, y) and allows two dimensional vector operations
 struct Vector2
@@ -620,7 +626,7 @@ struct mat4x4
     {
         for(int i=0; i<16; i++) matrix[i] = 0;
     }
-    mat4x4(float scale) // creates a scaled identity matrix by quantity 'scale'
+    explicit mat4x4(float scale) // creates a scaled identity matrix by quantity 'scale'
     {
         for(int i=0; i<16; i++) matrix[i] = 0;
         matrix[0] = matrix[5] = matrix[10] = matrix[15] = scale;
@@ -859,6 +865,16 @@ inline Vector4 operator *(const mat4x4 &mat, const Vector4 &vector)
 
     return result;
 }
+inline Vector3 operator *(const mat4x4 &mat, const Vector3 &vector)
+{
+    Vector3 result = Vector3();
+    
+    result.x = vector.x*mat.matrix[0] + vector.y*mat.matrix[1] + vector.z*mat.matrix[2] + mat.matrix[3];
+    result.y = vector.x*mat.matrix[4] + vector.y*mat.matrix[5] + vector.z*mat.matrix[6] + mat.matrix[7];
+    result.z = vector.x*mat.matrix[8] + vector.y*mat.matrix[9] + vector.z*mat.matrix[10] + mat.matrix[11];
+
+    return result;
+}
 inline mat4x4 operator *(const mat4x4 &mat1, const mat4x4 &mat2)
 {
     mat4x4 result(0);
@@ -925,13 +941,6 @@ struct Quaternion
     float q0, q1, q2, q3;
 
     Quaternion() : q0(1), q1(0), q2(0), q3(0){}
-    Quaternion(float theta, const Vector3 &direction)    // creates a rotation quaternion rotated 'theta' radians around the 'direction' axis :: Axis-Angle Quaternion
-    {
-        q0 = std::cos(theta/2);
-        q1 = direction.x*std::sin(theta/2);
-        q2 = direction.y*std::sin(theta/2);
-        q3 = direction.z*std::sin(theta/2);
-    }
     Quaternion(const mat4x4 &rotationMatrix)             // creates a rotation quaternion by converting a mat4x4 to a Quaterion :: Rotation Matrix Quaternion
     {
         const float *matrix = rotationMatrix.matrix;
@@ -971,6 +980,13 @@ struct Quaternion
                 q3 = 0.25f * s;
             }
         }
+    }
+    Quaternion(float theta, const Vector3 &direction)    // creates a rotation quaternion rotated 'theta' radians around the 'direction' axis :: Axis-Angle Quaternion
+    {
+        q0 = std::cos(theta/2);
+        q1 = direction.x*std::sin(theta/2);
+        q2 = direction.y*std::sin(theta/2);
+        q3 = direction.z*std::sin(theta/2);
     }
 
     Vector3 imaginary() const // returns the imaginary components of a quaternion (q1, q2, q3) as a Vector3
@@ -1082,14 +1098,17 @@ namespace vec2
     const Vector2 up(0, 1);
     const Vector2 down(0, -1);
 
-    Vector2 abs(const Vector2 &vector);                    // returns "math::abs" of each of its components as a new Vector2
+    Vector2 abs(const Vector2 &vector);                                               // returns "math::abs" of each of its components as a new Vector2
     Vector2 degrees(const Vector2& vector);
-    Vector2 min(const Vector2 &vec1, const Vector2 &vec2); // returns "std::max" of each of its components as a new Vector2
-    Vector2 pow(const Vector2 &vector, float exponent);    // returns "std::pow" of each of its components as a new Vector2
+    Vector2 lerp(const Vector2& vec1, const Vector2& vec2, float weight);             // returns 'vec1' linearly interpolated to 'vec2' by weight
+    Vector2 min(const Vector2 &vec1, const Vector2 &vec2);                            // returns "std::max" of each of its components as a new Vector2
+    Vector2 pow(const Vector2 &vector, float exponent);                               // returns "std::pow" of each of its components as a new Vector2
     Vector2 radians(const Vector2& vector);
     Vector2 rotatedAround(const Vector2& vector, const Vector2& origin, float theta);
-    Vector2 sign(const Vector2 &vector);                   // returns the "math::sign" of each of its components as a new Vector2
-    Vector2 sign0(const Vector2 &vector);                  // returns the "math::sign0" of each of its components as a new Vector2
+    Vector2 sign(const Vector2 &vector);                                              // returns the "math::sign" of each of its components as a new Vector2
+    Vector2 sign0(const Vector2 &vector);                                             // returns the "math::sign0" of each of its components as a new Vector2
+
+    std::vector<Vector2> bezier(const std::vector<Vector2>& points, const std::vector<Vector2>& controls, float partition);
 }
 namespace vec3
 {

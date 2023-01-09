@@ -1080,7 +1080,8 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: C:/Projects/Venus/src/setup.cpp \
   C:/msys64/mingw64/include/c++/12.1.0/set \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
-  C:/Projects/Venus/include/setup.h
+  C:/Projects/Venus/include/setup.h \
+  C:/Projects/Venus/include/ui.h
 
 src/CMakeFiles/venus_lib.dir/shader.cpp.obj: C:/Projects/Venus/src/shader.cpp \
   C:/Projects/Venus/include/glad/glad.h \
@@ -2012,6 +2013,8 @@ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/tsxldtrkintrin.h:
 C:/Projects/Venus/src/global.cpp:
 
 C:/Projects/Venus/include/file_util.h:
+
+C:/Projects/Venus/include/ui.h:
 
 C:/msys64/mingw64/include/msxml.h:
 

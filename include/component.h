@@ -111,6 +111,7 @@ struct Transform
     Transform() {}
     Transform(const Vector3& position__) : Transform(position__, vec3::one, Quaternion()) {}
     Transform(const Vector3& position__, const Vector3& scale__) : Transform(position__, scale__, Quaternion()) {}
+    Transform(const Vector3& position__, const Quaternion& rotation__) : Transform(position__, vec3::one, rotation__) {}
     Transform(const Vector3& position__, const Vector3& scale__, const Quaternion& rotation__) : position(position__), scale(scale__), rotation(rotation__) {}
 };
 

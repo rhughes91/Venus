@@ -1080,7 +1080,8 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: C:/Projects/Venus/src/setup.cpp \
   C:/msys64/mingw64/include/c++/12.1.0/set \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
-  C:/Projects/Venus/include/setup.h
+  C:/Projects/Venus/include/setup.h \
+  C:/Projects/Venus/include/ui.h
 
 src/CMakeFiles/venus_lib.dir/shader.cpp.obj: C:/Projects/Venus/src/shader.cpp \
   C:/Projects/Venus/include/glad/glad.h \
@@ -1404,6 +1405,11 @@ src/CMakeFiles/venus_lib.dir/vector.cpp.obj: C:/Projects/Venus/src/vector.cpp \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/vector \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
   C:/Projects/Venus/include/color.h \
   C:/msys64/mingw64/include/c++/12.1.0/iomanip \
   C:/msys64/mingw64/include/c++/12.1.0/locale \
@@ -2012,6 +2018,8 @@ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/tsxldtrkintrin.h:
 C:/Projects/Venus/src/global.cpp:
 
 C:/Projects/Venus/include/file_util.h:
+
+C:/Projects/Venus/include/ui.h:
 
 C:/msys64/mingw64/include/msxml.h:
 

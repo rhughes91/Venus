@@ -12,4 +12,6 @@ std::vector<std::string> loadFileToStringVector(const std::string &fileName);
 
 std::string getCurrentDirectoryName();
 
+void loadTTF(const std::string &fileName);
+
 #endif

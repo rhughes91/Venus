@@ -6,8 +6,9 @@ void createWorld(const Material& objectDefault)
     Mesh& cube = mesh::get("cube");
 
     Material objectDull = Material
-    (shader::get("obj_shader"), [] (const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+    (shader::get("obj_shader"), [] (Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform)
     {
+        Transform& transform = object::getComponent<Transform>(entity);
         Shader shader = model.material.shader;
         shader.use();
         
@@ -26,6 +27,7 @@ void createWorld(const Material& objectDefault)
         shader.setVec3("material.diffuseStrength", 1);
         shader.setVec3("material.specularStrength", 0.1f);
     });
+    Material simple = Material(shader::get("simple_shader"));
 
     Mesh shelfMesh = loadObjFile("shelf.obj");
     Mesh winMesh = loadObjFile("window.obj");
@@ -52,28 +54,42 @@ void createWorld(const Material& objectDefault)
     windowLight2.getComponent<SpotLight>().direction = Vector3(1, -0.25f, 0);
     shelfArray.addChild(windowLight2);
 
-    Object shelf("shelf");
+    Object shelf("shelf", false);
     shelf.addComponent<Transform>(Transform(Vector3(5, -16.5f, start), 1));
     shelf.addComponent<Model>({color::WHITE, objectDefault, shelfMesh, texture::get("Vellichor/bookcase_texture.png")});
-    shelfArray.addChild(shelf);
+    shelf.addComponent<MeshAddon>(
+    MeshAddon
+    ({
+        Vector3(91, 0, 0), Vector3(0, 0, -25), Vector3(91, 0, -25), Vector3(0, 0, -50), Vector3(91, 0, -50), Vector3(0, 0, -75), Vector3(91, 0, -75)
+    }));
 
-    Object win("window");
-    win.addComponent<Transform>(Transform(Vector3(-9.0f, -2.5f, start), 1));
-    win.addComponent<Model>({color::WHITE * 0.8f, Material(shader::get("simple_shader")), winMesh, texture::get("Vellichor/window_texture.png")});
-    shelfArray.addChild(win);
+    Object window("window", false);
+    window.addComponent<Transform>(Transform(Vector3(-9.0f, -2.5f, start), 1));
+    window.addComponent<Model>({color::WHITE * 0.8f, simple, winMesh, texture::get("Vellichor/window_texture.png")});
+    window.addComponent<MeshAddon>(
+    MeshAddon
+    ({
+        {Vector3(119, 0, 0), Quaternion(math::radians(180), vec3::up)}, Vector3(0, 0, -25), {Vector3(119, 0, -25), Quaternion(math::radians(180), vec3::up)}, Vector3(0, 0, -50), 
+        {Vector3(119, 0, -50), Quaternion(math::radians(180), vec3::up)}, Vector3(0, 0, -75), {Vector3(119, 0, -75), Quaternion(math::radians(180), vec3::up)}
+    }));
 
-    Object back("back");
-    back.addComponent<Transform>(Transform(Vector3(-20.0f, 5, 0), Vector3(180, 60, 0), Quaternion(math::radians(90), vec3::up)));
-    back.addComponent<Model>({Color(0.02f, 0.02f, 0.05f, 1), objectDefault, square, texture::get("default.png")});
-    back.clone().getComponent<Transform>() = Transform(Vector3(120.0f, 5, 0), Vector3(180, 60, 0), Quaternion(math::radians(90), vec3::down));
+    Object back("back", false);
+    back.addComponent<Transform>(Transform(Vector3(-20.0f, 5, 0), Vector3(180, 60, 1), Quaternion(math::radians(90), vec3::up)));
+    back.addComponent<Model>({Color(0.04f, 0.04f, 0.1f, 1), simple, square, texture::get("default.png")});
+    back.addComponent<MeshAddon>(MeshAddon({{Vector3(140, 0, 0), Quaternion(math::radians(180), vec3::up)}}));
 
-    Object pane("windowPane");
+    Object pane("windowPane", false);
     pane.addComponent<Transform>(Transform(Vector3(-9.45f, 5, start), 7.25f, Quaternion(math::radians(90), vec3::up)));
     pane.addComponent<Model>({color::CLEAR, objectDefault, square, texture::get("default.png")});
-    shelfArray.addChild(pane);
+    pane.addComponent<MeshAddon>(
+    MeshAddon
+    ({
+        {Vector3(119.9f, 0, 0), Quaternion(math::radians(180), vec3::up)}, Vector3(0, 0, -25), {Vector3(119.9f, 0, -25), Quaternion(math::radians(180), vec3::up)}, Vector3(0, 0, -50), 
+        {Vector3(119.9f, 0, -50), Quaternion(math::radians(180), vec3::up)}, Vector3(0, 0, -75), {Vector3(119.9f, 0, -75), Quaternion(math::radians(180), vec3::up)}
+    }));
 
-    Object ladder("ladder");
-    ladder.addComponent<Transform>(Transform(Vector3(-4.9125f, -16.5f, 5.25f+start), 1, Quaternion(math::radians(45), vec3::up)));
+    Object ladder("ladder", false);
+    ladder.addComponent<Transform>(Transform(Vector3(-4.9125f, -16.5f, 5.25f+start), Quaternion(math::radians(45), vec3::up)));
     ladder.addComponent<Model>({color::WHITE, objectDefault, ladderMesh, texture::get("Vellichor/ladder_texture.png")});
     ladder.addComponent<BoxCollider>();
     shelfArray.addChild(ladder);
@@ -102,24 +118,17 @@ void createWorld(const Material& objectDefault)
         {
             Transform& childTransform = child.getComponent<Transform>();
             childTransform.position += Vector3(91, 0, 0);
-            if(child.name.find("window") != std::string::npos)
+            if(child.name.find("windowLight") != std::string::npos)
             {
-                childTransform.position += Vector3(28.0f, 0, 0);
-                if(child.name.find("Light") != std::string::npos)
-                {
-                    child.getComponent<SpotLight>().direction *= Vector3(-1, 1, -1);
-                }
-                else
-                {
-                    childTransform.rotation *= Quaternion(math::radians(180), vec3::up);
-                }
+                childTransform.position += Vector3(30.0f, 0, 0);
+                child.getComponent<SpotLight>().direction *= Vector3(-1, 1, -1);
             }
         }
     }
 
     Object wall("wall");
     wall.addComponent<Transform>(Transform(Vector3(50.5f, -5, 60), 1 , Quaternion(math::radians(180), vec3::up)));
-    wall.addComponent<Model>(Model {color::WHITE, Material(shader::get("simple_shader")), wallMesh, texture::get("Vellichor/wall_texture.png")});
+    wall.addComponent<Model>(Model {0.75f, simple, wallMesh, texture::get("Vellichor/wall_texture.png")});
 
     Object wall2 = wall.clone();
     wall2.getComponent<Transform>() = Transform(Vector3(-9.5f, -5, 0), 1 , Quaternion(math::radians(90), vec3::up));
@@ -135,11 +144,11 @@ void createWorld(const Material& objectDefault)
 
     Object floor("floor");
     floor.addComponent<Transform>(Transform(Vector3(50.5f, -32.5f, 0), 120, Quaternion(math::radians(90), vec3::left)));
-    floor.addComponent<Model>({Color(0.2f, 0.02f, 0.03f, 1), Material(shader::get("simple_shader")), shape::square(24), texture::get("Vellichor/carpet_texture.png")});
+    floor.addComponent<Model>({Color(0.2f, 0.02f, 0.03f, 1), simple, shape::square(24), texture::get("Vellichor/carpet_texture.png")});
 
     Object ceiling("ceiling");
     ceiling.addComponent<Transform>(Transform(Vector3(50.5f, 19.5f, 0), 120, Quaternion(math::radians(90), vec3::right)));
-    ceiling.addComponent<Model>({Color(0.1f, 0.0375f, 0.0375f, 1), Material(shader::get("simple_shader")), shape::square(24), texture::get("default.png")});
+    ceiling.addComponent<Model>({Color(0.1f, 0.0375f, 0.0375f, 1), simple, shape::square(24), texture::get("default.png")});
 }
 
 void register8DStates(AnimationState& state)
@@ -220,7 +229,7 @@ void vellichor::initialize()
         float speed = 2.0f, rotationalSpeed = 0, radius = 6, angle = 0, mouseSensitivity = 0.5f, lastDelta;
         key::KeyArray forward = {key::W}, back = {key::S}, left = {key::A}, right = {key::D};
     };
-    Event& event = object::initializeScript<Event>(0);
+    Event& event = object::initializeScript<Event>();
     {
         // LOAD
         event.load([]
@@ -235,22 +244,16 @@ void vellichor::initialize()
             data.lastMousePosition = window::cursorScreenPosition();
 
             Material playerMaterial = 
-            Material (shader::get("obj_shader"), [] (const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+            Material (shader::get("obj_shader"), [] (Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform)
             {
-                shader::advanced(transform, model, camera, cameraTransform, 1, 0.2f, 0.1f, 64);
+                shader::advanced(entity, model, camera, cameraTransform, 1, 0.2f, 0.1f, 64);
             });
             Material objectDefault = 
-            Material(shader::get("obj_shader"), [] (const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+            Material(shader::get("obj_shader"), [] (Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform)
             {
-                shader::advanced(transform, model, camera, cameraTransform, 1, 1, 0.5f, 32);
+                shader::advanced(entity, model, camera, cameraTransform, 1, 1, 0.5f, 32);
             });
-            Material uiMaterial = Material {shader::get("ui_shader"), shader::simple};
-
-
-            // Object test("button");
-            // test.addComponent<Rect>(Rect(Alignment(alignment::MIDDLE, alignment::CENTER)));
-            // test.addComponent<Model>(Model(color::RED, uiMaterial, mesh::get("square"), texture::get("default.png")));
-
+            Material uiMaterial = Material {shader::get("ui_shader"), shader::ui};
 
             createWorld(objectDefault);
 
@@ -277,7 +280,7 @@ void vellichor::initialize()
                     transform.position = Vector3(newTransform.x, math::clamp(newTransform.y, minHeight, maxHeight), newTransform.z);
                 }
             });
-            data.violetTransform = &violet.addComponent<Transform>(Transform(Vector3(0, 0.6f, 5), Vector3(1.125f, 2.25f, 1)));
+            data.violetTransform = &violet.addComponent<Transform>(Transform(Vector3(0, 0.6f, 35), Vector3(1.125f, 2.25f, 1)));
             data.animator = &configurePlayerAnimator(violet);
 
             Object spotLight("follower");
@@ -297,12 +300,20 @@ void vellichor::initialize()
 
             violet.addComponent<Billboard>(Billboard{camera.data});
             // mother.addComponent<Billboard>(Billboard{camera.data});
+
+
+            // loadTTF("arial_mt_black/arial_mt_black.ttf");
+
+            // Object curve("curveTest");
+            // curve.addComponent<Rect>(Rect(Alignment(alignment::MIDDLE, alignment::CENTER)));
+            // curve.addComponent<Spline>(Spline({Curve(Vector2(-1, 0), Vector2(1, 0), {})}, shader::get("spline_shader"), color::PURPLE));
         });
 
         // UPDATE
         event.update([]
         (System& script)
         {
+
             Event& data = script.data<Event>();
 
             float delta = data.lastDelta * 0.75 + event::delta() * 0.25;
@@ -338,7 +349,7 @@ void vellichor::initialize()
 
             if(window::camera() == data.test.data)
             {
-                object::getComponent<Transform>(data.test.data).position += Vector3(key::held(key::RIGHT) - key::held(key::LEFT), key::held(key::SLASH) - key::held(key::PERIOD), key::held(key::DOWN) - key::held(key::UP)).normalized() * event::delta();
+                object::getComponent<Transform>(data.test.data).position += Vector3(key::held(key::RIGHT) - key::held(key::LEFT), key::held(key::SLASH) - key::held(key::PERIOD), key::held(key::DOWN) - key::held(key::UP)).normalized() * event::delta() * 20;
             }
             data.lastDelta = delta;
         });

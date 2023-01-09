@@ -7,6 +7,7 @@
 #include "input.h"
 #include "setup.h"
 #include "structure.h"
+#include "ui.h"
 
 InputManager g_keyboard, g_mouse;
 Window g_window;
@@ -23,24 +24,27 @@ void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screen
     dirLight = dirLight__;
     gamma = 1.5f;
 
+    int maxSamples = getMaximumSamples();
+
     frameBuffer.initialize();
     subBuffer.initialize();
     depthBuffer.initialize();
 
-    frameBuffer.addTexture("multiTexture", width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, 0, GL_REPEAT, true);
-    subBuffer.addTexture("texture", width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_REPEAT, false);
+    frameBuffer.addTexture("multiTexture", width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, 0, GL_REPEAT, std::min(4, maxSamples));
+    subBuffer.addTexture("texture", width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT0, GL_LINEAR, GL_REPEAT, 0);
     
-    frameBuffer.addRenderBuffer("renderBuffer", width, height);
+    frameBuffer.addRenderBuffer("renderBuffer", width, height, std::min(4, maxSamples));
 
     shader = screenShader__;
     shader.use();
     shader.setInt("screenTexture", 0);
 
-    if(!frameBuffer.complete())
-        std::cout << "ERROR :: Screen framebuffer is not complete." << std::endl;
+    int complete;
+    if((complete = frameBuffer.complete()) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR :: " << complete << " :: Screen subbuffer is not complete." << std::endl;
 
-    if(!subBuffer.complete())
-        std::cout << "ERROR :: Screen subbuffer is not complete." << std::endl;
+    if((complete = subBuffer.complete()) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR :: " << complete << " :: Screen subbuffer is not complete." << std::endl;
 }
 void Screen::remove()
 {
@@ -71,10 +75,16 @@ void Screen::draw()
     glDisable(GL_DEPTH_TEST);
     glClearColor(defaultColor.r, defaultColor.g, defaultColor.b, defaultColor.a);
     glClear(GL_COLOR_BUFFER_BIT);
-
+    
     shader.use();
     shader.setFloat("gamma", gamma);
     quad.draw(subBuffer.getTexture("texture").data);
+}
+int Screen::getMaximumSamples()
+{
+    int maxSamples;
+    glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
+    return maxSamples;
 }
 
 void object::render()
@@ -91,13 +101,19 @@ void Mesh::draw(const uint32_t texture) const
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, g_window.screen.depthBuffer.getTexture("texture").data);
-
+    
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, count);
+    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+}
+void Spline::render()
+{   
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_LINE_STRIP, 0, points.size());
 }
 
-void shader::simple(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform)
+void shader::simple(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform)
 {
+    Transform& transform = object::getComponent<Transform>(entity);
     Shader shader = model.material.shader;
     shader.use();
     
@@ -107,8 +123,21 @@ void shader::simple(const Transform& transform, const Model& model, const Camera
     shader.setVec3("scale", transform.scale);
     shader.setVec4("objColor", model.color);
 }
-void shader::advanced(const Transform& transform, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess)
+void shader::ui(Entity entity, const Model& model, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
 {
+    Rect& transform = object::getComponent<Rect>(entity);
+    Shader shader = model.material.shader;
+    shader.use();
+    
+    shader.setFloat("aspect", window::aspectRatio());
+    shader.setVec2("position", transform.relativePosition());
+    shader.setVec2("scale", transform.scale);
+    shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
+    shader.setVec4("objColor", model.color);
+}
+void shader::advanced(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess)
+{
+    Transform& transform = object::getComponent<Transform>(entity);
     Shader shader = model.material.shader;
     shader.use();
     
@@ -290,12 +319,17 @@ void Time::beginTimer()
     lastFrame = currentFrame;
 }
 
+void error_callback(int error, const char* msg) {
+	std::string s;
+	s = " [" + std::to_string(error) + "] " + msg + '\n';
+	std::cout << s << std::endl;
+}
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if(action == GLFW_REPEAT)
         return;
 
-    for(GLenum k = 0; k<=GLFW_KEY_LAST; k++)
+    for(GLenum k = 32; k<=GLFW_KEY_LAST; k++)
     {
         g_keyboard.parse(glInputToKeyCode(k), glfwGetKey(window, k));
     }
@@ -361,13 +395,18 @@ Window::Window(std::string name, uint32_t width__, uint32_t height__)
     height = height__;
     screen.defaultColor = color::RED;
     
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    if(!glfwInit())
+    {
+        std::cout << "ERROR :: GLFW could not be initialized." << std::endl;
+        return;
+    }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwSetErrorCallback(error_callback);
 
     data = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
     if(data == NULL)
@@ -513,25 +552,25 @@ bool window::throwError()
             errorMessage = "SUCCESS";
         break;
         case 1280:
-            errorMessage = "ERROR :: Invalid enumeration parameter.";
+            errorMessage = "ERROR :: 1280 :: Invalid enumeration parameter.";
         break;
         case 1281:
-            errorMessage = "ERROR :: Invalid value parameter.";
+            errorMessage = "ERROR :: 1281 :: Invalid value parameter.";
         break;
         case 1282:
-            errorMessage = "ERROR :: Invalid command state for given parameter.";
+            errorMessage = "ERROR :: 1282 :: Invalid command state for given parameter.";
         break;
         case 1283:
-            errorMessage = "ERROR :: Stack overflow.";
+            errorMessage = "ERROR :: 1283 :: Stack overflow.";
         break;
         case 1284:
-            errorMessage = "ERROR :: Stack underflow.";
+            errorMessage = "ERROR :: 1284 :: Stack underflow.";
         break;
         case 1285:
-            errorMessage = "ERROR :: Memory could not be allocated.";
+            errorMessage = "ERROR :: 1285 :: Memory could not be allocated.";
         break;
         case 1286:
-            errorMessage = "ERROR :: Framebuffer incomplete.";
+            errorMessage = "ERROR :: 1286 :: Framebuffer incomplete.";
         break;
     }
     std::cout << errorMessage << std::endl;
@@ -725,7 +764,9 @@ bool createWindow(const char *name, uint32_t width, uint32_t height)
     
     stbi_set_flip_vertically_on_load(true);
     texture::load("", {"default"}, texture::PNG);
+    
     g_window.screen.quad = mesh::load("square", shape::square());
+    g_window.screen.quad.refresh();
     mesh::load("cube", shape::cube());
 
     g_keyboard.initialize(key::LAST);

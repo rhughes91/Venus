@@ -1,4 +1,4 @@
-#version 460 core
+#version 330 core
 
 uniform sampler2D text;
 uniform bool clear;
