@@ -983,10 +983,11 @@ struct Quaternion
     }
     Quaternion(float theta, const Vector3 &direction)    // creates a rotation quaternion rotated 'theta' radians around the 'direction' axis :: Axis-Angle Quaternion
     {
+        Vector3 dir = direction.normalized();
         q0 = std::cos(theta/2);
-        q1 = direction.x*std::sin(theta/2);
-        q2 = direction.y*std::sin(theta/2);
-        q3 = direction.z*std::sin(theta/2);
+        q1 = dir.x*std::sin(theta/2);
+        q2 = dir.y*std::sin(theta/2);
+        q3 = dir.z*std::sin(theta/2);
     }
 
     Vector3 imaginary() const // returns the imaginary components of a quaternion (q1, q2, q3) as a Vector3

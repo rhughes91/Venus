@@ -43,6 +43,11 @@ void mesh::load(const std::string &path, const std::vector<std::string> &subPath
 }
 Mesh &mesh::get(const std::string &path)
 {
+    if(!g_loadedMeshes.count(path))
+    {
+        std::cout << "ERROR :: Mesh at \'" << path << "\' could not be found." << std::endl;
+        return mesh::get("square");
+    }
     return g_loadedMeshes.at(path);
 }
 std::vector<Mesh> mesh::get(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
@@ -68,6 +73,11 @@ Shader &shader::load(const std::string& path, const Shader& shader)
 }
 Shader &shader::get(const std::string& path)
 {
+    if(!g_loadedShaders.count(path))
+    {
+        std::cout << "ERROR :: Shader at \'" << path << "\' could not be found." << std::endl;
+        // return mesh::get("square");
+    }
     return g_loadedShaders.at(path);
 }
 void shader::remove()

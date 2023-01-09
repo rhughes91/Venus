@@ -10,6 +10,9 @@ struct DirectionalLight
     Vector3 direction;
     Color color;
     float strength;
+
+    DirectionalLight() {}
+    DirectionalLight(const Vector3& direction__, const Color& color__, float strength__ = 1) : direction(direction__), color(color__), strength(strength__) {}
 };
 
 // Screen (struct): holds basic data about how data is rendered to the screen
@@ -107,6 +110,7 @@ namespace window
 
     uint32_t camera();
     DirectionalLight& lighting();
+    DirectionalLight& setLighting(const DirectionalLight& light);
 }
 
 // initializes the global 'g_window' Window singleton

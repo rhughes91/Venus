@@ -14,26 +14,6 @@ void beginEventLoop()
         return;
     }
     
-    DirectionalLight light = window::lighting();
-
-    Shader& objectShader = shader::load("obj_shader", Shader("object_vertex", "object_frag"));
-    objectShader.use();
-    objectShader.setInt("material.diffuse", 0);
-    // objectShader.setInt("material.specular", 1);
-    objectShader.setVec3("dirLight.direction", light.direction);
-    objectShader.setVec4("dirLight.color", light.color);
-    objectShader.setFloat("dirLight.strength", light.strength);
-    
-    Shader& simpleShader = shader::load("simple_shader", Shader("object_vertex", "simple_frag"));
-    simpleShader.use();
-    simpleShader.setInt("material.texture", 0);
-    
-    Shader& uiShader = shader::load("ui_shader", Shader("ui_vertex", "ui_frag"));
-    uiShader.use();
-    uiShader.setInt("text", 0);
-
-    shader::load("spline_shader", Shader("spline_vertex", "spline_frag"));
-    
     float timeScale = 0.02f;
     object::load();
     object::start();
@@ -62,6 +42,8 @@ void beginEventLoop()
         g_mouse.refresh();
         window::refresh();
     }
+
+    object::destroy();
     
     window::remove();
     mesh::remove();

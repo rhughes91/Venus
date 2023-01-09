@@ -381,7 +381,7 @@ class System
             p_start = start__;
         }      
 
-        // function that is run after the primary game loop begins
+        // function that is run after the primary game loop ends
         void destroy(System &system) {p_destroy(system);} 
         void setDestroy(void (*destroy__)(System &))
         {

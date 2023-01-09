@@ -429,7 +429,7 @@ Window::Window(std::string name, uint32_t width__, uint32_t height__)
     double xPos, yPos;
     glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
     cursorPosition = {(float)xPos, (float)yPos};
-    screen.initialize(DirectionalLight{Vector3(0, 0, 1), color::WHITE, 1}, Shader("screen_vertex", "screen_frag"), width, height);
+    screen.initialize(DirectionalLight(vec3::forward, color::WHITE), Shader("screen_vertex", "screen_frag"), width, height);
 }
 void Window::configureGLAD()
 {
@@ -751,6 +751,10 @@ DirectionalLight& window::lighting()
 {
     return g_window.screen.dirLight;
 }
+DirectionalLight& window::setLighting(const DirectionalLight& light)
+{
+    return(g_window.screen.dirLight = light);
+}
 
 bool createWindow(const char *name, uint32_t width, uint32_t height)
 {
@@ -768,6 +772,27 @@ bool createWindow(const char *name, uint32_t width, uint32_t height)
     g_window.screen.quad = mesh::load("square", shape::square());
     g_window.screen.quad.refresh();
     mesh::load("cube", shape::cube());
+
+
+    DirectionalLight light = window::lighting();
+
+    Shader& objectShader = shader::load("obj_shader", Shader("object_vertex", "object_frag"));
+    objectShader.use();
+    objectShader.setInt("material.diffuse", 0);
+    // objectShader.setInt("material.specular", 1);
+    objectShader.setVec3("dirLight.direction", light.direction);
+    objectShader.setVec4("dirLight.color", light.color);
+    objectShader.setFloat("dirLight.strength", light.strength);
+    
+    Shader& simpleShader = shader::load("simple_shader", Shader("object_vertex", "simple_frag"));
+    simpleShader.use();
+    simpleShader.setInt("material.texture", 0);
+    
+    Shader& uiShader = shader::load("ui_shader", Shader("ui_vertex", "ui_frag"));
+    uiShader.use();
+    uiShader.setInt("text", 0);
+
+    shader::load("spline_shader", Shader("spline_vertex", "spline_frag"));
 
     g_keyboard.initialize(key::LAST);
     g_mouse.initialize(mouse::LAST);
