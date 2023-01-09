@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\Vellichor.dir/objects.a
-C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\Vellichor.dir/objects.a @CMakeFiles\Vellichor.dir\objects1
-C:\msys64\mingw64\bin\c++.exe -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles\Vellichor.dir/objects.a -Wl,--no-whole-archive -o C:\Projects\Venus\build\Vellichor\Vellichor.exe -Wl,--out-implib,libVellichor.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\Vellichor.dir\linkLibs.rsp
