@@ -87,7 +87,6 @@ int main()
         cube.addComponent<Model>(Model(color::WHITE, defaultMaterial, mesh::get("cube"), texture::get("default.png")));
 
         createScript();
-
         beginEventLoop();
     }
     else
