@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\SageHaven.dir/objects.a
-C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\SageHaven.dir/objects.a @CMakeFiles\SageHaven.dir\objects1
-C:\msys64\mingw64\bin\c++.exe -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles\SageHaven.dir/objects.a -Wl,--no-whole-archive -o C:\Projects\Venus\build\SageHaven\SageHaven.exe -Wl,--out-implib,libSageHaven.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\SageHaven.dir\linkLibs.rsp
