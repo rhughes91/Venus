@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libecs_lib.a CMakeFiles/ecs_lib.dir/structure.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libecs_lib.a
