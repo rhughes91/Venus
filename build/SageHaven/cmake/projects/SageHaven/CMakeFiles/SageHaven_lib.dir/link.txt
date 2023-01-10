@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libSageHaven_lib.a CMakeFiles/SageHaven_lib.dir/platformer.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libSageHaven_lib.a
