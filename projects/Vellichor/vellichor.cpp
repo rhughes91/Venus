@@ -212,7 +212,6 @@ Animator& configurePlayerAnimator(Object& violet)
     return animator;
 }
 
-
 void vellichor::initialize()
 {
     struct Event : Script
