@@ -2,7 +2,7 @@ project(Venus)
 
 
 # additional '.cpp' files can be placed in the variable below
-set(PROJECT_SRC "")
+set(PROJECT_SRC "project.cpp")
 
 set(EMPTY_PROJ FALSE)
 if(PROJECT_SRC STREQUAL "")

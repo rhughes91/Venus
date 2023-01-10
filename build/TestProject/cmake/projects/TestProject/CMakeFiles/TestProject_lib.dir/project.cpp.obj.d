@@ -1,5 +1,5 @@
-projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj: \
- C:\Projects\Venus\projects\TestProject\main.cpp \
+projects/TestProject/CMakeFiles/TestProject_lib.dir/project.cpp.obj: \
+ C:\Projects\Venus\projects\TestProject\project.cpp \
  C:\Projects\Venus\projects\TestProject\project.h \
  C:/Projects/Venus/include/venus.h C:/Projects/Venus/include/component.h \
  C:/msys64/mingw64/include/c++/12.1.0/iostream \

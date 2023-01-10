@@ -168,6 +168,19 @@ vendor_lib/fast:
 .PHONY : vendor_lib/fast
 
 #=============================================================================
+# Target rules for targets named TestProject_lib
+
+# Build rule for target.
+TestProject_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 TestProject_lib
+.PHONY : TestProject_lib
+
+# fast build rule for target.
+TestProject_lib/fast:
+	$(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject_lib.dir\build.make projects/TestProject/CMakeFiles/TestProject_lib.dir/build
+.PHONY : TestProject_lib/fast
+
+#=============================================================================
 # Target rules for targets named TestProject
 
 # Build rule for target.
@@ -189,6 +202,7 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... TestProject
+	@echo ... TestProject_lib
 	@echo ... ecs_lib
 	@echo ... file_lib
 	@echo ... vendor_lib

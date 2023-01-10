@@ -92,6 +92,7 @@ TestProject_EXTERNAL_OBJECTS =
 
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/build.make
+C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/libTestProject_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libvenus_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: vendor/libvendor_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libecs_lib.a

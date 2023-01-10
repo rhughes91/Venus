@@ -12,6 +12,7 @@ C:/Projects/Venus/build/TestProject/cmake/vendor/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/vendor/CMakeFiles/rebuild_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/projects/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/projects/CMakeFiles/rebuild_cache.dir
+C:/Projects/Venus/build/TestProject/cmake/projects/TestProject/CMakeFiles/TestProject_lib.dir
 C:/Projects/Venus/build/TestProject/cmake/projects/TestProject/CMakeFiles/TestProject.dir
 C:/Projects/Venus/build/TestProject/cmake/projects/TestProject/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/projects/TestProject/CMakeFiles/rebuild_cache.dir

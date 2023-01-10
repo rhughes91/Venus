@@ -1,0 +1,2 @@
+C:\msys64\mingw64\bin\ar.exe qc libTestProject_lib.a CMakeFiles/TestProject_lib.dir/project.cpp.obj
+C:\msys64\mingw64\bin\ranlib.exe libTestProject_lib.a
