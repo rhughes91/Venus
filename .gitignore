@@ -1,4 +1,0 @@
-build/*/
-!build/TestProject/
-projects/*/
-!projects/TestProject/
