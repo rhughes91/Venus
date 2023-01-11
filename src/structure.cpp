@@ -472,8 +472,8 @@ ObjectManager::ObjectManager()
         {
             for(auto const &entity : system.m_entities)
             {
-                Transform &transform = object::getComponent<Transform>(entity);
-                transform.rotation = Quaternion(object::getComponent<Camera>(object::getComponent<Billboard>(entity).target).view).normalized().inverted();
+                Transform& transform = object::getComponent<Transform>(entity);
+                transform.rotation = Quaternion(mat4::lookAt(transform.position, (object::getComponent<Transform>(object::getComponent<Billboard>(entity).target).position - transform.position).normalized(), vec3::up)).inverted();
             }
         });
 

@@ -190,15 +190,14 @@ Mesh shape::square(int32_t tiling)
         Vector3(-0.5f, 0.5f, 0),
         Vector3(0.5f, -0.5f, 0),
     };
-    float textureCorners = tiling;
     float texture[]
     {
-        textureCorners, 0,
-        0, textureCorners,
+        (float)tiling, 0,
+        0, (float)tiling,
         0, 0,
-        textureCorners, textureCorners,
-        0, textureCorners,
-        textureCorners, 0,
+        (float)tiling, (float)tiling,
+        0, (float)tiling,
+        (float)tiling, 0,
     };
     Mesh result = Mesh(vectors, 6, texture, Vector3(1, 1, 0));
     return result;
@@ -286,7 +285,7 @@ Mesh shape::cube()
         Vector3(-0.5f, -0.5f, -0.5f),
         Vector3(0.5f, -0.5f, -0.5f),
         Vector3(0.5f, -0.5f, 0.5f),
-        // TOP
+        // BOTTOM
         Vector3(0.5f, -0.5f, 0.5f),
         Vector3(-0.5f, -0.5f, 0.5f),
         Vector3(-0.5f, -0.5f, -0.5f),
@@ -294,7 +293,7 @@ Mesh shape::cube()
         Vector3(-0.5f, 0.5f, -0.5f),
         Vector3(0.5f, 0.5f, 0.5f),
         Vector3(0.5f, 0.5f, -0.5f),
-        // BOTTOM
+        // TOP
         Vector3(0.5f, 0.5f, 0.5f),
         Vector3(-0.5f, 0.5f, -0.5f),
         Vector3(-0.5f, 0.5f, 0.5f),

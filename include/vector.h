@@ -955,9 +955,9 @@ struct Quaternion
         } 
         else
         {
-            if ( matrix[0] > matrix[5] && matrix[0] > matrix[19] )
+            if ( matrix[0] > matrix[5] && matrix[0] > matrix[10] )
             {
-                float s = 2.0f * sqrtf( 1.0f + matrix[0] - matrix[5] - matrix[19]);
+                float s = 2.0f * sqrtf( 1.0f + matrix[0] - matrix[5] - matrix[10]);
                 q0 = (matrix[9] - matrix[6] ) / s;
                 q1 = 0.25f * s;
                 q2 = (matrix[1] + matrix[4] ) / s;
@@ -1103,6 +1103,7 @@ namespace vec2
     Vector2 degrees(const Vector2& vector);
     Vector2 lerp(const Vector2& vec1, const Vector2& vec2, float weight);             // returns 'vec1' linearly interpolated to 'vec2' by weight
     Vector2 min(const Vector2 &vec1, const Vector2 &vec2);                            // returns "std::max" of each of its components as a new Vector2
+    Vector2 modf(const Vector2& vector, float divisor);
     Vector2 pow(const Vector2 &vector, float exponent);                               // returns "std::pow" of each of its components as a new Vector2
     Vector2 radians(const Vector2& vector);
     Vector2 rotatedAround(const Vector2& vector, const Vector2& origin, float theta);
@@ -1119,18 +1120,21 @@ namespace vec3
     const Vector3 right(1, 0, 0);
     const Vector3 up(0, 1, 0);
     const Vector3 down(0, -1, 0);
-    const Vector3 forward(0, 0, 1);
-    const Vector3 back(0, 0, -1);
+    const Vector3 forward(0, 0, -1);
+    const Vector3 back(0, 0, 1);
 
-    Vector3 pow(const Vector3 &vector, float exponent);                                        // returns "std::pow" of each of its components as a new Vector3
+    
     Vector3 abs(const Vector3 &vector);                                                        // returns "math::abs" of each of its components as a new Vector3
+    Vector3 lerp(const Vector3& vec1, const Vector3& vec2, float weight);                      // returns 'vec1' linearly interpolated to 'vec2' by weight
     Vector3 max(const Vector3 &vec1, const Vector3 &vec2);                                     // returns "std::max" of each of its components as a new Vector3
+    Vector3 modf(const Vector3& vector, float divisor);
+    Vector3 pow(const Vector3 &vector, float exponent);                                        // returns "std::pow" of each of its components as a new Vector3
+    Vector3 roundTo(const Vector3& vector, int32_t precision);                                 // returns "math::roundTo" of each of its components as a new Vector3
     Vector3 sign(const Vector3 &vector);                                                       // returns "math::sign" of each of its components as a new Vector3
     Vector3 sign0(const Vector3 &vector);                                                      // returns "math::sign0" of each of its components as a new Vector3
-    Vector3 roundTo(const Vector3& vector, int32_t precision);                                 // returns "math::roundTo" of each of its components as a new Vector3
-    Vector3 triSurface(const Vector3 &vec1, const Vector3 &vec2, const Vector3 &pThree);       // returns normal vector of the triangular area described by the provided position vectors
-    Vector3 lerp(const Vector3& vec1, const Vector3& vec2, float weight);                      // returns 'vec1' linearly interpolated to 'vec2' by weight
     Vector3 slerp(const Vector3& vec1, const Vector3& vec2, float weight);                     // returns 'vec1' spherically interpolated to 'vec2' by weight (INCOMPLETE)
+    Vector3 triSurface(const Vector3 &vec1, const Vector3 &vec2, const Vector3 &pThree);       // returns normal vector of the triangular area described by the provided position vectors
+    
     bool inRange(const Vector3& vec1, const Vector3& vec2, float proximity);                   // returns whether 'vec1' is in proximity of 'vec2'
     float angle(const Vector3& vec1, const Vector3& vec2);                                     // returns the angle between 'vec1' and 'vec2'
     float signedAngle(const Vector3& vec1, const Vector3& vec2, const Vector3& up = vec3::up); // returns the angle between 'vec1' and 'vec2' with 'up' being considered the positive direction

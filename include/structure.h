@@ -812,6 +812,10 @@ struct Script : System
         {
             root -> setLoad(load__);
         }
+        void start(void (*start__)(System &))
+        {
+            root -> setStart(start__);
+        }
         void destroy(void (*destroy__)(System &))
         {
             root -> setDestroy(destroy__);
@@ -1083,7 +1087,7 @@ namespace shader
 {
     void simple(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform);
     void ui(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform);
-    void advanced(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess);
+    void advanced(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& strength, int32_t shininess);
 }
 
 // Material (struct): holds the information necessary to render an entity to a complex Shader

@@ -34,6 +34,21 @@ Vector2 vec2::min(const Vector2 &vec1, const Vector2 &vec2)
 {
     return Vector2(std::min(vec1.x, vec2.x), std::min(vec1.y, vec2.y));
 }
+Vector2 vec2::modf(const Vector2& vector, float divisor)
+{
+    Vector2 result = vector;
+    if(divisor == 0) return vector;
+    while(math::abs(result.x) > abs(divisor))
+    {
+        result.x -= divisor * math::abs(result.x)/result.x;
+    }
+    while(math::abs(result.y) > abs(divisor))
+    {
+        result.y -= divisor * math::abs(result.y)/result.y;
+    }
+    return result;
+    
+}
 Vector2 vec2::pow(const Vector2 &vector, float exponent)
 {
     return Vector2(std::pow(vector.x, exponent), std::pow(vector.y, exponent));
@@ -103,6 +118,25 @@ Vector3 vec3::abs(const Vector3 &vector)
 {
     return Vector3(math::abs(vector.x), math::abs(vector.y), math::abs(vector.z));
 }
+Vector3 vec3::modf(const Vector3& vector, float divisor)
+{
+    Vector3 result = vector;
+    if(divisor == 0) return vector;
+    while(math::abs(result.x) > abs(divisor))
+    {
+        result.x -= divisor * math::abs(result.x)/result.x;
+    }
+    while(math::abs(result.y) > abs(divisor))
+    {
+        result.y -= divisor * math::abs(result.y)/result.y;
+    }
+    while(math::abs(result.z) > abs(divisor))
+    {
+        result.z -= divisor * math::abs(result.z)/result.z;
+    }
+    return result;
+    
+}
 Vector3 vec3::sign(const Vector3 &vector)
 {
     return Vector3(math::sign(vector.x), math::sign(vector.y), math::sign(vector.z));
@@ -115,12 +149,12 @@ Vector3 vec3::roundTo(const Vector3& vector, int32_t precision)
 {
     return Vector3(math::roundTo(vector.x, precision), math::roundTo(vector.y, precision), math::roundTo(vector.z, precision));
 }
-Vector3 vec3::triSurface(const Vector3 &vec1, const Vector3 &vec2, const Vector3 &pThree)
+Vector3 vec3::triSurface(const Vector3 &vec1, const Vector3 &vec2, const Vector3 &vec3)
 {
     Vector3 u = vec2 - vec1;
-    Vector3 v = pThree - vec1;
+    Vector3 v = vec3 - vec1;
 
-    return Vector3((u.y*v.z - u.z*v.y) * math::sign(vec1.x), (u.z*v.x - u.x*v.z)* math::sign(vec1.y), (u.x*v.y - u.y*v.x) * math::sign(vec1.z));
+    return Vector3((u.y*v.z - u.z*v.y), (u.z*v.x - u.x*v.z), (u.x*v.y - u.y*v.x));
 }
 Vector3 vec3::lerp(const Vector3& vec1, const Vector3& vec2, float weight)
 {

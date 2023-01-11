@@ -135,9 +135,10 @@ void shader::ui(Entity entity, const Model& model, const Camera& camera = Camera
     shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
     shader.setVec4("objColor", model.color);
 }
-void shader::advanced(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& ambient, const Vector3& diffuse, const Vector3& specular, int32_t shininess)
+void shader::advanced(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform, const Vector3& strength, int32_t shininess)
 {
     Transform& transform = object::getComponent<Transform>(entity);
+    DirectionalLight& light = window::lighting();
     Shader shader = model.material.shader;
     shader.use();
     
@@ -146,15 +147,17 @@ void shader::advanced(Entity entity, const Model& model, const Camera& camera, c
     shader.setMat4("projection", camera.projection.matrix, true);
     shader.setVec3("scale", transform.scale);
     
-    shader.setVec3("lightPos", Vector3(-60, 20, -20));
+    shader.setVec3("dirLight.direction", light.direction);
+    shader.setVec4("dirLight.color", light.color);
+    shader.setFloat("dirLight.strength", light.strength);
+
     shader.setVec3("viewPos", cameraTransform.position);
     shader.setVec4("objColor", model.color);
 
-    shader.setBool("advanced", true);
     shader.setFloat("material.shininess", shininess);
-    shader.setVec3("material.ambientStrength", ambient);
-    shader.setVec3("material.diffuseStrength", diffuse);
-    shader.setVec3("material.specularStrength", specular);
+    shader.setFloat("material.ambientStrength", strength.x);
+    shader.setFloat("material.diffuseStrength", strength.y);
+    shader.setFloat("material.specularStrength", strength.z);
 }
 
 uint32_t glInputToKeyCode(uint32_t input)
@@ -768,21 +771,18 @@ bool createWindow(const char *name, uint32_t width, uint32_t height)
     
     stbi_set_flip_vertically_on_load(true);
     texture::load("", {"default"}, texture::PNG);
-    
-    g_window.screen.quad = mesh::load("square", shape::square());
-    g_window.screen.quad.refresh();
+
+    mesh::load("square", shape::square());
     mesh::load("cube", shape::cube());
 
+    g_window.screen.quad = mesh::get("square");
+    g_window.screen.quad.refresh();
 
     DirectionalLight light = window::lighting();
 
     Shader& objectShader = shader::load("obj_shader", Shader("object_vertex", "object_frag"));
     objectShader.use();
     objectShader.setInt("material.diffuse", 0);
-    // objectShader.setInt("material.specular", 1);
-    objectShader.setVec3("dirLight.direction", light.direction);
-    objectShader.setVec4("dirLight.color", light.color);
-    objectShader.setFloat("dirLight.strength", light.strength);
     
     Shader& simpleShader = shader::load("simple_shader", Shader("object_vertex", "simple_frag"));
     simpleShader.use();
