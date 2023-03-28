@@ -17,10 +17,24 @@ struct Color
     Color(float red, float green, float blue) : r{red/255}, g{green/255}, b{blue/255}, a{1}{};
     Color(float red, float green, float blue, float alpha) : r{red/255}, g{green/255}, b{blue/255}, a{alpha/255}{};
 
+    Color(Color color, float alpha) : r(color.r), g(color.g), b(color.b), a(alpha/255) {}
+
     operator std::string() const
     {
         return std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a);
     }
+};
+struct Color8
+{
+    uint8_t r, g, b, a;
+    Color8()
+    {
+        r = g = b = a = 0;
+    }
+    Color8(uint8_t value) : r(value), g(value), b(value), a(255) {}
+    Color8(uint8_t value, uint8_t alpha) : r(value), g(value), b(value), a(alpha) {}
+    Color8(uint8_t red, uint8_t green, uint8_t blue) : r{red}, g{green}, b{blue}, a{255}{};
+    Color8(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r{red}, g{green}, b{blue}, a{alpha}{};
 };
 
 // color (namespace): provides easy access to basic colors
@@ -366,6 +380,7 @@ namespace color
     PINK(255, 192, 203),
     PLUM(221, 160, 221),
     POWDERBLUE(176, 224, 230),
+    PRIMROSEPETAL(249, 234, 176),
     PURPLE(128, 0, 128),
     RED(255, 0, 0),
     ROSYBROWN(118, 143, 143),
@@ -383,6 +398,7 @@ namespace color
     SLATEGRAY(112, 128, 144),
     SLATEGREY = SLATEGRAY,
     SNOW(255, 250, 250),
+    SOFTPEACH(246, 217, 190),
     SPRINGGREEN(0, 255, 127),
     STEELBLUE(70, 130, 180),
     TAN(210, 180, 140),

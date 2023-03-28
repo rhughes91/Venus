@@ -27,6 +27,11 @@ struct Timer
         timer = timer-interval;
     }
 
+    bool set()
+    {
+        return timer > interval;
+    }
+
     private:
         float lastFrame;
 };
@@ -71,6 +76,9 @@ struct PointLight
     Color color;
     float strength;
     float constant, linear, quadratic;
+
+    PointLight() {}
+    PointLight(const Color& color__, float strength__, const Vector3& values) : color(color__), strength(strength__), constant(values.x), linear(values.y), quadratic(values.z) {}
 };
 
 // SpotLight (struct): holds data needed to render a spotlight
@@ -83,8 +91,7 @@ struct SpotLight
     float outerCutOff, cutoff;
 
     SpotLight() {}
-    SpotLight(const Vector3& direction__, const Color& color__, float strength__, float constant__, float linear__, float quadratic__, float outerCutOff__, float cutoff__) : direction(direction__), color(color__), strength(strength__), constant(constant__), linear(linear__), quadratic(quadratic__), outerCutOff(outerCutOff__), cutoff(cutoff__) {}
-    SpotLight(const Vector3& direction__, const Color& color__, float strength__, const Vector3 values, float outerCutOff__, float cutoff__) : SpotLight(direction__, color__, strength__, values.x, values.y, values.z, outerCutOff__, cutoff__) {}
+    SpotLight(const Vector3& direction__, const Color& color__, float strength__, const Vector3& values, float outerCutOff__, float cutoff__) : direction(direction__), color(color__), strength(strength__), constant(values.x), linear(values.y), quadratic(values.z), outerCutOff(outerCutOff__), cutoff(cutoff__) {}
 };
 
 

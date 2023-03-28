@@ -1,6 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
+#include "file_util.h"
 #include "vector.h"
 
 namespace alignment
@@ -18,11 +19,11 @@ namespace alignment
 // Alignment (struct): holds basic data to determine how a UI entity should be rendered to the screen
 struct Alignment
 {
-    alignment::vertical vAlignment;
-    alignment::horizontal hAlignment;
+    alignment::vertical vertical;
+    alignment::horizontal horizontal;
 
-    Alignment() : vAlignment(alignment::MIDDLE), hAlignment(alignment::CENTER) {}
-    Alignment(alignment::vertical vAlignment__, alignment::horizontal hAlignment__) : vAlignment(vAlignment__), hAlignment(hAlignment__) {}
+    Alignment() : vertical(alignment::MIDDLE), horizontal(alignment::CENTER) {}
+    Alignment(alignment::vertical vAlignment__, alignment::horizontal hAlignment__) : vertical(vAlignment__), horizontal(hAlignment__) {}
 };
 
 // Rect (struct): screen-space equivalent of Transform :: holds position, rotation, scale, and alignment of an entity
@@ -34,7 +35,7 @@ struct Rect
     Quaternion rotation;
 
     Rect() {}
-    Rect(Alignment alignment__, Vector2 position__ = vec3::zero, Vector2 scale__ = vec3::one, Quaternion rotation__ = Quaternion()) : alignment(alignment__), position(position__), scale(scale__), rotation(rotation__)
+    Rect(Alignment alignment__, Vector2 scale__ = vec3::one, Vector2 position__ = vec3::zero, Quaternion rotation__ = Quaternion()) : alignment(alignment__), position(position__), scale(scale__), rotation(rotation__)
     {
         refresh();
     }
@@ -62,15 +63,105 @@ struct Rect
         // refreshes the relative origin of the Rect
         void refresh()
         {
-            relativeOrigin = Vector2(alignment.hAlignment-1, alignment.vAlignment-1);
+            relativeOrigin = Vector2(alignment.horizontal-1, alignment.vertical-1);
         }
 };
 
-// TextBox (struct): holds texts within the bounds of its attached Rect component (INCOMPLETE: TEXT RENDERING NOT YET IMPLEMENTED)
-struct TextBox
+namespace text
 {
-    Alignment alignment;
-    std::string text;
+    enum NewLineSetting
+    {
+        LETTER, WORD
+    };
+}
+struct Text
+{
+    Text() {}
+    Text(const Font& font__, const std::string& text__, const Color& color__, float scale__, const Alignment& alignment__, const Rect& bounds__, const Shader& shader__) : font(font__), text(text__), color(color__), scale(scale__), alignment(alignment__), bounds(bounds__), shader(shader__) {}
+
+    void refresh();
+    void render(const Vector2& position);
+
+    void setText(const std::string& newText)
+    {
+        text = newText;
+        refresh();
+    }
+    void addText(const std::string& newText)
+    {
+        text += newText;
+        refresh();
+    }
+
+    float getScale()
+    {
+        return scale;
+    }
+    void setScale(float scale__)
+    {
+        scale = scale;
+        refresh();
+    }
+
+    text::NewLineSetting getNewLineSetting()
+    {
+        return newLineSetting;
+    }
+    void setScale(text::NewLineSetting newLineSetting__)
+    {
+        newLineSetting = newLineSetting__;
+        refresh();
+    }
+
+    Alignment getAlignment()
+    {
+        return alignment;
+    }
+    void setAlignment(Alignment alignment__)
+    {
+        alignment = alignment__;
+        refresh();
+    }
+
+    float getCeiling()
+    {
+        return font.maxScale.y * 0.025f * scale;
+    }
+    float getHeight()
+    {
+        return height * 0.1f;
+    }
+
+    Color getColor()
+    {
+        return color;
+    }
+    void setColor(const Color& p_color)
+    {
+        color = p_color;
+    }
+
+    private:
+
+        Vector2 relativeOrigin;
+
+        std::vector<Vector2> points;
+
+        Font font;
+        std::string text;
+        Color color;
+        float scale, height;
+
+        text::NewLineSetting newLineSetting = text::WORD;
+        Alignment alignment;
+        Rect bounds;
+
+        Shader shader;
+        uint32_t VAO, VBO;
+
+        void leftAligned();
+        void centerAligned();
+        void rightAligned();
 };
 
 #endif

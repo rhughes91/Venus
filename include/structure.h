@@ -1,6 +1,7 @@
 #ifndef STRUCTURE_H
 #define STRUCTURE_H
 
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <map>
@@ -11,6 +12,7 @@
 
 #include "vector.h"
 #include "setup.h"
+#include "file_util.h"
 
 using Entity = uint32_t;
 using Path = std::pair<std::string, std::string>;
@@ -20,13 +22,11 @@ class Object;
 // operators (namespace): used for data structures that may require sorting
 namespace operators
 {
-    struct less
+    template<typename T>
+    bool less(T a, T b)
     {
-        bool operator() (int a, int b) const
-        {
-            return a < b;
-        }
-    };
+        return a < b;
+    }
 }
 
 
@@ -69,9 +69,10 @@ struct Time
     double deltaTime = 0.0f;
     double lastDeltaTime = 0.0f;
     double lastFrame = 0.0f;
-    double averageFrameRate = 0.0f;
     double timer = 0;
     double runtime = 0;
+
+    std::array<double, 10> framerates;
 
     Time();
 
@@ -82,6 +83,9 @@ struct Time
     {
         timer = timer-interval;
     }
+
+    private:
+        int32_t framerateIndex = 0;
 };
 
 namespace event
@@ -95,7 +99,7 @@ namespace event
 
 
 using ComponentType = uint8_t;
-const ComponentType MAX_COMPONENTS = 32;
+const ComponentType MAX_COMPONENTS = 64;
 
 using Signature = std::bitset<MAX_COMPONENTS>;
 
@@ -192,19 +196,18 @@ class ComponentArray : public IComponentArray
         // stores the 'entity' as an index to its respective 'component'
         void insertData(Entity entity, const T& component)
         {
-            size_t newIndex = m_size;
-            m_entityToIndexMap[entity] = newIndex;
-            m_indexToEntityMap[newIndex] = entity;
-            m_componentArray[newIndex] = component;
+            m_entityToIndexMap[entity] = m_count;
+            m_indexToEntityMap[m_count] = entity;
+            m_componentArray[m_count] = component;
             
-            m_size++;
+            m_count++;
         }
 
         // removes the index data of 'entity' and the component that belongs to it
         void removeData(Entity entity)
         {
             size_t removeIndex = m_entityToIndexMap[entity];
-            size_t lastIndex = m_size-1;
+            size_t lastIndex = m_count-1;
             m_componentArray[removeIndex] = m_componentArray[lastIndex];
 
             Entity lastEntity = m_indexToEntityMap[lastIndex];
@@ -214,7 +217,7 @@ class ComponentArray : public IComponentArray
             m_entityToIndexMap.erase(entity);
             m_indexToEntityMap.erase(lastIndex);
 
-            m_size--;
+            m_count--;
         }
 
         // returns the component T attached to 'entity'
@@ -232,6 +235,11 @@ class ComponentArray : public IComponentArray
             }
         }
 
+        bool containsComponent(Entity entity)
+        {
+            return contains(entity);
+        }
+
         // attaches component attached to 'original' to 'copy' :: returns true if component is successfully found and copied; returns false otherwise
         bool copyComponent(Entity original, Entity copy) override
         {
@@ -245,7 +253,8 @@ class ComponentArray : public IComponentArray
 
     private:
         std::array<T, MAX_ENTITIES> m_componentArray;
-        size_t m_size;
+        size_t m_count;
+        bool m_enabled;
 };
 
 // ComponentManager (class): acts as an array of ComponentArrays :: regulates the addition, removal, and retrieval of components from their respective ComponentArrays
@@ -271,6 +280,12 @@ class ComponentManager
             m_componentArrays.insert({typeName, std::make_shared<ComponentArray<T>>()});
 
             m_nextComponentType++;
+        }
+
+        template <typename T>
+        bool componentRegistered()
+        {
+            return m_componentTypes.count(typeid(T).name());
         }
 
         // returns the id of the given structure 'T' as assigned by "registerComponent"
@@ -302,6 +317,12 @@ class ComponentManager
             return getComponentArray<T>() -> getData(entity);
         }
 
+        template<typename T>
+        bool containsComponent(Entity entity)
+        {
+            return getComponentArray<T>() -> containsComponent(entity);
+        }
+
         // protocol for when an entity is removed from the ECS :: entity data is erased if it found
         void entityDestroyed(Entity entity)
         {
@@ -322,8 +343,7 @@ class ComponentManager
         template<typename T>
         std::shared_ptr<ComponentArray<T>> getComponentArray()
         {
-            const char *typeName = typeid(T).name();
-            return std::static_pointer_cast<ComponentArray<T>>(m_componentArrays.at(typeName));
+            return std::static_pointer_cast<ComponentArray<T>>(m_componentArrays.at(typeid(T).name()));
         }
 };
 
@@ -334,32 +354,37 @@ class ComponentManager
 class System
 {
     public:
-        std::set<Entity, operators::less> m_entities;
+        std::vector<Entity> m_entities;
 
         System()
         {
-            p_onInsert = [](Entity entity, std::set<Entity, operators::less> &entities)
+            p_onInsert = [](Entity entity, std::vector<Entity> &entities)
             {
-                if(entity)
-                    entities.insert(entity);
+                if(entity && std::find(entities.begin(), entities.end(), entity) == entities.end())
+                {
+                    entities.push_back(entity);
+                    std::sort(entities.begin(), entities.end(), operators::less<Entity>);
+                }
             };
-            p_onRemove = [](Entity entity, std::set<Entity, operators::less> &entities)
+            p_onRemove = [](Entity entity, std::vector<Entity> &entities)
             {
                 if(entity)
-                    entities.erase(entity);
+                {
+                    entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
+                }
             };
         };
 
         // function that is run when an entity is inserted into this system
         void insert(Entity entity) {p_onInsert(entity, m_entities);}   
-        void setInsertion(void (*insertion)(Entity, std::set<Entity, operators::less> &))
+        void setInsertion(void (*insertion)(Entity, std::vector<Entity> &))
         {
             p_onInsert = insertion;
         }     
 
         // protocol for when an entity is removed from the ECS :: entity data is erased if it found
         void remove(Entity entity) {p_onRemove(entity, m_entities);}
-        void setRemoval(void (*removal)(Entity, std::set<Entity, operators::less> &))
+        void setRemoval(void (*removal)(Entity, std::vector<Entity> &))
         {
             p_onRemove = removal;
         }
@@ -416,7 +441,7 @@ class System
             p_fixedUpdate = fixedUpdate__;
         }
 
-        std::set<Entity, operators::less> entities()
+        std::vector<Entity> entities()
         {
             return m_entities;
         }
@@ -424,15 +449,15 @@ class System
         // the first entity stored in every System :: this entity is automatically assigned to be the System's global data throughtout its lifetime
         Entity id()
         {
-            return *m_entities.begin();
+            return 0;
         }
 
         template<typename T>
         T& data();
 
         private:
-            void (*p_onInsert)(Entity, std::set<Entity, operators::less> &);
-            void (*p_onRemove)(Entity, std::set<Entity, operators::less> &);
+            void (*p_onInsert)(Entity, std::vector<Entity> &);
+            void (*p_onRemove)(Entity, std::vector<Entity> &);
 
             void (*p_load)(System &system) = [](System &){};
             void (*p_start)(System &system) = [](System &){};
@@ -448,13 +473,9 @@ class System
 class SystemManager
 {
     public:
-        // registers values of type 'T' as valid systems, and adds a component of type 'T' to a global entity :: this allows for variables to be stored statically between entities
-        template<typename T>
-        std::shared_ptr<T> registerSystem(int32_t priority = 0);
-
         // registers values of type 'T' as valid systems
         template<typename T>
-        std::shared_ptr<T> registerClosedSystem(int32_t priority = 0)
+        std::shared_ptr<T> registerSystem(int32_t priority = 0)
         {
             auto system = std::make_shared<T>();
             m_systems.insert({typeid(T).name(), system});
@@ -481,17 +502,10 @@ class SystemManager
             return std::static_pointer_cast<T>(m_systems[typeid(T).name()]);
         }
 
-        // sets the System of type 'T''s Signature to 'signature' :: the System Signature is what determines what components an entity needs to be inserted into a System
-        template<typename T>
-        void setSignature(Signature signature)
-        {
-            m_signatures.insert({typeid(T).name(), signature});
-        }
-
         // sets the System with the typename 'typeName''s Signature to 'signature'
         void setSignature(const char *typeName, Signature signature)
         {
-            m_signatures.insert({typeName, signature});
+            m_signatures[typeName] = signature;
         }
 
         // protocol for when an entity is removed from the ECS :: entity data is erased if it found
@@ -512,7 +526,7 @@ class SystemManager
                 auto const &systemSignature = m_signatures.at(pair.first);
                 
                 if((signature & systemSignature) == systemSignature)
-                {
+                {                    
                     system -> insert(entity);
                 }
                 else
@@ -527,10 +541,6 @@ class SystemManager
 
         void load()
         {
-            // for(auto &system : m_systems)
-            // {
-            //     system.second -> load(*system.second);
-            // }
             for(auto& priority : m_priorities)
             {
                 auto& system = m_systems[priority.second];
@@ -667,9 +677,9 @@ class ObjectManager
         }
 
         template<typename T>
-        void addGlobalComponent(Entity entity, const T& component)
+        bool componentRegistered()
         {
-            m_componentManager -> addComponent(entity, component);
+            return m_componentManager -> componentRegistered<T>();
         }
 
         template<typename T>
@@ -680,7 +690,6 @@ class ObjectManager
             auto signature = m_entityManager -> getSignature(entity);
             signature.set(m_componentManager -> getComponentType<T>(), true);
             m_entityManager -> setSignature(entity, signature);
-            
             m_systemManager -> entitySignatureChanged(entity, signature);
             
             return getComponent<T>(entity);
@@ -705,22 +714,23 @@ class ObjectManager
         }
 
         template<typename T>
+        bool containsComponent(Entity entity)
+        {
+            return m_componentManager -> containsComponent<T>(entity);
+        }
+
+        template<typename T>
         ComponentType getComponentType()
         {
             return m_componentManager -> getComponentType<T>();
         }
 
         // SYSTEM
-        template<typename T>
-        std::shared_ptr<T> registerSystem(int32_t priority = 0)
-        {
-            return m_systemManager -> registerSystem<T>(priority);
-        }
 
         template<typename T>
-        std::shared_ptr<T> registerClosedSystem(int32_t priority)
+        std::shared_ptr<T> registerSystem(int32_t priority)
         {
-            return m_systemManager -> registerClosedSystem<T>(priority);
+            return m_systemManager -> registerSystem<T>(priority);
         }
 
         template<typename T>
@@ -733,12 +743,6 @@ class ObjectManager
         std::shared_ptr<T> getSystem()
         {
             return m_systemManager -> getSystem<T>();
-        }
-
-        template<typename T>
-        void setSystemSignature(Signature signature)
-        {
-            m_systemManager -> setSignature<T>(signature);
         }
 
         void setSystemSignature(const char *typeName, Signature signature)
@@ -754,31 +758,6 @@ class ObjectManager
 
 
 extern ObjectManager g_manager;
-
-// SYSTEMS: base Systems for the engine :: static variables are stored in these structures
-
-struct AnimationManager : System {};
-struct BillboardManager : System {};
-struct ButtonManager : System {};
-struct CameraManager : System {};
-struct CollisionManager : System {};
-struct SplineManager : System {};
-struct GraphicsManager : System {};
-struct MeshManager : System {};
-struct MovementManager : System {};
-struct PhysicsManager : System {};
-struct SpotLightManager : System {};
-struct UIManager : System {};
-
-
-template<typename T>
-std::shared_ptr<T> SystemManager::registerSystem(int32_t priority)
-{
-    auto system = registerClosedSystem<T>(priority);
-    g_manager.registerComponent<T>();
-    g_manager.addGlobalComponent<T>(system -> id(), T());
-    return system;
-}
 
 template<typename T>
 T& System::data()
@@ -796,17 +775,34 @@ struct Script : System
             id = name;
             root = rootPointer;
         }
+        void initText();
 
         // requires 'T' to be added to an entity so that it can use this Script
         template<typename T>
         void addRequirement()
         {
+            if(!g_manager.componentRegistered<T>())
+            {
+                g_manager.registerComponent<T>();
+            }
             signature.set(g_manager.getComponentType<T>());
             g_manager.setSystemSignature(id, signature);
+        }
+        Signature getSignature()
+        {
+            return signature;
         }
 
 
         // standard key method accessors for a System
+        void insert(void (*insert__)(Entity, std::vector<Entity> &))
+        {
+            root -> setInsertion(insert__);
+        }
+        void remove(void (*remove__)(Entity, std::vector<Entity> &))
+        {
+            root -> setRemoval(remove__);
+        }
 
         void load(void (*load__)(System &))
         {
@@ -842,6 +838,20 @@ struct Script : System
         std::shared_ptr<Script> root;
         Signature signature;
 };
+
+struct AnimationManager : Script {};
+struct BillboardManager : Script {};
+struct ButtonManager : Script {};
+struct CameraManager : Script {};
+struct CollisionManager : Script {};
+struct GraphicsManager : Script {};
+struct LineManager : Script {};
+struct MeshManager : Script {};
+struct PhysicsManager : Script {};
+struct PointLightManager : Script {};
+struct SpotLightManager : Script {};
+struct TextManager : Script {};
+struct UIManager : Script {};
 
 // Object (class): Entity wrapper :: allows for adding and removing components, cloning, and provides a basic child:parent hierarchy
 class Object
@@ -933,12 +943,28 @@ class Object
             return g_manager.getComponent<T>(data);
         }
 
+        template<typename T>
+        bool containsComponent()
+        {
+            return g_manager.containsComponent<T>(data);
+        }
+
         bool operator <(const Object& obj) const
         {
             return data < obj.data;
         }
 
+        void setEnabled(bool enable)
+        {
+            m_enabled = enable;
+        }
+        bool enabled()
+        {
+            return m_enabled;
+        }
+
     private:
+        bool m_enabled;
         std::set<Object> m_children;
 
         bool duplicateChild(Entity id)
@@ -972,7 +998,10 @@ struct BoxCollider
     void (*trigger)(Entity, Entity, bool, int);
     void (*miss)(Entity);
 
-    BoxCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0, void (*trigger__)(Entity, Entity, bool, int) = [](Entity entity, Entity target, bool edge, int triggerd){}, void (*miss__)(Entity) = [](Entity entity){}) : scale(scale__), offset(offset__), trigger(trigger__), miss(miss__) {}
+    BoxCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0, void (*trigger__)(Entity, Entity, bool, int) = [](Entity entity, Entity target, bool edge, int triggerd){}, void (*miss__)(Entity) = [](Entity entity){}) : scale(scale__), offset(offset__), trigger(trigger__), miss(miss__)
+    {
+        refreshWireframe();
+    }
 
     void setTrigger(void (*trigger__)(Entity, Entity, bool, int))
     {
@@ -983,6 +1012,77 @@ struct BoxCollider
     {
         miss = miss__;
     }
+
+    void adjustCollider(const MeshAddon& addon)
+    {
+        Vector2 xBounds, yBounds, zBounds;
+        for(const auto& addition : addon.additions)
+        {
+            xBounds.x = std::min(xBounds.x, addition.position.x);
+            xBounds.y = std::max(xBounds.y, addition.position.x);
+
+            yBounds.x = std::min(yBounds.x, addition.position.y);
+            yBounds.y = std::max(yBounds.y, addition.position.y);
+
+            zBounds.x = std::min(zBounds.x, addition.position.z);
+            zBounds.y = std::max(zBounds.y, addition.position.z);
+        }
+
+        offset = {(xBounds.x + xBounds.y)/2, (yBounds.x + yBounds.y)/2, (zBounds.x + zBounds.y)/2};
+        scale = {math::abs(xBounds.x) + math::abs(xBounds.y) + 1, math::abs(yBounds.x) + math::abs(yBounds.y) + 1, math::abs(zBounds.x) + math::abs(zBounds.y) + 1};
+
+        if(wireframe)
+            refreshWireframe();
+    }
+
+    void enableWireframe(bool enabled)
+    {
+        if(wireframe = enabled)
+        {
+            refreshWireframe();
+        }
+    }
+
+    bool wireframeEnabled()
+    {
+        return wireframe;
+    }
+
+    void frame(const Transform& transform)
+    {
+
+    }
+
+    private:
+        bool wireframe = false;
+        std::vector<Vector3> wirePoints;
+
+        void refreshWireframe()
+        {
+            wirePoints.clear();
+
+            wirePoints.push_back(Vector3(-scale.x, -scale.y, scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(-scale.x, scale.y, scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(scale.x, scale.y, scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(scale.x, -scale.y, scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(-scale.x, -scale.y, scale.z)*0.5f + offset);
+
+            wirePoints.push_back(Vector3(-scale.x, -scale.y, -scale.z)*0.5f + offset);
+
+            wirePoints.push_back(Vector3(-scale.x, scale.y, -scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(-scale.x, scale.y, scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(-scale.x, scale.y, -scale.z)*0.5f + offset);
+
+            wirePoints.push_back(Vector3(scale.x, scale.y, -scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(scale.x, scale.y, scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(scale.x, scale.y, -scale.z)*0.5f + offset);
+
+            wirePoints.push_back(Vector3(scale.x, -scale.y, -scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(scale.x, scale.y, -scale.z)*0.5f + offset);
+            wirePoints.push_back(Vector3(scale.x, -scale.y, -scale.z)*0.5f + offset);
+
+            wirePoints.push_back(Vector3(-scale.x, -scale.y, -scale.z)*0.5f + offset);
+        }
 };
 
 // object (namespace): allows the user to avoid accessing the global ObjectManager variable :: only way to initialize a Script
@@ -1018,15 +1118,33 @@ namespace object
     }
 
     template<typename T>
-    std::shared_ptr<T> getSystem()
+    bool containsComponent(Entity data)
     {
-        return g_manager.getSystem<T>();
+        return g_manager.containsComponent<T>(data);
     }
 
     template<typename T>
-    std::shared_ptr<T> registerSystem(int32_t priority)
+    bool componentRegistered()
     {
-        return g_manager.registerSystem<T>(priority);
+        return g_manager.componentRegistered<T>();
+    }
+
+    template<typename T>
+    void enableComponent(Entity data, bool enable)
+    {
+        // object::getComponent<T>(data)
+    }
+
+    template<typename T>
+    ComponentType getComponentType()
+    {
+        return g_manager.getComponentType<T>();
+    }
+
+    template<typename T>
+    std::shared_ptr<T> getSystem()
+    {
+        return g_manager.getSystem<T>();
     }
 
     template<typename T>
@@ -1040,6 +1158,25 @@ namespace object
     {
         if(g_manager.containsSystem<T>())
         {
+            return object::find("g_global_event_runner").getComponent<T>();
+        }
+        else
+        {
+            g_manager.registerComponent<T>();
+
+            T &script = object::find("g_global_event_runner").addComponent<T>();
+            script.initialize(typeid(T).name(), g_manager.registerSystem<T>(priority));
+            script.template addRequirement<T>();
+        
+            return script;
+        }
+    }
+
+    template<typename T>
+    T& initializeScript(bool recurseRequirement, int32_t priority = 0)
+    {
+        if(g_manager.containsSystem<T>())
+        {
             
             return object::find("g_global_event_runner").getComponent<T>();
         }
@@ -1048,9 +1185,11 @@ namespace object
             g_manager.registerComponent<T>();
 
             T &script = object::find("g_global_event_runner").addComponent<T>();
-            script.initialize(typeid(T).name(), g_manager.registerClosedSystem<T>(priority));
-            ((Script)script).addRequirement<T>();
-        
+            script.initialize(typeid(T).name(), g_manager.registerSystem<T>(priority));
+            if(recurseRequirement)
+            {
+                script.template addRequirement<T>();
+            }
             return script;
         }
     }
@@ -1060,16 +1199,17 @@ namespace object
     {
         if(g_manager.containsSystem<S>())
         {
-            return object::getSystem<S>();
+            return object::find("g_global_event_runner").getComponent<S>();
         }
         else
         {
             g_manager.registerComponent<S>();
-            g_manager.registerComponent<T>();
 
             S& script = object::find("g_global_event_runner").addComponent<S>();
-            script.initialize(typeid(S).name(), g_manager.registerClosedSystem<S>(priority));
-            ((Script)script).addRequirement<T>();
+            script.initialize(typeid(S).name(), g_manager.registerSystem<S>(priority));
+            script.template addRequirement<T>();
+
+            return script;
         }
     }
 };
@@ -1132,29 +1272,6 @@ struct Model
     }
 };
 
-struct Curve
-{
-    Vector2 beginning, end;
-    std::vector<Vector2> controls;
 
-    Curve(const Vector2& beginning__, const Vector2& end__, const std::vector<Vector2>& controls__) : beginning(beginning__), end(end__), controls(controls__) {}
-};
-
-struct Spline
-{
-    Color color;
-    Shader shader;
-    std::vector<Curve> curves;
-
-    uint32_t VAO, VBO;
-
-    Spline(const std::vector<Curve>& curves__ = std::vector<Curve>(), const Shader& shader__ = Shader(), const Color& color__ = color::WHITE) : color(color__), shader(shader__), curves(curves__) {};
-
-    void refresh();
-    void render();
-
-    private:
-        std::vector<Vector2> points;
-};
 
 #endif

@@ -11,7 +11,7 @@ float event::delta()
 }
 float event::framerate()
 {
-    return g_time.averageFrameRate;
+    return (g_time.framerates[0] + g_time.framerates[1] + g_time.framerates[2] + g_time.framerates[3] + g_time.framerates[4] + g_time.framerates[5] + g_time.framerates[6] + g_time.framerates[7] + g_time.framerates[8] + g_time.framerates[9])/10.f;
 }
 float event::time()
 {
@@ -25,10 +25,11 @@ void event::freezeTime(bool freeze)
 std::unordered_map<std::string, Mesh> g_loadedMeshes;
 std::unordered_map<std::string, uint32_t> g_loadedTextures;
 std::unordered_map<std::string, Shader> g_loadedShaders;
+std::unordered_map<std::string, Font> g_loadedFonts;
 
 Mesh &mesh::load(const std::string &path)
 {
-    return(g_loadedMeshes[path] = loadObjFile(path, 1));
+    return(g_loadedMeshes[path] = file::loadObjFile(path));
 }
 Mesh &mesh::load(const std::string& path, const Mesh& mesh)
 {
@@ -67,9 +68,9 @@ void mesh::remove()
     }
 }
 
-Shader &shader::load(const std::string& path, const Shader& shader)
+void shader::load(const std::string& path, const Shader& shader)
 {
-    return(g_loadedShaders[path] = shader);
+    g_loadedShaders[path] = shader;
 }
 Shader &shader::get(const std::string& path)
 {
@@ -88,3 +89,14 @@ void shader::remove()
     }
 }
 
+void ttf::load(const std::string &fileName)
+{
+    int index = fileName.find_last_of('/')+1;
+    g_loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
+}
+Font& ttf::get(const std::string &fileName)
+{
+    if(!g_loadedFonts.count(fileName))
+        std::cout << "ERROR :: TTF file " << fileName << " could not be found." << std::endl;
+    return g_loadedFonts[fileName];
+}

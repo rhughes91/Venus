@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "vector.h"
+#include "color.h"
 
 // TextureBuffer (struct): wrapper for graphical texture data
 struct TextureBuffer
@@ -28,7 +29,7 @@ struct FrameBuffer
     void addRenderBuffer(const std::string& name, uint16_t width, uint16_t height, int samples);
 
     void bind(uint32_t type);
-    void unbind();
+    void unbind(uint32_t type);
     void bindTexture(const std::string& name);
     TextureBuffer getTexture(const std::string& name)
     {
@@ -39,6 +40,12 @@ struct FrameBuffer
 // texture (namespace): global methods for loading and accessing image data from image files
 namespace texture
 {
+    enum Channel
+    {
+        RED, RGB, RGBA
+    };
+    uint32_t channelToModifier(Channel channel);
+
     enum Type
     {
         PNG, JPEG
@@ -56,6 +63,9 @@ namespace texture
 
     void load(const std::string& path, Type type);
     void load(const std::string& path, const std::vector<std::string>& subPaths, Type type);
+    void load(const std::string& name, const std::vector<char>& data, float width, float height, Channel channel, Type type);
+    void load(const std::string& name, const std::vector<Color8>& data, float width, float height, Channel channel, Type type);
+    
     uint32_t get(const std::string& path);
     std::vector<uint32_t> get(const std::string& path, const std::vector<std::string>& subPaths, Type type);
 

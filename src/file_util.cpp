@@ -3,22 +3,20 @@
 #include <iostream>
 #include <algorithm>
 #include <bitset>
-#include <fstream>
 #include <limits>
-#include <unordered_map>
+#include <filesystem>
 #include <windows.h>
 
 #include "file_util.h"
+#include "setup.h"
 #include "shader.h"
 
-extern std::string g_source;
-
-std::string loadFileToString(const std::string &fileName)
+std::string file::loadFileToString(const std::string &fileName)
 {
     std::string content = "", line;
     std::ifstream myFile;
 
-    myFile.open(g_source+fileName);
+    myFile.open(source::root()+fileName);
     if(myFile.is_open())
     {
         while (std::getline(myFile, line))
@@ -29,18 +27,18 @@ std::string loadFileToString(const std::string &fileName)
     }
     else
     {
-        std::cout << "ERROR :: " << g_source+fileName << " could not be opened." << std::endl;
+        std::cout << "ERROR :: " << source::root()+fileName << " could not be opened." << std::endl;
     }
     return content;
 }
 
-std::vector<std::string> loadFileToStringVector(const std::string &fileName)
+std::vector<std::string> file::loadFileToStringVector(const std::string &fileName)
 {
     std::vector<std::string> content;
     std::string line;
     std::ifstream myFile;
 
-    myFile.open(g_source+fileName);
+    myFile.open(source::root()+fileName);
     if(myFile.is_open())
     {
         while (std::getline(myFile, line))
@@ -51,22 +49,12 @@ std::vector<std::string> loadFileToStringVector(const std::string &fileName)
     }
     else
     {
-        std::cout << "ERROR :: " << fileName << " could not be opened.";
+        std::cout << "ERROR :: " << fileName << " could not be opened." << std::endl;
     }
     return content;
 }
 
-std::string getCurrentDirectoryName()
-{
-    TCHAR buffer[260] = { 0 };
-    GetModuleFileName(NULL, buffer, 256);
-
-    std::string source = std::string(buffer);
-    std::replace(source.begin(), source.end(), '\\', '/');
-    return source.substr(0, source.find_last_of("/")) + "/";
-}
-
-Mesh loadObjFile(const std::string &fileName, Vector2 tiling)
+Mesh file::loadObjFile(const std::string &fileName)
 {
     std::vector<Vertex> vertices;
     int tri[3][3];
@@ -80,7 +68,7 @@ Mesh loadObjFile(const std::string &fileName, Vector2 tiling)
     
     std::string line;
     std::ifstream myFile;
-    myFile.open(g_source + "resources/models/" + fileName);
+    myFile.open(source::root() + source::model() + fileName);
     if(myFile.is_open())
     {
         float minX, maxX, minY, maxY, minZ, maxZ;
@@ -90,7 +78,7 @@ Mesh loadObjFile(const std::string &fileName, Vector2 tiling)
             if(line.rfind("vt", 0) == 0)
             {
                 sscanf((line.substr(3)).c_str(), "%f %f", &bufferUV.x, &bufferUV.y);
-                inUVs.push_back(bufferUV * tiling);
+                inUVs.push_back(bufferUV);
             }
             else if(line.rfind("vn", 0) == 0)
             {
@@ -139,85 +127,122 @@ Mesh loadObjFile(const std::string &fileName, Vector2 tiling)
     return {vertices, dimensions};
 }
 
-template<typename T, int I>
-void printBinary(T value)
+void file::loadFilesInDirectory(const std::string &fileName, void(*load)(const std::string&))
 {
-    std::bitset<I> bits(value);
-    std::cout << bits.to_string() << std::endl;
-    // Storing integral values in the string:
-    for(auto i: bits.to_string(char(0), char(1))) {
-        std::cout << (int)i;
-    }
-    std::cout << std::endl;
-}
-uint8_t toUInt8(std::ifstream& file)
-{
-    char c;
-    file.get(c);
-    return c;
-}
-uint16_t toUInt16(std::ifstream& file)
-{
-    return ((toUInt8(file) << 8) | toUInt8(file));
-}
-int16_t toInt16(std::ifstream& file)
-{
-    uint8_t number = toUInt16(file);
-    if(number & 0x8000)
-        number -= 1 << 16;
-    return number;
-}
-int16_t toFWord(std::ifstream& file)
-{
-    return toInt16(file);
-}
-int16_t toUFWord(std::ifstream& file)
-{
-    return toUInt16(file);
-}
-int32_t toInt32(std::ifstream& file)
-{
-    return (toUInt8(file) << 24) | (toUInt8(file) << 16) | (toUInt8(file) << 8) | toUInt8(file);
-}
-uint32_t toUInt32(std::ifstream& file)
-{
-    return toInt32(file);
-}
-std::string toString(std::ifstream& file, int length)
-{
-    std::string result;
-    for (int i = 0; i < length; i++)
+    for (const auto& entry : std::filesystem::directory_iterator(fileName))
     {
-        result += char(toUInt8(file));
+        load(entry.path().string());
     }
-    return result;
-}
-float toFixed(std::ifstream& file)
-{
-    return toInt32(file) / (1 << 16);
-}
-uint32_t toDate(std::ifstream& file)
-{
-    uint32_t macTime = toUInt32(file) * 0x100000000 + toUInt32(file);
-    return macTime * 1000;
 }
 
-uint32_t calculateTableChecksum(std::ifstream& file, uint32_t offset, uint32_t length)
-{
-    auto old = file.tellg();
-    file.seekg(offset);
-    uint32_t sum = 0;
-    int64_t nlongs = ((length + 3) / 4) | 0;
+Source g_source;
 
-    while( nlongs-- )
+Source::Source()
+{
+    source = getCurrentDirectoryName();
+    std::vector<std::string> pathConfig = file::loadFileToStringVector("path.config");
+    for(const auto& line : pathConfig)
     {
-        sum = (sum + toUInt32(file) & 0xffffffff);
+        int index = -1;
+        if((index = line.find(':')) != std::string::npos)
+        {
+            std::string setting = line.substr(0, index);
+            
+            if(setting == "source")
+            {
+                source += line.substr(index+2);
+            }
+            else if(setting == "data")
+            {
+                configSource = line.substr(index+2) + "/";
+            }
+            else if(setting == "texture")
+            {
+                textureSource = line.substr(index+2) + "/";
+            }
+            else if(setting == "font")
+            {
+                fontSource = line.substr(index+2) + "/";
+            }
+            else if(setting == "model")
+            {
+                modelSource = line.substr(index+2) + "/";
+            }
+            else if(setting == "shader")
+            {
+                shaderSource = line.substr(index+2) + "/";
+            }
+        }
     }
+}
+std::string Source::getCurrentDirectoryName()
+{
+    TCHAR buffer[260] = { 0 };
+    GetModuleFileName(NULL, buffer, 256);
 
-    file.seekg(old);
-    return sum;
+    std::string source = std::string(buffer);
+    std::replace(source.begin(), source.end(), '\\', '/');
+    return source.substr(0, source.find_last_of("/")) + "/";
 }
 
+std::string source::root()
+{
+    return g_source.getSource();;
+}
+std::string source::config()
+{
+    return g_source.getConfigSource();
+}
+void source::setConfig(const std::string& source)
+{
+    g_source.setConfigSource(source);
+}
+std::string source::texture()
+{
+    return g_source.getTextureSource();
+}
+void source::setTexture(const std::string& source)
+{
+    g_source.setTextureSource(source);
+}
+std::string source::font()
+{
+    return g_source.getFontSource();
+}
+void source::setFont(const std::string& source)
+{
+    g_source.setFontSource(source);
+}
+std::string source::model()
+{
+    return g_source.getModelSource();
+}
+void source::setModel(const std::string& source)
+{
+    g_source.setModelSource(source);
+}
+std::string source::shader()
+{
+    return g_source.getShaderSource();
+}
+void source::setShader(const std::string& source)
+{
+    g_source.setShaderSource(source);
+}
+
+BinaryFile::BinaryFile(const std::string& path)
+{
+    file.open(path, std::ios::binary);
+}
+
+struct Glyph
+{
+    int16_t numberOfContours, xMin, yMin, xMax, yMax;
+    std::vector<uint16_t> contourEnds;
+    std::vector<Point> points;
+
+    uint16_t offset;
+};
 struct Metric
 {
     uint16_t advanceWidth;
@@ -229,199 +254,677 @@ struct EncodingRecord
     uint32_t offset;
 };
 
-struct HMTX
+struct Header
+{
+    uint16_t majorVersion, minorVersion;
+    float fontRevision;
+    uint32_t checksumAdjustment, magicNumber;
+    uint16_t flags, unitsPerEm;
+    uint32_t created, modified;
+    int16_t xMin, yMin, xMax, yMax;
+    uint16_t macStyle, lowestRecPPEM, fontDirectionHint, indexToLocFormat, glyphDataFormat;
+
+    Header() {}
+    Header(BinaryFile& file, uint32_t offset)
+    {
+        file.seek(offset);
+        majorVersion = file.toUInt16();
+        minorVersion = file.toUInt16();
+        fontRevision = file.toFixed();
+        checksumAdjustment = file.toUInt32();
+        magicNumber = file.toUInt32();
+        flags = file.toUInt16();
+        unitsPerEm = file.toUInt16();
+        created = file.toDate();
+        modified = file.toDate();
+        xMin = file.toFWord();
+        yMin = file.toFWord();
+        xMax = file.toFWord();
+        yMax = file.toFWord();
+        macStyle = file.toUInt16();
+        lowestRecPPEM = file.toUInt16();
+        fontDirectionHint = file.toInt16();
+        indexToLocFormat = file.toInt16();
+        glyphDataFormat = file.toInt16();
+    }
+};
+struct MaxProfile
+{
+    float maxpVersion;
+    uint16_t numGlyphs, maxPoints, maxContours, maxCompositePoints, maxCompositeContours, maxZones, maxTwilightPoints, maxStorage, maxFunctionDefs, maxInstructionDefs, maxStackElements, maxSizeOfInstructions, maxComponentElements, maxComponentDepth;
+
+    MaxProfile() {}
+    MaxProfile(BinaryFile& file, uint32_t index)
+    {
+        file.seek(index);
+        maxpVersion = file.toFixed();
+        numGlyphs = file.toUInt16();
+        maxPoints = file.toUInt16();
+        maxContours = file.toUInt16();
+        maxCompositePoints = file.toUInt16();
+        maxCompositeContours = file.toUInt16();
+        maxZones = file.toUInt16();
+        maxTwilightPoints = file.toUInt16();
+        maxStorage = file.toUInt16();
+        maxFunctionDefs = file.toUInt16();
+        maxInstructionDefs = file.toUInt16();
+        maxStackElements = file.toUInt16();
+        maxSizeOfInstructions = file.toUInt16();
+        maxComponentElements = file.toUInt16();
+        maxComponentDepth = file.toUInt16();
+    }
+
+};
+struct HorizontalHeader
+{
+    uint16_t majorVersion, minorVersion;
+    int16_t ascent, descent, lineGap;
+    uint16_t advanceWidthMax;
+    int16_t minLeftSideBearing, minRightSideBearing, xMaxExtent, caretSlopeRise, caretSlopeRun, caretOffset, metricDataFormat;
+    uint16_t numOfLongHorMetrics;
+
+    HorizontalHeader() {}
+    HorizontalHeader(BinaryFile& file, uint32_t index)
+    {
+        file.seek(index);
+        majorVersion = file.toUInt16();
+        minorVersion = file.toUInt16();
+        ascent = file.toFWord();
+        descent = file.toFWord();
+        lineGap = file.toFWord();
+        advanceWidthMax = file.toUFWord();
+        minLeftSideBearing = file.toFWord();
+        minRightSideBearing = file.toFWord();
+        xMaxExtent = file.toFWord();
+        caretSlopeRise = file.toInt16();
+        caretSlopeRun = file.toInt16();
+        caretOffset = file.toInt16();
+
+        file.toInt16();file.toInt16();file.toInt16();file.toInt16(); // skip 4 reserved places
+
+        metricDataFormat = file.toInt16();
+        numOfLongHorMetrics = file.toUInt16();
+    }
+
+};
+struct HorizontalMetrics
 {
     std::vector<Metric> hMetrics;
     std::vector<int16_t> leftSideBearing;
 
-    HMTX(std::ifstream& file, uint16_t numGlyphs, uint16_t numOfLongHorMetrics)
+    HorizontalMetrics() {}
+    HorizontalMetrics(BinaryFile& file, uint32_t index, uint16_t numGlyphs, uint16_t numOfLongHorMetrics)
     {
+        file.seek(index);
         for (int i = 0; i < numOfLongHorMetrics; i++) {
             hMetrics.push_back
             ({
-                toUInt16(file), toInt16(file)
+                file.toUInt16(), file.toInt16()
             });
         }
         for (int i = 0; i < numGlyphs - numOfLongHorMetrics; i++)
         {
-            leftSideBearing.push_back(toFWord(file));
+            leftSideBearing.push_back(file.toFWord());
         }
     }
 };
-struct Glyph
+struct IndexLocations
 {
-    int16_t numberOfContours, xMin, yMin, xMax, yMax;
-};
+    std::vector<uint32_t> locations;
 
-void loadTTF(const std::string &fileName)
-{
-    char c;
-    std::ifstream file;
-
-    file.open(g_source + "resources/fonts/" + fileName, std::ios::binary);
-    if(file.is_open())
+    IndexLocations() {}
+    IndexLocations(BinaryFile& file, uint32_t index, uint16_t indexToLocFormat, uint16_t numGlyphs)
     {
-        uint32_t scalar = toUInt32(file);
-        uint16_t numTables = toUInt16(file);
-        uint16_t searchRange = toUInt16(file);
-        uint16_t entrySelector = toUInt16(file);
-        uint16_t rangeShift = toUInt16(file);
-
-        std::unordered_map<std::string, uint32_t[3]> tables = std::unordered_map<std::string, uint32_t[3]>();
-        for (int i = 0; i < numTables; i++) 
+        if(indexToLocFormat == 1)
         {
-            std::string tag = toString(file, 4);
-            tables[tag][0] = toUInt32(file); // checksum
-            tables[tag][1] = toUInt32(file); // offset
-            tables[tag][2] = toUInt32(file); // length
-
-            if(tag != "head" && calculateTableChecksum(file, tables[tag][1], tables[tag][2]) != tables[tag][0])
+            for(int i = 0; i < numGlyphs + 1; i++)
             {
-                std::cout << "ERROR :: Font table data could not be verified; checksum was invalidated." << std::endl;
-                file.close();
+                file.seek(index + i*4);
+                locations.push_back(file.toUInt32());
+            }
+        }
+        else
+        {
+            for(int i = 0; i < numGlyphs + 1; i++)
+            {
+                file.seek(index + i*2);
+                locations.push_back(file.toUInt16()*2);
+            }
+        }
+    }
+
+};
+struct GlyphData
+{
+    std::vector<Glyph> glyphs;
+
+    GlyphData() {}
+    GlyphData(BinaryFile& file, uint32_t index, const std::vector<uint32_t>& locations, const Vector2& scale)
+    {
+        for(int i = 0; i < locations.size() - 1; i++)
+        {
+            uint32_t locaOffset = locations[i];
+
+            file.seek(index + locaOffset);
+
+            Glyph glyph = {file.toInt16(), file.toInt16(), file.toInt16(), file.toInt16(), file.toInt16()};
+            if(glyph.numberOfContours > 0)
+            {
+                readSimpleGlyph(file, glyph, scale);
+            }
+            glyphs.push_back(glyph);
+        }
+    }
+
+    private:
+        void readSimpleGlyph(BinaryFile& file, Glyph& glyph, const Vector2& scale)
+        {
+            uint8_t ON_CURVE = 1, X_IS_BYTE = 2, Y_IS_BYTE = 4, REPEAT = 8 , X_DELTA = 16, Y_DELTA = 32;
+
+            uint16_t numPoints = 0;
+            for(int i=0; i<glyph.numberOfContours; i++)
+            {
+                uint16_t contourEnd = file.toUInt16();
+                glyph.contourEnds.push_back(contourEnd);
+
+                if(contourEnd > numPoints)
+                {
+                    numPoints = contourEnd+1;
+                }
+            }
+
+            file.seek(file.toUInt16() + file.position());
+
+            if(glyph.numberOfContours == 0)
                 return;
+
+            std::vector<uint8_t> flags;
+            for(int i=0; i<numPoints; i++)
+            {
+                uint8_t flag = file.toUInt8();
+                flags.push_back(flag);
+                glyph.points.push_back(Point((flag & ON_CURVE) > 0));
+                if(flag & REPEAT)
+                {
+                    uint8_t repeatCount = file.toUInt8();
+                    i += repeatCount;
+                    while(repeatCount--)
+                    {
+                        flags.push_back(flag);
+                        glyph.points.push_back(Point((flag & ON_CURVE) > 0));
+                    }
+                }
+            }
+
+            int32_t value = 0;
+            for(int i=0; i<numPoints; i++)
+            {
+                if(flags[i] & X_IS_BYTE)
+                {
+                    if(flags[i] & X_DELTA)
+                    {
+                        value += file.toUInt8();
+                    }
+                    else
+                    {
+                        value -= file.toUInt8();
+                    }
+                }
+                else if(~(flags[i]) & X_DELTA)
+                {
+                    value += file.toInt16();
+                }
+
+                glyph.points[i].position.x = value * scale.x;
+            }
+
+            value = 0;
+            for(int i=0; i<numPoints; i++)
+            {
+                if(flags[i] & Y_IS_BYTE)
+                {
+                    if(flags[i] & Y_DELTA)
+                    {
+                        value += file.toUInt8();
+                    }
+                    else
+                    {
+                        value -= file.toUInt8();
+                    }
+                }
+                else if(~(flags[i]) & Y_DELTA)
+                {
+                    value += file.toInt16();
+                }
+
+                glyph.points[i].position.y = value * scale.y;
+            }
+        }
+};
+struct CharacterMap
+{
+    uint16_t version, numTables;
+    uint32_t offset;
+    uint16_t format;
+    
+    std::vector<EncodingRecord> encodingRecords;
+
+    uint32_t length, language = -1;
+    uint16_t segCount = -1, searchRange = -1, entrySelector = -1, rangeShift = -1;
+    std::unordered_map<int32_t, uint16_t> glyphIndexMap;
+
+    uint32_t error = 0;
+
+    CharacterMap() {}
+    CharacterMap(BinaryFile& file, uint32_t index)
+    {
+        file.seek(index);
+
+        version = file.toUInt16();
+        numTables = file.toUInt16();
+
+        if(version != 0)
+        {
+            error = file.position() < 0 ? ttf::END_OF_FILE:ttf::UNSUPPORTED_CMAP;
+            return;
+        }
+        
+        for(int i = 0; i < numTables; i++)
+        {
+            encodingRecords.push_back
+            ({
+                file.toUInt16(),
+                file.toUInt16(),
+                file.toUInt32()
+            });
+        }
+        offset = -1;
+        for(int i = 0; i < numTables; i++)
+        {
+            EncodingRecord record = encodingRecords[i];
+            bool isWindowsPlatform = record.platformID == 3 && (record.encodingID == 0 || record.encodingID == 1 || record.encodingID == 10);
+            bool isUnicodePlatform = record.platformID == 0 && (record.encodingID == 0 || record.encodingID == 1 || record.encodingID == 2 || record.encodingID == 3 || record.encodingID == 4);
+
+            if (isWindowsPlatform || isUnicodePlatform)
+            {
+                offset = record.offset;
+                break;
             }
         }
         
-        // head
-            file.seekg(tables["head"][1]);
-            uint16_t majorVersion = toUInt16(file);
-            uint16_t minorVersion = toUInt16(file);
-            float fontRevision = toFixed(file);
-            uint32_t checksumAdjustment = toUInt32(file);
-            uint32_t magicNumber = toUInt32(file);
-            uint16_t flags = toUInt16(file);
-            uint16_t unitsPerEm = toUInt16(file);
-            uint32_t created = toDate(file);
-            uint32_t modified = toDate(file);
-            int16_t xMin = toFWord(file);
-            int16_t yMin = toFWord(file);
-            int16_t xMax = toFWord(file);
-            int16_t yMax = toFWord(file);
-            uint16_t macStyle = toUInt16(file);
-            uint16_t lowestRecPPEM = toUInt16(file);
-            uint16_t fontDirectionHint = toInt16(file);
-            uint16_t indexToLocFormat = toInt16(file);
-            uint16_t glyphDataFormat = toInt16(file);
-
-        // maxp
-            file.seekg(tables["maxp"][1]);
-            float maxpVersion = toFixed(file);
-            uint16_t numGlyphs = toUInt16(file);
-            uint16_t maxPoints = toUInt16(file);
-            uint16_t maxContours = toUInt16(file);
-            uint16_t maxCompositePoints = toUInt16(file);
-            uint16_t maxCompositeContours = toUInt16(file);
-            uint16_t maxZones = toUInt16(file);
-            uint16_t maxTwilightPoints = toUInt16(file);
-            uint16_t maxStorage = toUInt16(file);
-            uint16_t maxFunctionDefs = toUInt16(file);
-            uint16_t maxInstructionDefs = toUInt16(file);
-            uint16_t maxStackElements = toUInt16(file);
-            uint16_t maxSizeOfInstructions = toUInt16(file);
-            uint16_t maxComponentElements = toUInt16(file);
-            uint16_t maxComponentDepth = toUInt16(file);
-
-        // hhea
-            file.seekg(tables["hhea"][1]);
-            float hheaVersion = toFixed(file);
-            int16_t ascent = toFWord(file);
-            int16_t descent = toFWord(file);
-            int16_t lineGap = toFWord(file);
-            uint16_t advanceWidthMax = toUFWord(file);
-            int16_t minLeftSideBearing = toFWord(file);
-            int16_t minRightSideBearing = toFWord(file);
-            int16_t xMaxExtent = toFWord(file);
-            int16_t caretSlopeRise = toInt16(file);
-            int16_t caretSlopeRun = toInt16(file);
-            int16_t caretOffset = toFWord(file);
-            toInt16(file);toInt16(file);toInt16(file);toInt16(file); // skip 4 reserved places
-            int16_t metricDataFormat = toInt16(file);
-            uint16_t numOfLongHorMetrics = toUInt16(file);
+        if (offset == -1)
+        {
+            error = file.position() < 0 ? ttf::END_OF_FILE:ttf::UNSUPPORTED_PLATFORM;
+            return;
+        }
         
-        // hmtx
-            file.seekg(tables["hmtx"][1]);
-            HMTX hmtx = HMTX(file, numGlyphs, numOfLongHorMetrics);
+        format = file.toUInt16();
+        switch(format)
+        {
+            case 0:
+                parseFormat0(file);
+            break;
+            case 4:
+                parseFormat4(file);
+            break;
+            default:
+                error = file.position() < 0 ? ttf::END_OF_FILE:ttf::UNSUPPORTED_FORMAT;
+            return;
+        }
+        glyphIndexMap[' '] = 3;
+    }
 
-        // loca
-            file.seekg(tables["loca"][1]);
-            std::vector<uint32_t> loca;
-            for(int i = 0; i < numGlyphs + 1; i++)
-            {
-                loca.push_back(indexToLocFormat ? toUInt32(file):toUInt16(file));
-            }
-        
-        // glyf
-            std::vector<Glyph> glyphs;
-            for(int i = 0; i < loca.size() - 1; i++)
-            {
-                uint32_t multiplier = indexToLocFormat == 0 ? 2 : 1;
-                uint32_t locaOffset = loca[i] * multiplier;
+    bool parseFormat0(BinaryFile& file)
+    {
+        length = file.toUInt16();
+        language = file.toUInt16();
 
-                file.seekg(tables["glyf"][1] + locaOffset);
-                glyphs.push_back
-                ({
-                    toInt16(file),
-                    toInt16(file),
-                    toInt16(file),
-                    toInt16(file),
-                    toInt16(file)
-                });
-            }
+        for(int c=0; c<256; c++)
+            glyphIndexMap[c] = (c-29) & 0xFFFF;
 
-        // cmap
-            file.seekg(tables["cmap"][1]);
-            uint16_t cmapVersion = toUInt16(file);
-            uint16_t cmapTables = toUInt16(file);
+        return true;
+    }
 
-            std::vector<EncodingRecord> encodingRecords;
-            // glyphIndexMap = {}
+    bool parseFormat4(BinaryFile& file)
+    {
+        length = file.toUInt16();
+        language = file.toUInt16();
+        segCount = file.toUInt16()/2;
+        searchRange = file.toUInt16();
+        entrySelector = file.toUInt16();
+        rangeShift = file.toUInt16();
 
-            if(cmapVersion != 0)
-            {
-                std::cout << "ERROR :: Font CMAP version not supported; Current version is " << cmapVersion << " but version 0 is required." << std::endl;
-                file.close();
-                return;
-            }
-            for(int i = 0; i < cmapTables; i++)
-            {
-                encodingRecords.push_back
-                ({
-                    toUInt16(file),
-                    toUInt16(file),
-                    toUInt32(file)
-                });
-            }
-            int selectedOffset = -1;
-            for(int i = 0; i < cmapTables; i++)
-            {
-                EncodingRecord record = encodingRecords[i];
-                bool isWindowsPlatform = record.platformID == 3 && (record.encodingID == 0 || record.encodingID == 1 || record.encodingID == 10);
-                bool isUnicodePlatform = record.platformID == 0 && (record.encodingID == 0 || record.encodingID == 1 || record.encodingID == 2 || record.encodingID == 3 || record.encodingID == 4);
+        std::vector<uint16_t> endCodes;
+        for(int i=0; i<segCount; i++)
+        {
+            endCodes.push_back(file.toUInt16());
+        }
 
-                if (isWindowsPlatform || isUnicodePlatform)
+        if(file.toUInt16())
+        {
+            error = ttf::INVALID_BENCHMARK;
+            return false;
+        }
+
+        std::vector<uint16_t> startCodes;
+        for(int i=0; i<segCount; i++)
+        {
+            startCodes.push_back(file.toUInt16());
+        }
+
+        std::vector<int16_t> idDeltas;
+        for(int i=0; i<segCount; i++)
+        {
+            idDeltas.push_back(file.toInt16());
+        }
+
+        uint16_t idRangeOffsetsStart = file.position();
+
+        std::vector<uint16_t> idRangeOffsets;
+        for(int i=0; i<segCount; i++)
+        {
+            idRangeOffsets.push_back(file.toUInt16());
+        }
+
+        for(int i=0; i<segCount; i++)
+        {
+            uint16_t endCode = endCodes[i];
+            uint16_t startCode = startCodes[i];
+
+            for(int32_t c=startCode; c<=endCode; c++)
+            {                
+                if(idRangeOffsets[i])
                 {
-                    selectedOffset = record.offset;
-                    break;
+                    uint16_t glyphID = *(idRangeOffsets[i]/2 + (c + startCodes[i]) + &idRangeOffsets[i]);
+                    if(glyphID)
+                    {
+                        glyphIndexMap[c] = (glyphID + idDeltas[i]) & 0xFFFF;
+                    }
+                    else
+                    {
+                        glyphIndexMap[c] = c;
+                    }
+                }
+                else
+                {
+                    glyphIndexMap[c] = (c + idDeltas[i]) & 0xFFFF;
                 }
             }
-            
-            if (selectedOffset == -1)
-            {
-                std::cout << "ERROR :: Font does not contain any recognized platform and encoding." << std::endl;
-                file.close();
-                return;
-            }
-            
-            file.seekg(selectedOffset);
-            toUInt16(file);
-            uint16_t format = toUInt16(file);
-            std::cout << format << std::endl;
+        }
+        return true;
+    }
+};
+struct TTF
+{
+    uint32_t scalar;
+    uint16_t numTables, searchRange, entrySelector, rangeShift;
 
+    std::unordered_map<std::string, uint32_t[3]> tables;
+
+    uint32_t errorCode = 0;
+
+    Header head;
+    MaxProfile maxp;
+    HorizontalHeader hhea;
+    HorizontalMetrics hmtx;
+    IndexLocations loca;
+    GlyphData glyf;
+    CharacterMap cmap;
+
+    TTF(BinaryFile& file)
+    {
+        scalar = file.toUInt32();
+        numTables = file.toUInt16();
+        searchRange = file.toUInt16();
+        entrySelector = file.toUInt16();
+        rangeShift = file.toUInt16();
+
+        if(!parseTables(file))
+        {
+            file.close();
+            errorCode = file.position() < 0 ? ttf::END_OF_FILE:ttf::INVALID_CHECKSUM;
+            return;
+        }
+
+        head = Header(file, tables["head"][1]);
+        maxp = MaxProfile(file, tables["maxp"][1]);
+        hhea = HorizontalHeader(file, tables["hhea"][1]);
+        hmtx = HorizontalMetrics(file, tables["hmtx"][1], maxp.numGlyphs, hhea.numOfLongHorMetrics);
+        loca = IndexLocations(file, tables["loca"][1], head.indexToLocFormat, maxp.numGlyphs);
+        glyf = GlyphData(file, tables["glyf"][1], loca.locations, 0.025f / head.unitsPerEm);
+        cmap = CharacterMap(file, tables["cmap"][1]);
+
+        if(cmap.error)
+        {
+            file.close();
+            errorCode = cmap.error;
+            return;
+        }
+    }
+
+    bool parseTables(BinaryFile& file)
+    {
+        for (int i = 0; i < numTables; i++) 
+        {
+            std::string tag = file.toString(4);
+            tables[tag][0] = file.toUInt32(); // checksum
+            tables[tag][1] = file.toUInt32(); // offset
+            tables[tag][2] = file.toUInt32(); // length
+
+            if(tag != "head" && calculateTableChecksum(file, tables[tag][1], tables[tag][2]) != tables[tag][0])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private:
+        uint32_t calculateTableChecksum(BinaryFile& file, uint32_t offset, uint32_t length)
+        {
+            auto old = file.position();
+            file.seek(offset);
+            uint32_t sum = 0;
+            int64_t nlongs = ((length + 3) / 4) | 0;
+
+            while( nlongs-- )
+            {
+                sum = (sum + file.toUInt32() & 0xffffffff);
+            }
+
+            file.seek(old);
+            return sum;
+        }
+};
+
+Font file::loadTTF(const std::string &fileName)
+{
+    Font font;
+
+    BinaryFile file(fileName);
+    if(file.open())
+    {
+        TTF ttf = TTF(file);
+        switch(ttf.errorCode)
+        {
+            case ttf::END_OF_FILE:
+                std::cout << "ERROR :: Parser reach the end of the file " << fileName << " before data could be read." << std::endl;
+            break;
+            case ttf::INVALID_CHECKSUM:
+                std::cout << "ERROR :: Font " << fileName << " table data could not be verified; checksum was invalidated." << std::endl;
+            break;
+            case ttf::INVALID_BENCHMARK:
+                std::cout << "ERROR :: Benchmark value was not set to the correct value for " << fileName << ". This could indicate data corruption of the file." << std::endl;
+            break;
+            case ttf::UNSUPPORTED_CMAP:
+                std::cout << "ERROR :: Font " << fileName << " CMAP version not supported; Current version is " << ttf.cmap.version << " but version 0 is required." << std::endl;
+            break;
+            case ttf::UNSUPPORTED_FORMAT:
+                std::cout << "ERROR :: Font " << fileName << " does not contain any recognized platform and encoding." << std::endl;
+            break;
+            case ttf::UNSUPPORTED_PLATFORM:
+                std::cout << "ERROR :: TTF format ("<<ttf.cmap.format<<") not supported for " << fileName << ". Format 0 or 4 is required." << std::endl;
+            break;
+            default:
+                font.maxScale = vec2::zero;
+                font.characters = std::unordered_map<char, CharacterTTF>();
+                for(int i=' '; i<='~'; i++)
+                {
+                    uint16_t index = ttf.cmap.glyphIndexMap[i];
+                    if(index < ttf.glyf.glyphs.size() && index > 0)
+                    {
+                        Glyph glyph = ttf.glyf.glyphs[index];
+                        Metric metric = ttf.hmtx.hMetrics[index];
+                        
+                        font.characters[i] = {glyph.xMin, glyph.yMin, {(float)(glyph.xMax - glyph.xMin) / ttf.head.unitsPerEm, (float)(glyph.yMax - glyph.yMin) / ttf.head.unitsPerEm}, (metric.leftSideBearing / (float)ttf.head.unitsPerEm), (float)(metric.advanceWidth - metric.leftSideBearing - (glyph.xMax - glyph.xMin)) / ttf.head.unitsPerEm, glyph.contourEnds, glyph.points};
+                        font.maxScale = vec2::max(font.maxScale, font.characters[i].scale);
+                    }
+                }
+            break;
+        }
         file.close();
     }
     else
     {
         std::cout << "ERROR :: " << fileName << " could not be opened." << std::endl;
     }
+    return font;
+}
+
+int8_t binary::bitArrayToInt8(const std::vector<bool>& arr)
+{
+    size_t count = arr.size();
+    int8_t result = 0;
+    int tmp;
+    for (int i = 0; i < count; i++)
+    {
+        tmp = arr[i];
+        result |= tmp << (count - i - 1);
+    }
+    return result;
+}
+
+struct HuffmanNode
+{
+    std::string symbol = "";
+    HuffmanNode *left, *right;
+};
+struct HuffmanTree
+{
+
+};
+void inflateBlockNoCompression(BinaryFile& file, std::vector<char> result)
+{
+    uint16_t size = file.toUInt16();
+    uint16_t nsize = file.toUInt16();
+    for(int i=0; i<size; i++)
+    {
+        result.push_back(file.toUInt8());
+    }
+}
+std::vector<char> file::loadPNG(const std::string &fileName)
+{
+    std::vector<char> result;
+
+    BinaryFile file(fileName);
+    if(file.open())
+    {
+        uint64_t magicNumber = file.toUInt64();
+        if(magicNumber == 0x89504e470d0a1a0a)
+        {
+            uint32_t width, height;
+            uint8_t bitDepth, colorType, compressionMethod, filterMethod, interlacedMethod;
+
+            uint32_t name = -1;
+            while(name != 0x49454e44)
+            {
+                uint32_t size = file.toUInt32();
+                name = file.toUInt32();
+                uint8_t data[size];
+                std::bitset<8> byte;
+
+                switch(name)
+                {
+                    case 0x49484452:
+                    {
+                        width = file.toUInt32();
+                        height = file.toUInt32();
+                        bitDepth = file.toUInt8();
+                        colorType = file.toUInt8();
+                        compressionMethod = file.toUInt8();
+                        filterMethod = file.toUInt8();
+                        interlacedMethod = file.toUInt8();
+                    }
+                    break;
+                    case 0x49444154:
+                    {
+                        uint8_t cmf = file.toUInt8();
+                        byte = std::bitset<8>(cmf);
+                        uint8_t cm = binary::bitArrayToInt8({byte[3], byte[2], byte[1], byte[0]});
+                        uint8_t cinfo = binary::bitArrayToInt8({byte[7], byte[6], byte[5], byte[4]});
+
+                        uint8_t flg = file.toUInt8();
+                        byte = std::bitset<8>(flg);
+                        uint8_t fcheck = binary::bitArrayToInt8({byte[4], byte[3], byte[2], byte[1], byte[0]});
+                        uint8_t fdict = byte[5];
+                        uint8_t flevel = binary::bitArrayToInt8({byte[7], byte[6]});
+
+                        int bytesRead = 0;
+                        bool bfinal = 0;
+
+                        while(!bfinal)
+                        {
+                            byte = std::bitset<8>(file.toUInt8());
+                            bfinal = byte[0];
+                            uint8_t btype = binary::bitArrayToInt8({byte[1], byte[2]});
+
+                            switch(btype)
+                            {
+                                case 0:
+
+                                break;
+                                case 1:
+
+                                break;
+                                case 2:
+
+                                break;
+                                case 3:
+                                    std::cout << "ERROR :: Invalid BTYPE for PNG file " << fileName << ". Entry is either corrupted or is not a PNG file." << std::endl;
+                                break;
+                            }
+
+                            bytesRead++;
+                        }
+
+                        file.close();
+                        return result;
+
+                        for(int i=0; i<size-2-bytesRead; i++)
+                        {
+                            file.toUInt8();
+                        }
+                    }
+                    break;
+                    default:
+                    {
+                        for(int i=0; i<size; i++)
+                        {
+                            data[i] = file.toUInt8();
+                        }
+                    }
+                    break;
+                }
+                uint32_t crc = file.toUInt32();
+            }
+        }
+        else
+            std::cout << "ERROR :: Benchmark value was not set to the correct value for " << fileName << ". Entry is either corrupted or is not a PNG file." << std::endl;
+        file.close();
+    }
+    else
+    {
+        std::cout << "ERROR :: " << fileName << " could not be opened." << std::endl;
+    }
+    return result;
 }

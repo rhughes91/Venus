@@ -1,6 +1,6 @@
 #version 330 core
 
-#define MAX_POINT 0
+#define MAX_POINT 32
 #define MAX_SPOT 32
 
 struct Material
@@ -82,27 +82,10 @@ void main()
 
 vec4 calcDirLight(vec4 color, vec3 normal, vec3 viewDir)
 {
-    float NDotL = dot(dirLight.direction, -normal);
-    vec4 finalColor = color * max(0, NDotL) * material.diffuseStrength;
+    vec4 finalColor = color * max(0, dot(dirLight.direction, -normal)) * material.diffuseStrength;
+    finalColor += color * pow(max(0, dot(normalize(viewDir + dirLight.direction), -normal)), material.shininess) * material.specularStrength;
     
-    // Blinn specular
-    vec3 ToEye = viewPos - FragPos;
-    ToEye = normalize(ToEye);
-    vec3 HalfWay = normalize(ToEye + dirLight.direction);
-    float NDotH = max(0, dot(HalfWay, -normal));
-    finalColor += color * pow(NDotH, material.shininess) * material.specularStrength;
-    
-    return finalColor * dirLight.color + color * material.ambientStrength;
-    // vec3 lightDir = dirLight.direction;
-    // vec3 reflectDir = reflect(-lightDir, normal);
-
-    // float diff = max(dot(normal, lightDir), 0.0);
-    // float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    
-    // vec3 ambient = material.ambientStrength * color.rgb;
-    // vec3 diffuse = material.diffuseStrength * diff * color.rgb * dirLight.color.rgb;
-    // vec3 specular = material.specularStrength * spec * color.rgb;
-    // return vec4((ambient + diffuse + specular) * dirLight.strength, color.a);
+    return (finalColor * dirLight.color + color * material.ambientStrength) * dirLight.strength;
 }
 
 vec4 calcPointLight(PointLight light, vec4 color, vec3 normal, vec3 viewDir)
@@ -116,12 +99,10 @@ vec4 calcPointLight(PointLight light, vec4 color, vec3 normal, vec3 viewDir)
     float distance = length(light.position - FragPos);
     float attenuation = 1.0f / (light.constant + light.linear*distance + light.quadratic*(distance*distance));
 
-    vec4 diffuse = material.diffuseStrength * diff * attenuation * light.color;
-    vec4 specular = material.specularStrength * spec * attenuation * light.color;
-    
-    vec4 result = (diffuse + specular) * color;
+    vec3 diffuse = material.diffuseStrength * diff * attenuation * vec3(color) * vec3(light.color);
+    vec3 specular = material.specularStrength * spec * attenuation * vec3(color) * vec3(light.color);
 
-    return vec4(result.x * light.strength, result.y * light.strength, result.z * light.strength, result.a);
+    return vec4((diffuse + specular) * light.strength, color.a);
 }
 
 vec4 calcSpotLight(SpotLight light, vec4 color, vec3 normal, vec3 viewDir)
@@ -139,8 +120,8 @@ vec4 calcSpotLight(SpotLight light, vec4 color, vec3 normal, vec3 viewDir)
     float epsilon = light.cutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
     
-    vec3 diffuse = material.diffuseStrength * diff * attenuation * intensity * vec3(color);
-    vec3 specular = material.specularStrength * spec * attenuation * intensity * vec3(color);
+    vec3 diffuse = material.diffuseStrength * diff * attenuation * intensity * vec3(color) * vec3(light.color);
+    vec3 specular = material.specularStrength * spec * attenuation * intensity * vec3(color) * vec3(light.color);
 
     return vec4((diffuse + specular) * light.strength, color.a);
 }

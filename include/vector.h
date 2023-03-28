@@ -68,11 +68,6 @@ namespace math
     bool quadPointIntersect(const Quad& quad, const Vector2& point);
 }
 
-// struct fixed
-// {
-
-// };
-
 // Vector2 (structure): structure that holds two variables (x, y) and allows two dimensional vector operations
 struct Vector2
 {
@@ -617,6 +612,14 @@ inline bool operator >=(const Vector3I &vec1, const Vector3I &vec2)
     return vec1.length2() >= vec2.length2();
 }
 
+struct Point
+{
+    Vector2 position;
+    bool onCurve;
+
+    Point(bool onCurve__) : onCurve(onCurve__) {}
+};
+
 // mat4x4 (structure): structure that holds an array of 16 floats and allows 4 by 4 matrix operations
 struct mat4x4
 {
@@ -1102,7 +1105,8 @@ namespace vec2
     Vector2 abs(const Vector2 &vector);                                               // returns "math::abs" of each of its components as a new Vector2
     Vector2 degrees(const Vector2& vector);
     Vector2 lerp(const Vector2& vec1, const Vector2& vec2, float weight);             // returns 'vec1' linearly interpolated to 'vec2' by weight
-    Vector2 min(const Vector2 &vec1, const Vector2 &vec2);                            // returns "std::max" of each of its components as a new Vector2
+    Vector2 max(const Vector2 &vec1, const Vector2 &vec2);                            // returns "std::max" of each of its components as a new Vector2
+    Vector2 min(const Vector2 &vec1, const Vector2 &vec2);                            // returns "std::min" of each of its components as a new Vector2
     Vector2 modf(const Vector2& vector, float divisor);
     Vector2 pow(const Vector2 &vector, float exponent);                               // returns "std::pow" of each of its components as a new Vector2
     Vector2 radians(const Vector2& vector);
@@ -1110,7 +1114,7 @@ namespace vec2
     Vector2 sign(const Vector2 &vector);                                              // returns the "math::sign" of each of its components as a new Vector2
     Vector2 sign0(const Vector2 &vector);                                             // returns the "math::sign0" of each of its components as a new Vector2
 
-    std::vector<Vector2> bezier(const std::vector<Vector2>& points, const std::vector<Vector2>& controls, float partition);
+    std::vector<Vector2> bezier(const std::vector<Vector2>& points, float partition);
 }
 namespace vec3
 {

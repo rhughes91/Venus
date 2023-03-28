@@ -70,7 +70,7 @@ void FrameBuffer::addTexture(const std::string& name, uint16_t width, uint16_t h
     glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, type, texture, 0);
     
     textures.insert({name, TextureBuffer{texture, type, component}});
-    unbind();
+    unbind(GL_FRAMEBUFFER);
 }
 void FrameBuffer::addRenderBuffer(const std::string& name, uint16_t width, uint16_t height, int samples)
 {
@@ -83,18 +83,16 @@ void FrameBuffer::addRenderBuffer(const std::string& name, uint16_t width, uint1
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderBuffer);
     renderBuffers.insert({name, renderBuffer});
     
-    unbind();
+    unbind(GL_FRAMEBUFFER);
 }
 
 void FrameBuffer::bind(uint32_t type)
 {
     glBindFramebuffer(type, data);
-    // std::cout << data << " one " << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
 }
-void FrameBuffer::unbind()
+void FrameBuffer::unbind(uint32_t type)
 {
-    // std::cout << data << " two " << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);  
+    glBindFramebuffer(type, 0);  
 }
 void FrameBuffer::bindTexture(const std::string& name)
 {
@@ -104,14 +102,22 @@ int FrameBuffer::complete()
 {
     bind(GL_FRAMEBUFFER);
     int complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    unbind();
+    unbind(GL_FRAMEBUFFER);
     return complete;
 }
 
-extern std::string g_source;
 extern std::unordered_map<std::string, uint32_t> g_loadedTextures;
 
-
+uint32_t texture::channelToModifier(texture::Channel channel)
+{
+    switch(channel)
+    {
+        case texture::RED: return GL_RED;
+        case texture::RGB: return GL_RGB;
+        case texture::RGBA: return GL_RGBA;
+    }
+    return GL_RGB;
+}
 uint32_t texture::typeToModifier(texture::Type type)
 {
     switch(type)
@@ -121,12 +127,14 @@ uint32_t texture::typeToModifier(texture::Type type)
     }
     return GL_SRGB;
 }
+
 void texture::load(const std::string &path, texture::Type type)
 {
     int32_t screenChannel = texture::typeToModifier(type);
+    std::string screenChannelString = texture::typeToString(type);
 
     int32_t width, height, channels;
-    unsigned char *data = stbi_load((g_source + "resources/images/" + path).c_str(), &width, &height, &channels, 0);
+    unsigned char *data = stbi_load((source::root() + source::texture() + path + "." + screenChannelString).c_str(), &width, &height, &channels, 0);
 
     uint32_t channel;
     switch (channels)
@@ -163,21 +171,62 @@ void texture::load(const std::string &path, texture::Type type)
         std::cout << "Failed to load texture: " << path << std::endl;
     }
     stbi_image_free(data);
-    g_loadedTextures[path] = texture;
+    g_loadedTextures[path + "." + screenChannelString] = texture;
 }
 void texture::load(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
 {
     for (std::string subPath : subPaths)
     {
-        texture::load(path + subPath + "." + texture::typeToString(type), type);
+        texture::load(path + subPath, type);
     }
 }
+void texture::load(const std::string& name, const std::vector<char>& data, float width, float height, texture::Channel channel, texture::Type type)
+{
+    uint32_t imageChannel = texture::channelToModifier(channel);
+    uint32_t screenChannel = texture::typeToModifier(type);
+
+    uint32_t texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, imageChannel, GL_UNSIGNED_BYTE, &data[0]);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    g_loadedTextures[name] = texture;
+}
+void texture::load(const std::string& name, const std::vector<Color8>& data, float width, float height, texture::Channel channel, texture::Type type)
+{
+    uint32_t imageChannel = texture::channelToModifier(channel);
+    uint32_t screenChannel = texture::typeToModifier(type);
+
+    uint32_t texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, imageChannel, GL_UNSIGNED_BYTE, &data[0]);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // set the texture wrapping/filtering options (on the currently bound texture object)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    g_loadedTextures[name] = texture;
+}
+
 uint32_t texture::get(const std::string &path)
 {
     if(!g_loadedTextures.count(path))
     {
         std::cout << "ERROR :: Texture at \'" << path << "\' could not be found." << std::endl;
-        return g_loadedTextures.at("default.png");
+        return g_loadedTextures.at("default");
     }
     return g_loadedTextures.at(path);
 }
@@ -186,7 +235,13 @@ std::vector<uint32_t> texture::get(const std::string &path, const std::vector<st
     std::vector<uint32_t> textures;
     for (std::string subPath : subPaths)
     {
-        textures.push_back(g_loadedTextures[path + subPath + "." + texture::typeToString(type)]);
+        std::string pathName = path + subPath + "." + texture::typeToString(type);
+        if(!g_loadedTextures.count(pathName))
+        {
+            std::cout << "ERROR :: Texture at \'" << pathName << "\' could not be found." << std::endl;
+            return std::vector<uint32_t>();
+        }
+        textures.push_back(g_loadedTextures[pathName]);
     }
     return textures;
 }

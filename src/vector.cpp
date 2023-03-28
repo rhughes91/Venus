@@ -30,6 +30,10 @@ Vector2 vec2::abs(const Vector2 &vector)
 {
     return Vector2(math::abs(vector.x), math::abs(vector.y));
 }
+Vector2 vec2::max(const Vector2 &vec1, const Vector2 &vec2)
+{
+    return Vector2(std::max(vec1.x, vec2.x), std::max(vec1.y, vec2.y));
+}
 Vector2 vec2::min(const Vector2 &vec1, const Vector2 &vec2)
 {
     return Vector2(std::min(vec1.x, vec2.x), std::min(vec1.y, vec2.y));
@@ -86,22 +90,35 @@ Vector2 vec2::sign0(const Vector2 &vector)
     return Vector2(math::sign0(vector.x), math::sign0(vector.y));
 }
 
+float quadraticBezier(float one, float two, float three, float partition)
+{
+    return std::pow(1-partition, 2)*one + 2*partition*(1-partition)*two + partition*partition*three;
+}
 float cubicBezier(float one, float two, float three, float four, float partition)
 {
-    // std::cout << partition << " : " << std::pow(1-partition, 3)*one << " + " << 3*partition*std::pow(1-partition, 2)*two << " + " << 3*(1-partition)*partition*partition*three << " + " << partition*partition*partition*four << " = " << std::pow(1-partition, 3)*one + 3*partition*std::pow(1-partition, 2)*two + 3*(1-partition)*partition*partition*three + partition*partition*partition*four << std::endl;
     return std::pow(1-partition, 3)*one + 3*partition*std::pow(1-partition, 2)*two + 3*(1-partition)*partition*partition*three + partition*partition*partition*four;
 }
-std::vector<Vector2> vec2::bezier(const std::vector<Vector2>& points, const std::vector<Vector2>& controls, float partition)
+std::vector<Vector2> vec2::bezier(const std::vector<Vector2>& points, float partition)
 {
-    if(points.size() < 2 || controls.size() < 2)
+    if(points.size() < 3)
     {
         return points;
     }
 
     std::vector<Vector2> result;
-    for(float i=0; i<=1; i+=partition)
+    if(points.size() == 4)
     {
-        result.push_back(Vector2(cubicBezier(points[0].x, controls[0].x, controls[1].x, points[1].x, i), cubicBezier(points[0].y, controls[0].y, controls[1].y, points[1].y, i)));
+        for(float i=0; i<=1; i+=partition)
+        {
+            result.push_back(Vector2(cubicBezier(points[0].x, points[1].x, points[2].x, points[3].x, i), cubicBezier(points[0].y, points[1].y, points[2].y, points[3].y, i)));
+        }
+    }
+    else
+    {
+        for(float i=0; i<=1; i+=partition)
+        {
+            result.push_back(Vector2(quadraticBezier(points[0].x, points[1].x, points[2].x, i), quadraticBezier(points[0].y, points[1].y, points[2].y, i)));
+        }
     }
     return result;
 }

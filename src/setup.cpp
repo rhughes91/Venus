@@ -3,6 +3,10 @@
 #include "GLFW/glfw3.h"
 #include "image/stb_image.h"
 
+#include "windows.h"
+#include "psapi.h"
+
+#include "color.h"
 #include "file_util.h"
 #include "input.h"
 #include "setup.h"
@@ -11,8 +15,6 @@
 
 InputManager g_keyboard, g_mouse;
 Window g_window;
-
-std::string g_source;
 
 void Screen::clear(const Color& color)
 {
@@ -71,7 +73,7 @@ void Screen::draw()
     subBuffer.bind(GL_DRAW_FRAMEBUFFER);
     glBlitFramebuffer(0, 0, g_window.width, g_window.height, 0, 0, g_window.width, g_window.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    frameBuffer.unbind(GL_FRAMEBUFFER);
     glDisable(GL_DEPTH_TEST);
     glClearColor(defaultColor.r, defaultColor.g, defaultColor.b, defaultColor.a);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -79,6 +81,9 @@ void Screen::draw()
     shader.use();
     shader.setFloat("gamma", gamma);
     quad.draw(subBuffer.getTexture("texture").data);
+
+    frameBuffer.unbind(GL_READ_FRAMEBUFFER);
+    subBuffer.unbind(GL_DRAW_FRAMEBUFFER);
 }
 int Screen::getMaximumSamples()
 {
@@ -105,10 +110,16 @@ void Mesh::draw(const uint32_t texture) const
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 }
-void Spline::render()
-{   
+void Text::render(const Vector2& position)
+{
+    shader.use();      
+    shader.setFloat("aspect", window::aspectRatio());
+    shader.setFloat("scale", scale);
+    shader.setVec2("position", position);
+    shader.setVec4("objColor", color);
+
     glBindVertexArray(VAO);
-    glDrawArrays(GL_LINE_STRIP, 0, points.size());
+    glDrawArrays(GL_LINES, 0, points.size());
 }
 
 void shader::simple(Entity entity, const Model& model, const Camera& camera, const Transform& cameraTransform)
@@ -305,6 +316,7 @@ uint32_t glInputToButtonCode(uint32_t input)
 
 Time::Time()
 {
+    framerates = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60};
     advanceKey = key::BACKSLASH;
 }
 void Time::update()
@@ -314,7 +326,7 @@ void Time::update()
     deltaTime = (runtime - lastFrame);
     lastFrame = runtime;
     timer += deltaTime;
-    averageFrameRate = (averageFrameRate + (1/deltaTime))/2;
+    framerates[framerateIndex = (framerateIndex+1)%10] = (1/deltaTime);
 }
 void Time::beginTimer()
 {
@@ -389,6 +401,17 @@ void framebuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height
     glViewport(0, 0, width, height);
 }
 
+struct FrameText : Script
+{
+    Timer fpsTimer = Timer(1.f/2);
+    Text *text;
+    Color fontColor = color::BLACK;
+
+    MEMORYSTATUSEX memInfo;
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    DWORDLONG totalVirtualMem, virtualMemUsed, totalPhysMem, physMemUsed;
+    SIZE_T virtualMemUsedByMe, physMemUsedByMe;
+};
 Window::Window(std::string name, uint32_t width__, uint32_t height__)
 {
     if(g_window.data != NULL)
@@ -454,6 +477,91 @@ void Window::configureGLAD()
     glViewport(0, 0, g_window.width, g_window.height);
     // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     active = true;
+}
+void Window::initText()
+{
+    text = &object::initializeScript<FrameText>();
+    {
+        Object textbox("text");
+        Rect& box = textbox.addComponent<Rect>(Rect(Alignment(alignment::TOP, alignment::LEFT), {1, 0.5f}, {0.025f, -0.025f}));
+        ((FrameText *)text) -> text = &textbox.addComponent<Text>(Text(ttf::get("times new roman.ttf"), "", color::BLACK, 3, Alignment(alignment::TOP, alignment::LEFT), box, shader::get("spline_shader")));
+
+        ((FrameText *)text) -> load([]
+        (System& script)
+        {
+            FrameText& data = script.data<FrameText>();
+            data.fpsTimer.begin();
+
+            data.text -> setColor(data.fontColor);
+
+            data.memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+            GlobalMemoryStatusEx(&data.memInfo);
+
+            GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&data.pmc, sizeof(data.pmc));
+
+            data.totalVirtualMem = data.memInfo.ullTotalPageFile;
+            data.virtualMemUsed = data.memInfo.ullTotalPageFile - data.memInfo.ullAvailPageFile;
+            data.virtualMemUsedByMe = data.pmc.PrivateUsage;
+
+            data.totalPhysMem = data.memInfo.ullTotalPhys;
+            data.physMemUsed = data.memInfo.ullTotalPhys - data.memInfo.ullAvailPhys;
+            data.physMemUsedByMe = data.pmc.WorkingSetSize;
+
+            std::string ramUsed = std::to_string((float)data.virtualMemUsedByMe / 1000000.0f);
+            ramUsed = ramUsed.substr(0, ramUsed.size()-5);
+
+            std::string ramTotal = std::to_string((float)data.totalVirtualMem / 1000000.0f);
+            ramTotal = ramTotal.substr(0, ramTotal.size()-5);
+
+            std::string diskUsed = std::to_string((float)data.physMemUsedByMe / 1000000.0f);
+            diskUsed = diskUsed.substr(0, diskUsed.size()-5);
+
+            std::string diskTotal = std::to_string((float)data.totalPhysMem / 1000000.0f);
+            diskTotal = diskTotal.substr(0, diskTotal.size()-5);
+
+            data.text -> setText("fps:\t" + std::to_string((int)event::framerate()) + "\nRAM:\t" + ramUsed + "\t/\t" + ramTotal + " MB" + "\nDisk:\t" + diskUsed + "\t/\t" + diskTotal + " MB");
+            data.fpsTimer.reset();
+        });
+        ((FrameText *)text) -> update([]
+        (System& script)
+        {
+            FrameText& data = script.data<FrameText>();
+
+            data.text -> setColor(data.fontColor);
+
+            data.memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+            GlobalMemoryStatusEx(&data.memInfo);
+
+            GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&data.pmc, sizeof(data.pmc));
+
+            data.totalVirtualMem = data.memInfo.ullTotalPageFile;
+            data.virtualMemUsed = data.memInfo.ullTotalPageFile - data.memInfo.ullAvailPageFile;
+            data.virtualMemUsedByMe = data.pmc.PrivateUsage;
+
+            data.totalPhysMem = data.memInfo.ullTotalPhys;
+            data.physMemUsed = data.memInfo.ullTotalPhys - data.memInfo.ullAvailPhys;
+            data.physMemUsedByMe = data.pmc.WorkingSetSize;
+
+            data.fpsTimer.update(1);
+            while(data.fpsTimer.set())
+            {
+                std::string ramUsed = std::to_string((float)data.virtualMemUsedByMe / 1000000.0f);
+                ramUsed = ramUsed.substr(0, ramUsed.size()-5);
+
+                std::string ramTotal = std::to_string((float)data.totalVirtualMem / 1000000.0f);
+                ramTotal = ramTotal.substr(0, ramTotal.size()-5);
+
+                std::string diskUsed = std::to_string((float)data.physMemUsedByMe / 1000000.0f);
+                diskUsed = diskUsed.substr(0, diskUsed.size()-5);
+
+                std::string diskTotal = std::to_string((float)data.totalPhysMem / 1000000.0f);
+                diskTotal = diskTotal.substr(0, diskTotal.size()-5);
+
+                data.text -> setText("fps:\t" + std::to_string((int)event::framerate()) + "\nRAM:\t" + ramUsed + "\t/\t" + ramTotal + " MB" + "\nDisk:\t" + diskUsed + "\t/\t" + diskTotal + " MB");
+                data.fpsTimer.reset();
+            }
+        });
+    }
 }
 
 bool key::pressed(int32_t id)
@@ -579,6 +687,10 @@ bool window::throwError()
     std::cout << errorMessage << std::endl;
     return error;
 }
+bool window::vsyncEnabled()
+{
+    return g_window.vsyncEnabled;
+}
 void window::centerWindow()
 {
     setPosition(monitorCenter() - Vector2I(0.5*g_window.width, 0.5*g_window.height));
@@ -670,12 +782,16 @@ void window::setDefaultBackgroundColor(const Color &color)
     g_window.screen.defaultColor = color;
     g_window.screen.refreshResolution(g_window.width, g_window.height);
 }
+void window::setFontColor(const Color &color)
+{
+    ((FrameText *)g_window.text) -> fontColor = color;
+}
 void window::setIcon(const char *path)
 {
     GLFWimage images[1];
 
     stbi_set_flip_vertically_on_load(false);
-    images[0].pixels = stbi_load((g_source + std::string("resources/images/") + path).c_str(), &images[0].width, &images[0].height, 0, 4);
+    images[0].pixels = stbi_load((source::root() + std::string("resources/images/") + path).c_str(), &images[0].width, &images[0].height, 0, 4);
     glfwSetWindowIcon((GLFWwindow *)g_window.data, 1, images); 
     stbi_image_free(images[0].pixels);
     stbi_set_flip_vertically_on_load(true);
@@ -763,39 +879,49 @@ bool createWindow(const char *name, uint32_t width, uint32_t height)
 {
     if(g_window.active)
         return false;
-    
-    g_source = getCurrentDirectoryName();
+
     g_window = Window(name, width, height);
     if(!g_window.active)
         return false;
     
     stbi_set_flip_vertically_on_load(true);
-    texture::load("", {"default"}, texture::PNG);
+    // texture::load("default", file::loadPNG(source::root() + source::texture() + "default.png"), 16, 16, texture::RGBA, texture::PNG);
+    texture::load("default", {Color8(255, 255, 255, 255)}, 1, 1, texture::RGBA, texture::PNG);
 
     mesh::load("square", shape::square());
     mesh::load("cube", shape::cube());
 
+    file::loadFilesInDirectory(source::root() + source::font(), ttf::load);
+
+    std::vector<std::string> shaderConfig = file::loadFileToStringVector(source::config() + "shader.config");
+    for(const auto& line : shaderConfig)
+    {
+        int index = line.find(':');
+        if(index != std::string::npos)
+        {
+            int comma = line.find(',');
+
+            // std::cout << line.substr(0, index) << " : " << line.substr(index+2, comma - index-2) << std::endl;
+            shader::load(line.substr(0, index), Shader(line.substr(index+2, comma - index-2), line.substr(comma+2)));
+        }
+    }
+
+    shader::get("object_shader").use();
+    shader::get("object_shader").setInt("material.diffuse", 0);
+    
+    shader::get("simple_shader").use();
+    shader::get("simple_shader").setInt("material.texture", 0);
+    
+    shader::get("ui_shader").use();
+    shader::get("ui_shader").setInt("text", 0);
+
     g_window.screen.quad = mesh::get("square");
     g_window.screen.quad.refresh();
 
-    DirectionalLight light = window::lighting();
-
-    Shader& objectShader = shader::load("obj_shader", Shader("object_vertex", "object_frag"));
-    objectShader.use();
-    objectShader.setInt("material.diffuse", 0);
-    
-    Shader& simpleShader = shader::load("simple_shader", Shader("object_vertex", "simple_frag"));
-    simpleShader.use();
-    simpleShader.setInt("material.texture", 0);
-    
-    Shader& uiShader = shader::load("ui_shader", Shader("ui_vertex", "ui_frag"));
-    uiShader.use();
-    uiShader.setInt("text", 0);
-
-    shader::load("spline_shader", Shader("spline_vertex", "spline_frag"));
-
     g_keyboard.initialize(key::LAST);
     g_mouse.initialize(mouse::LAST);
+
+    g_window.initText();
     
     return true;
 }

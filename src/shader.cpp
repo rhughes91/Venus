@@ -3,6 +3,7 @@
 
 #include "file_util.h"
 #include "shader.h"
+#include "structure.h"
 
 Shader::Shader(std::string vertexPath, std::string fragmentPath)
 {
@@ -12,7 +13,7 @@ Shader::Shader(std::string vertexPath, std::string fragmentPath)
     uint32_t shader;
     if(shader = compileShader
     (
-        loadFileToString(("resources/shaders/"+m_vertexPath+".hlsl").c_str()), GL_VERTEX_SHADER
+        file::loadFileToString((source::shader()+m_vertexPath+".hlsl").c_str()), GL_VERTEX_SHADER
     ))
     {
         glAttachShader(ID, shader);
@@ -21,7 +22,7 @@ Shader::Shader(std::string vertexPath, std::string fragmentPath)
     else return;
     if(shader = compileShader
     (
-        loadFileToString(("resources/shaders/"+m_fragmentPath+".hlsl").c_str()), GL_FRAGMENT_SHADER
+        file::loadFileToString((source::shader()+m_fragmentPath+".hlsl").c_str()), GL_FRAGMENT_SHADER
     ))
     {
         glAttachShader(ID, shader);
@@ -111,16 +112,16 @@ uint32_t Shader::compileShader(const std::string &contents, uint32_t type) const
     return shader;
 }
 
-Mesh::Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__) : dimensions(dimensions__)
+Mesh::Mesh(const std::vector<Vector3>& vertices__, const std::vector<float>& texture__, const Vector3& dimensions__) : dimensions(dimensions__)
 {
     vertices.clear();
-    std::vector<float> textureCoords = std::vector<float>(2 * numVertices);
-    for(int i=0; i<numVertices; i++)
+    std::vector<float> textureCoords = std::vector<float>(2 * vertices__.size());
+    for(int i=0; i<vertices__.size(); i++)
     {
-        textureCoords[i*2] = texture__[i*2];
-        textureCoords[i*2 + 1] = texture__[i*2 + 1];
+        textureCoords[i*2] = texture__[(i*2) % texture__.size()];
+        textureCoords[i*2 + 1] = texture__[(i*2 + 1) % texture__.size()];
     }
-    for(int i=0; i<numVertices; i+=3)
+    for(int i=0; i<vertices__.size(); i+=3)
     {
         Vector3 normal = vec3::triSurface(vertices__[i], vertices__[i+1], vertices__[i+2]);
         for(int j=0; j<3; j++)
@@ -178,9 +179,68 @@ void Mesh::remove()
     glDeleteBuffers(1, &VBO);
 }
 
+Mesh shape::sphere(float radius, int32_t lod)
+{
+    float sqrt2 = std::sqrt(2)/2;
+    std::vector<Vector3> vectors
+    {
+        // TOWARDS-TOP
+        Vector3(-0.5f, 0, -0.5f),
+        Vector3(0, sqrt2, 0),
+        Vector3(0.5f, 0, -0.5f),
+
+        // AWAY-TOP
+        Vector3(0.5f, 0, 0.5f),
+        Vector3(0, sqrt2, 0),
+        Vector3(-0.5f, 0, 0.5f),
+        
+        // RIGHT-TOP
+        Vector3(-0.5f, 0, 0.5f),
+        Vector3(0, sqrt2, 0),
+        Vector3(-0.5f, 0, -0.5f),      
+
+        // LEFT-TOP
+        Vector3(0.5f, 0, -0.5f),
+        Vector3(0, sqrt2, 0),
+        Vector3(0.5f, 0, 0.5f),
+
+        // TOWARDS-BOTTOM
+        Vector3(0.5f, 0, -0.5f),
+        Vector3(0, -sqrt2, 0),
+        Vector3(-0.5f, 0, -0.5f),
+
+        // AWAY-BOTTOM
+        Vector3(-0.5f, 0, 0.5f),
+        Vector3(0, -sqrt2, 0),
+        Vector3(0.5f, 0, 0.5f),
+        
+        // RIGHT-BOTTOM
+        Vector3(-0.5f, 0, -0.5f),
+        Vector3(0, -sqrt2, 0),
+        Vector3(-0.5f, 0, 0.5f),      
+
+        // LEFT-BOTTOM
+        Vector3(0.5f, 0, 0.5f),
+        Vector3(0, -sqrt2, 0),
+        Vector3(0.5f, 0, -0.5f),
+    };
+
+    vectors = shape::triangulate(vectors, lod);
+    for(auto& vector: vectors)
+        vector = vector.normalized() * radius/2;
+
+    std::vector<float> texture
+    {
+        0, 0,
+        0, 1,
+        1, 0,
+    };
+    Mesh result = Mesh(vectors, texture, Vector3(1, 1, 0));
+    return result;
+}
 Mesh shape::square(int32_t tiling)
 {
-    Vector3 vectors[]
+    std::vector<Vector3> vectors
     {
         Vector3(0.5f, -0.5f, 0),
         Vector3(-0.5f, 0.5f, 0),
@@ -190,7 +250,7 @@ Mesh shape::square(int32_t tiling)
         Vector3(-0.5f, 0.5f, 0),
         Vector3(0.5f, -0.5f, 0),
     };
-    float texture[]
+    std::vector<float> texture
     {
         (float)tiling, 0,
         0, (float)tiling,
@@ -199,55 +259,12 @@ Mesh shape::square(int32_t tiling)
         0, (float)tiling,
         (float)tiling, 0,
     };
-    Mesh result = Mesh(vectors, 6, texture, Vector3(1, 1, 0));
-    return result;
-}
-Mesh shape::double_square(int32_t tiling)
-{
-    Vector3 vectors[]
-    {
-        Vector3(1.5f, -0.5f, 0),
-        Vector3(0.5f, 0.5f, 0),
-        Vector3(0.5f, -0.5f, 0),
-        
-        Vector3(1.5f, 0.5f, 0),
-        Vector3(0.5f, 0.5f, 0),
-        Vector3(1.5f, -0.5f, 0),
-        
-
-        Vector3(-0.5f, -0.5f, 0),
-        Vector3(-1.5f, 0.5f, 0),
-        Vector3(-1.5f, -0.5f, 0),
-        
-        Vector3(-0.5f, 0.5f, 0),
-        Vector3(-1.5f, 0.5f, 0),
-        Vector3(-0.5f, -0.5f, 0),
-    };
-    float textureCorners = tiling;
-    float texture[]
-    {
-        textureCorners, 0,
-        0, textureCorners,
-        0, 0,
-
-        textureCorners, textureCorners,
-        0, textureCorners,
-        textureCorners, 0,
-
-
-        textureCorners, 0,
-        0, textureCorners,
-        0, 0,
-        textureCorners, textureCorners,
-        0, textureCorners,
-        textureCorners, 0,
-    };
-    Mesh result = Mesh(vectors, 12, texture, Vector3(1, 1, 0));
+    Mesh result = Mesh(vectors, texture, Vector3(1, 1, 0));
     return result;
 }
 Mesh shape::cube()
 {
-    Vector3 vectors[]
+    std::vector<Vector3> vectors
     {
         Vector3(-0.5f, -0.5f, -0.5f),
         Vector3(0.5f, 0.5f, -0.5f),
@@ -300,7 +317,7 @@ Mesh shape::cube()
         
     };
     
-    float texture[]
+    std::vector<float> texture
     {
         0, 0,
         1, 1,
@@ -352,6 +369,33 @@ Mesh shape::cube()
         0, 0,
         
     };
-    Mesh result = Mesh(vectors, 36, texture, vec3::one);
+    Mesh result = Mesh(vectors, texture, vec3::one);
     return result;
+}
+
+std::vector<Vector3> shape::triangulate(const std::vector<Vector3>& vertices, int32_t recursions)
+{
+    std::vector<Vector3> result;
+    for(int i=0; i<vertices.size(); i+=3)
+    {
+        result.push_back(vertices[i]);
+        result.push_back((vertices[i] + vertices[i+1])/2);
+        result.push_back((vertices[i] + vertices[i+2])/2);
+
+        result.push_back((vertices[i+1] + vertices[i+2])/2);
+        result.push_back((vertices[i] + vertices[i+2])/2);
+        result.push_back((vertices[i] + vertices[i+1])/2);
+
+        result.push_back((vertices[i] + vertices[i+2])/2);
+        result.push_back((vertices[i+1] + vertices[i+2])/2);
+        result.push_back(vertices[i+2]);
+
+        result.push_back((vertices[i] + vertices[i+1])/2);
+        result.push_back(vertices[i+1]);
+        result.push_back((vertices[i+1] + vertices[i+2])/2);
+    }
+    if(recursions == 1)
+        return result;
+
+    return triangulate(result, recursions-1);
 }

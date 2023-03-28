@@ -53,11 +53,12 @@ class Window
         uint16_t width = 0;
         uint16_t height = 0;
 
-        void *data;
+        void *data, *text;
         bool active, vsyncEnabled;
 
         Window() {};
         Window(std::string name, uint32_t width, uint32_t height);
+        void initText();
         
     private:
         void configureGLAD();
@@ -72,6 +73,7 @@ namespace window
     bool minimized();
     bool resolutionUpdated();
     bool throwError();
+    bool vsyncEnabled();
 
     void centerWindow();
     void clearScreen(const Color& color);
@@ -88,6 +90,7 @@ namespace window
     void setCamera(uint32_t newCamera);
     void setCursor(const Vector2& position);
     void setDefaultBackgroundColor(const Color &color);
+    void setFontColor(const Color &color);
     void setIcon(const char *path);
     void setOpacity(float opacity);
     void setPosition(const Vector2I& position);

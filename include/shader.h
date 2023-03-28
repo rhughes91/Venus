@@ -41,7 +41,7 @@ struct Shader
 // shader (namespace): global methods for loading and accessing shader data from .hlsl files
 namespace shader
 {
-    Shader &load(const std::string& path, const Shader& shader);
+    void load(const std::string& path, const Shader& shader);
     Shader &get(const std::string& path);
     void remove();
 };
@@ -62,7 +62,7 @@ struct Mesh
     Vector3 dimensions;
 
     Mesh() {}
-    Mesh(Vector3 vertices__[], uint32_t numVertices, float texture__[], const Vector3& dimensions__);
+    Mesh(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__);
     Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__);
 
     void append(const Transform& parentTransform, const std::vector<Transform>& additions);
@@ -82,9 +82,11 @@ struct MeshAddon
 // shape (namespace): provides basic Mesh shapes without needing to load a file
 namespace shape
 {
+    Mesh sphere(float radius = 1, int32_t lod = 4);
     Mesh square(int32_t tiling = 1);
-    Mesh double_square(int32_t tiling = 1);
     Mesh cube();
+
+    std::vector<Vector3> triangulate(const std::vector<Vector3>& vertices, int32_t recursions);
 }
 
 // mesh (namespace): global methods for loading and accessing mesh data from .obj files
@@ -99,7 +101,10 @@ namespace mesh
     void remove();
 };
 
-// loads .obj file at 'filename' :: applied textures will be applied in a checkerboard pattern of size 'tiling'
-Mesh loadObjFile(const std::string &fileName, Vector2 tiling = Vector2(1, 1));
+namespace file
+{
+    // loads .obj file at 'filename' :: applied textures will be applied in a checkerboard pattern of size 'tiling'
+    Mesh loadObjFile(const std::string &fileName);
+}
 
 #endif
