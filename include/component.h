@@ -103,9 +103,10 @@ struct Camera
     Color backgroundColor;
     Vector3 front, up;
     mat4x4 view, projection;
+    float nearDistance, farDistance;
 
     Camera() {}
-    Camera(Color color__, Vector3 front__, Vector3 up__);
+    Camera(Color color__, Vector3 front__, Vector3 up__, float near__ = 0.01f, float far__ = 200.f);
 };
 
 // Transform (struct): holds data about an entity's position, rotation, and scale

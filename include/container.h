@@ -68,7 +68,7 @@ namespace ctr
         {
             return queue.size();
         }
-        T top() const
+        T &top()
         {
             return queue.front().value;
         }

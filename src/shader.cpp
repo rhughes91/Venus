@@ -129,8 +129,12 @@ Mesh::Mesh(const std::vector<Vector3>& vertices__, const std::vector<float>& tex
             vertices.push_back({vertices__[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
         }
     }
+    
 }
-Mesh::Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : vertices(vertices__), dimensions(dimensions__) {}
+Mesh::Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : vertices(vertices__), dimensions(dimensions__)
+{
+    
+}
 void Mesh::append(const Transform& parentTransform, const std::vector<Transform>& additions)
 {
     std::vector<Vertex> newVertices = vertices;

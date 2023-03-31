@@ -77,7 +77,7 @@ namespace text
 struct Text
 {
     Text() {}
-    Text(const Font& font__, const std::string& text__, const Color& color__, float scale__, const Alignment& alignment__, const Rect& bounds__, const Shader& shader__) : font(font__), text(text__), color(color__), scale(scale__), alignment(alignment__), bounds(bounds__), shader(shader__) {}
+    Text(const Font& font__, const std::string& text__, const Color& color__, float scale__, const Alignment& alignment__, const Rect& bounds__, const Shader& shader__);
 
     void refresh();
     void render(const Vector2& position);

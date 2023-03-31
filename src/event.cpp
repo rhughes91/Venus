@@ -3,9 +3,6 @@
 #include "structure.h"
 #include "component.h"
 
-// #include "windows.h"
-// #include "psapi.h"
-
 extern Time g_time;
 extern InputManager g_keyboard, g_mouse;
 
@@ -16,11 +13,6 @@ void beginEventLoop()
         std::cout << "ERROR :: Window has not been initialized" << std::endl;
         return;
     }
-
-    // MEMORYSTATUSEX memInfo;
-    // PROCESS_MEMORY_COUNTERS_EX pmc;
-    // DWORDLONG totalVirtualMem, virtualMemUsed, totalPhysMem, physMemUsed;
-    // SIZE_T virtualMemUsedByMe, physMemUsedByMe;
     
     float timeScale = 0.02f;
     object::load();
@@ -45,22 +37,6 @@ void beginEventLoop()
             object::lateUpdate();
         }
         object::render();
-
-        
-        // memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-        // GlobalMemoryStatusEx(&memInfo);
-
-        // GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
-
-        // totalVirtualMem = memInfo.ullTotalPageFile;
-        // virtualMemUsed = memInfo.ullTotalPageFile - memInfo.ullAvailPageFile;
-        // virtualMemUsedByMe = pmc.PrivateUsage;
-
-        // totalPhysMem = memInfo.ullTotalPhys;
-        // physMemUsed = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
-        // physMemUsedByMe = pmc.WorkingSetSize;
-
-        // std::cout << totalVirtualMem << " :: " << virtualMemUsedByMe << " ---- " << totalPhysMem << " :: " << physMemUsedByMe << std::endl;
 
         g_keyboard.refresh();
         g_mouse.refresh();

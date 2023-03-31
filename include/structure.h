@@ -13,21 +13,12 @@
 #include "vector.h"
 #include "setup.h"
 #include "file_util.h"
+#include "container.h"
 
 using Entity = uint32_t;
 using Path = std::pair<std::string, std::string>;
 
 class Object;
-
-// operators (namespace): used for data structures that may require sorting
-namespace operators
-{
-    template<typename T>
-    bool less(T a, T b)
-    {
-        return a < b;
-    }
-}
 
 
 // GLOBAL STRUCTURES
@@ -390,52 +381,52 @@ class System
         }
 
         // function that is run before the primary game loop begins
-        void load(System &system) {p_load(system);} 
+        void load() {p_load(*this);} 
         void setLoad(void (*load__)(System &))
         {
             p_load = load__;
         }      
         void reload()
         {
-            load(*this);
+            load();
         }
 
-        void start(System &system) {p_start(system);} 
+        void start() {p_start(*this);} 
         void setStart(void (*start__)(System &))
         {
             p_start = start__;
         }      
 
         // function that is run after the primary game loop ends
-        void destroy(System &system) {p_destroy(system);} 
+        void destroy() {p_destroy(*this);} 
         void setDestroy(void (*destroy__)(System &))
         {
             p_destroy = destroy__;
         }
 
         // first function that is run inside the primary game loop every frame
-        void update(System &system) {p_update(system);}
+        void update() {p_update(*this);}
         void setUpdate(void (*update__)(System &))
         {
             p_update = update__;
         }
 
         // second function that is run inside the primary game loop every frame
-        void lateUpdate(System &system) {p_lateUpdate(system);} 
+        void lateUpdate() {p_lateUpdate(*this);} 
         void setLateUpdate(void (*lateUpdate__)(System &))
         {
             p_lateUpdate = lateUpdate__;
         }
 
         // third function that is run inside the primary game loop every frame
-        void render(System &system) {p_render(system);} 
+        void render() {p_render(*this);} 
         void setRender(void (*render__)(System &))
         {
             p_render = render__;
         }
 
         // function that is run every 20 millisecond inside the primary game loop (runs before "update" on correct frames)
-        void fixedUpdate(System &system) {p_fixedUpdate(system);}  
+        void fixedUpdate() {p_fixedUpdate(*this);}  
         void setFixedUpdate(void (*fixedUpdate__)(System &))
         {
             p_fixedUpdate = fixedUpdate__;
@@ -452,10 +443,21 @@ class System
             return 0;
         }
 
+        void setName(const std::string& name__)
+        {
+            name = name__;
+        }
+        std::string getName()
+        {
+            return name;
+        }
+
         template<typename T>
         T& data();
 
         private:
+            std::string name;
+
             void (*p_onInsert)(Entity, std::vector<Entity> &);
             void (*p_onRemove)(Entity, std::vector<Entity> &);
 
@@ -478,8 +480,9 @@ class SystemManager
         std::shared_ptr<T> registerSystem(int32_t priority = 0)
         {
             auto system = std::make_shared<T>();
-            m_systems.insert({typeid(T).name(), system});
-            m_priorities.insert({priority, typeid(T).name()});
+            system -> setName(typeid(T).name());
+            m_systems.push(system, priority);
+            m_signatures[typeid(T).name()] = Signature();
             return system;
         }
 
@@ -487,10 +490,12 @@ class SystemManager
         template<typename T>
         bool containsSystem()
         {
-            for(auto const& system : m_systems)
+            for(const auto& system : m_systems)
             {
-                if(system.first == typeid(T).name())
+                if(typeid(T).name() == system.value -> getName())
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -499,108 +504,105 @@ class SystemManager
         template<typename T>
         std::shared_ptr<T> getSystem()
         {
-            return std::static_pointer_cast<T>(m_systems[typeid(T).name()]);
+            for(const auto& system : m_systems)
+            {
+                if(typeid(T).name() == system.value -> getName())
+                {
+                    return std::static_pointer_cast<T>(system.value);
+                }
+            }
+            return std::shared_ptr<T>(nullptr);
         }
 
         // sets the System with the typename 'typeName''s Signature to 'signature'
         void setSignature(const char *typeName, Signature signature)
         {
-            m_signatures[typeName] = signature;
+            m_signatures.at(typeName) = signature;
         }
 
         // protocol for when an entity is removed from the ECS :: entity data is erased if it found
         void entityDestroyed(Entity entity)
         {
-            for(auto const &pair : m_systems)
+            for(const auto& system : m_systems)
             {
-                pair.second -> remove(entity);
+                system.value -> remove(entity);
             }
         }
 
         // updates which Systems an entity belongs to when one of its components is either added or removed
         void entitySignatureChanged(Entity entity, Signature signature)
         {
-            for(auto const &pair : m_systems)
+            for(const auto& system : m_systems)
             {
-                auto const &system = pair.second;
-                auto const &systemSignature = m_signatures.at(pair.first);
+                auto const &systemSignature = m_signatures.at(system.value -> getName());
                 
                 if((signature & systemSignature) == systemSignature)
                 {                    
-                    system -> insert(entity);
+                    system.value -> insert(entity);
                 }
                 else
                 {
-                    system -> remove(entity);
+                    system.value -> remove(entity);
                 }
             }
         }
-
 
         // key methods for all systems
 
         void load()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> load(*system);
+                system.value -> load();
             }
         }
         void start()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> start(*system);
+                system.value -> start();
             }
         }
         void destroy()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> destroy(*system);
+                system.value -> destroy();
             }
         }
 
         void render()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> render(*system);
+                system.value -> render();
             }
         }
         void update()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> update(*system);
+                system.value -> update();
             }
         }
         void lateUpdate()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> lateUpdate(*system);
+                system.value -> lateUpdate();
             }
         }
         void fixedUpdate()
         {
-            for(auto& priority : m_priorities)
+            for(auto& system : m_systems)
             {
-                auto& system = m_systems[priority.second];
-                system -> fixedUpdate(*system);
+                system.value -> fixedUpdate();
             }
         }
 
     private:
         std::unordered_map<std::string, Signature> m_signatures{};
-        std::unordered_map<std::string, std::shared_ptr<System>> m_systems{};
-        std::multimap<int32_t, std::string> m_priorities{};
+        ctr::priority_queue<std::shared_ptr<System>> m_systems{};
 };
 
 // ObjectManager (class): an intermediary class for EntityManager, ComponentManager, and SystemManager :: all methods in this class can be found in the other manager classes
@@ -628,6 +630,7 @@ class ObjectManager
 
         Entity getEntity(const std::string& name) const
         {
+            m_entities.at(name);
             return m_entities.at(name);
         }
 
@@ -750,7 +753,6 @@ class ObjectManager
             m_systemManager -> setSignature(typeName, signature);
         }
 
-    private:
         std::unique_ptr<EntityManager> m_entityManager;
         std::unique_ptr<ComponentManager> m_componentManager;
         std::unique_ptr<SystemManager> m_systemManager;
@@ -770,9 +772,9 @@ struct Script : System
 {
     public:
         // stores the Script's typename as its 'id'
-        void initialize(const char *name, std::shared_ptr<Script> rootPointer)
+        void initialize(const char *name__, std::shared_ptr<Script> rootPointer)
         {
-            id = name;
+            setName(name__);
             root = rootPointer;
         }
         void initText();
@@ -786,7 +788,7 @@ struct Script : System
                 g_manager.registerComponent<T>();
             }
             signature.set(g_manager.getComponentType<T>());
-            g_manager.setSystemSignature(id, signature);
+            g_manager.setSystemSignature(getName().c_str(), signature);
         }
         Signature getSignature()
         {
@@ -834,7 +836,6 @@ struct Script : System
         }
 
     private:
-        const char *id;
         std::shared_ptr<Script> root;
         Signature signature;
 };
@@ -1100,9 +1101,16 @@ namespace object
     Vector3 brightness(int32_t value);
 
     template<typename T>
-    T& addComponent(Entity data, const T& component)
+    T& addComponent(Entity entity, const T& component)
     {
-        return g_manager.addComponent<T>(data, component);
+        g_manager.m_componentManager -> addComponent(entity, component);
+            
+        auto signature = g_manager.m_entityManager -> getSignature(entity);
+        signature.set(g_manager.m_componentManager -> getComponentType<T>(), true);
+        g_manager.m_entityManager -> setSignature(entity, signature);
+        g_manager.m_systemManager -> entitySignatureChanged(entity, signature);
+        
+        return g_manager.getComponent<T>(entity);
     }
 
     template<typename T>
@@ -1158,6 +1166,7 @@ namespace object
     {
         if(g_manager.containsSystem<T>())
         {
+            
             return object::find("g_global_event_runner").getComponent<T>();
         }
         else
@@ -1177,7 +1186,6 @@ namespace object
     {
         if(g_manager.containsSystem<T>())
         {
-            
             return object::find("g_global_event_runner").getComponent<T>();
         }
         else

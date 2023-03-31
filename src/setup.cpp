@@ -13,6 +13,20 @@
 #include "structure.h"
 #include "ui.h"
 
+#define BENCHMARK 0
+#if BENCHMARK
+    #include <chrono>
+    #include <utility>
+
+    #define BENCHMARK_LOAD 1
+    #define BENCHMARK_START 1
+    #define BENCHMARK_UPDATE 0
+    #define BENCHMARK_LATEUPDATE 0
+    #define BENCHMARK_FIXEDUPDATE 0
+    #define BENCHMARK_RENDER 1
+    #define BENCHMARK_DESTROY 1
+#endif
+
 InputManager g_keyboard, g_mouse;
 Window g_window;
 
@@ -92,12 +106,92 @@ int Screen::getMaximumSamples()
     return maxSamples;
 }
 
+void object::load()
+{
+    #if BENCHMARK_LOAD
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
+    g_manager.load();
+
+    #if BENCHMARK_LOAD
+        std::cout << "LOAD: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
+}
+void object::start()
+{
+    #if BENCHMARK_START
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
+    g_manager.start();
+    
+    #if BENCHMARK_START
+        std::cout << "START: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
+}
+void object::destroy()
+{
+    #if BENCHMARK_DESTROY
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
+    g_manager.destroy();
+
+    #if BENCHMARK_DESTROY
+        std::cout << "DESTROY: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
+}
+void object::update()
+{
+    #if BENCHMARK_UPDATE
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
+    g_manager.update();
+
+    #if BENCHMARK_UPDATE
+        std::cout << "UPDATE: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
+}
+void object::lateUpdate()
+{
+    #if BENCHMARK_LATEUPDATE
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
+    g_manager.lateUpdate();
+
+    #if BENCHMARK_LATEUPDATE
+        std::cout << "LATE UPDATE: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
+}
+void object::fixedUpdate()
+{
+    #if BENCHMARK_FIXEDUPDATE
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
+    g_manager.fixedUpdate();
+
+    #if BENCHMARK_FIXEDUPDATE
+        std::cout << "FIXED UPDATE: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
+}
 void object::render()
 {
+    #if BENCHMARK_RENDER
+        auto start = std::chrono::high_resolution_clock::now();
+    #endif
+
     g_window.screen.store();
     window::clearScreen(object::getComponent<Camera>(window::camera()).backgroundColor);
     g_manager.render();
     g_window.screen.draw();
+
+    #if BENCHMARK_RENDER
+        std::cout << "RENDER: " << ((double)(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 0.001) << " ms\n";
+    #endif
 }
 void Mesh::draw(const uint32_t texture) const
 {
@@ -542,7 +636,7 @@ void Window::initText()
             data.physMemUsed = data.memInfo.ullTotalPhys - data.memInfo.ullAvailPhys;
             data.physMemUsedByMe = data.pmc.WorkingSetSize;
 
-            data.fpsTimer.update(1);
+            data.fpsTimer.update(1/2.f);
             while(data.fpsTimer.set())
             {
                 std::string ramUsed = std::to_string((float)data.virtualMemUsedByMe / 1000000.0f);

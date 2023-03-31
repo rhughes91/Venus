@@ -9,34 +9,9 @@
 
 ObjectManager g_manager;
 
-void object::load()
+Camera::Camera(Color color__, Vector3 front__, Vector3 up__, float near__, float far__) : backgroundColor(color__), front(front__), up(up__), nearDistance(near__), farDistance(far__)
 {
-    g_manager.load();
-}
-void object::start()
-{
-    g_manager.start();
-}
-void object::destroy()
-{
-    g_manager.destroy();
-}
-void object::update()
-{
-    g_manager.update();
-}
-void object::lateUpdate()
-{
-    g_manager.lateUpdate();
-}
-void object::fixedUpdate()
-{
-    g_manager.fixedUpdate();
-}
-
-Camera::Camera(Color color__, Vector3 front__, Vector3 up__) : backgroundColor(color__), front(front__), up(up__)
-{
-    projection = mat4::per(math::radians(45.0f), window::aspectRatioInv(), 0.01f, 200.0f);
+    projection = mat4::per(math::radians(45.0f), window::aspectRatioInv(), nearDistance, farDistance);
 }
 
 bool Rect::contains(const Vector2& vec)
@@ -213,6 +188,11 @@ void physics::collisionMiss(Entity entity)
     object::getComponent<Physics2D>(entity).resetCollisions();
 }
 
+Text::Text(const Font& font__, const std::string& text__, const Color& color__, float scale__, const Alignment& alignment__, const Rect& bounds__, const Shader& shader__) : font(font__), text(text__), color(color__), scale(scale__), alignment(alignment__), bounds(bounds__), shader(shader__)
+{
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+}
 void Text::refresh()
 {
     relativeOrigin = Vector2(alignment.horizontal-1, alignment.vertical-1);
@@ -231,10 +211,7 @@ void Text::refresh()
         break;
     }
 
-    glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-
-    glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(Vector2), &points[0], GL_STATIC_DRAW);
@@ -386,14 +363,8 @@ ObjectManager::ObjectManager()
         registerComponent<Transform>();
 
         Object global("g_global_event_runner");
-        
-        // Signature signature;
-        // signature.set(getComponentType<Transform>());
-        // signature.set(getComponentType<Model>());
-        // setSystemSignature<GraphicsManager>(signature);
 
-
-        auto& animations = object::initializeScript<AnimationManager, Animator>(21);
+        auto& animations = object::initializeScript<AnimationManager, Animator>(15);
         animations.addRequirement<Model>();
         animations.fixedUpdate([]
         (System &system)
@@ -416,7 +387,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& buttons = object::initializeScript<ButtonManager, Button>(3);
+        auto& buttons = object::initializeScript<ButtonManager, Button>(33);
         buttons.addRequirement<Rect>();
         buttons.update([]
         (System &system)
@@ -450,7 +421,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& cameras = object::initializeScript<CameraManager, Camera>(15);
+        auto& cameras = object::initializeScript<CameraManager, Camera>(21);
         cameras.addRequirement<Transform>();
         void (*cameraFunction)(System &) = []
         (System &system)
@@ -469,7 +440,7 @@ ObjectManager::ObjectManager()
         cameras.load(cameraFunction);
         cameras.lateUpdate(cameraFunction);
 
-        auto& collisions = object::initializeScript<CollisionManager, BoxCollider>(12);
+        auto& collisions = object::initializeScript<CollisionManager, BoxCollider>(24);
         collisions.addRequirement<Transform>();
         collisions.addRequirement<Model>();
         collisions.load([]
@@ -541,7 +512,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& graphics = object::initializeScript<GraphicsManager, Transform>(27);
+        auto& graphics = object::initializeScript<GraphicsManager, Transform>(9);
         graphics.addRequirement<Model>();
         graphics.insert([]
         (Entity entity, std::vector<Entity>& entities)
@@ -576,7 +547,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& meshes = object::initializeScript<MeshManager, MeshAddon>(24);
+        auto& meshes = object::initializeScript<MeshManager, MeshAddon>(12);
         meshes.addRequirement<Model>();
         meshes.start([]
         (System &system)
@@ -587,7 +558,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& physics = object::initializeScript<PhysicsManager, Physics2D>(6);
+        auto& physics = object::initializeScript<PhysicsManager, Physics2D>(30);
         physics.addRequirement<Transform>();
         physics.start([]
         (System &system)
@@ -652,7 +623,7 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& pointlights = object::initializeScript<PointLightManager, PointLight>(9);
+        auto& pointlights = object::initializeScript<PointLightManager, PointLight>(27);
         pointlights.addRequirement<Transform>();
         pointlights.update([]
         (System &system)
@@ -710,7 +681,31 @@ ObjectManager::ObjectManager()
             }
         });
 
-        auto& texts = object::initializeScript<TextManager, Text>(30);
+        auto& uis = object::initializeScript<UIManager, Rect>(6);
+        uis.addRequirement<Model>();
+        uis.start([]
+        (System &system)
+        {
+            for(auto const &entity : system.m_entities)
+            {
+                object::getComponent<Model>(entity).data.refresh();
+            }
+        });
+        uis.render([]
+        (System &system)
+        {
+            Camera& camera = object::getComponent<Camera>(window::camera());
+            Transform& cameraTransform = object::getComponent<Transform>(window::camera());
+
+            glDisable(GL_DEPTH_TEST);
+            for(auto const &entity :system.m_entities)
+            {
+                object::getComponent<Model>(entity).render(entity, camera, cameraTransform);
+            }
+            glEnable(GL_DEPTH_TEST);
+        });
+
+        auto& texts = object::initializeScript<TextManager, Text>(3);
         texts.addRequirement<Rect>();
         texts.start([]
         (System &system)
@@ -758,34 +753,5 @@ ObjectManager::ObjectManager()
 
             glEnable(GL_DEPTH_TEST);
         });
-
-        auto& uis = object::initializeScript<UIManager, Rect>(30);
-        uis.addRequirement<Model>();
-        uis.start([]
-        (System &system)
-        {
-            for(auto const &entity : system.m_entities)
-            {
-                object::getComponent<Model>(entity).data.refresh();
-            }
-        });
-        uis.render([]
-        (System &system)
-        {
-            glDisable(GL_DEPTH_TEST);
-            for(auto const &entity :system.m_entities)
-            {
-                object::getComponent<Model>(entity).render(entity);
-            }
-            glEnable(GL_DEPTH_TEST);
-        });
-
-
-        // LineManager& line = object::initializeScript<LineManager>();
-        // lineManager.update([]
-        // (System& script)
-        // {
-        //     std::cout << "what" << std::endl;
-        // });
     }
 }

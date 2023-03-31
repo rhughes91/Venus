@@ -213,4 +213,11 @@ src/CMakeFiles/ecs_lib.dir/structure.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/basic_file.h \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/c++io.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/fstream.tcc \
- C:/Projects/Venus/include/ui.h
+ C:/Projects/Venus/include/ui.h \
+ C:/msys64/mingw64/include/c++/12.1.0/chrono \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/chrono.h \
+ C:/msys64/mingw64/include/c++/12.1.0/ratio \
+ C:/msys64/mingw64/include/c++/12.1.0/ctime \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/parse_numbers.h \
+ C:/msys64/mingw64/include/c++/12.1.0/utility \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_relops.h
