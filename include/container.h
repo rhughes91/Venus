@@ -18,6 +18,18 @@ namespace operators
     {
         return a < b;
     }
+
+    template<typename T>
+    bool equals(const T& a, const T& b)
+    {
+        return a == b;
+    }
+
+    template<typename T>
+    bool nequals(const T& a, const T& b)
+    {
+        return a != b;
+    }
 }
 
 namespace ctr

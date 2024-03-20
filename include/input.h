@@ -21,7 +21,7 @@ namespace key
         A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
         LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET, MUTE, CALCULATOR, GRAVE, 
         F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, 
-        GLOBAL_0, GLOBAL_1, GLOBAL_2, GLOBAL_3, GLOBAL_4, DEL, UNKNOWN, LAST = UNKNOWN
+        GLOBAL_0, GLOBAL_1, GLOBAL_2, GLOBAL_3, DEL, UNKNOWN, LAST = UNKNOWN
     };
 
     using KeyArray = std::vector<KeyCode>;
@@ -35,6 +35,9 @@ namespace key
     bool released(int32_t id);
     bool released(KeyCode id);
     bool released(KeyArray ids);
+
+    char typed();
+    bool ascii_default(KeyCode key);
 }
 
 namespace mouse

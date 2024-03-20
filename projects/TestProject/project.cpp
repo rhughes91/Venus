@@ -1,4 +1,5 @@
 #include "project.h"
+#include <iostream>
 
 void project::initialize()
 {
@@ -19,72 +20,71 @@ void project::initialize()
             destroy (runs once after the event loop)
     */
 
-    struct CameraLook : Script // This is an example of a component script. In both types of scripts, do not access any properties in the 'window' namespace if you are initializing a script's field, unless the window has already been initialized.
+    struct CameraLook // This is an example of a component script. In both types of scripts, do not access any properties in the 'window' namespace if you are initializing a script's field, unless the window has already been initialized.
     {
         float mouseSensitivity = 0.25f;
         Vector2 lastCursorPosition, angle;
 
         // Vector2 aspectRatio = window::aspect(); <== EXAMPLE: If this initialization function was run BEFORE the window was initialized, accessing this field would lead to undefined behavior.
     };
-    CameraLook& look = object::initializeScript<CameraLook>();
-    look.addRequirement<Camera>();
+    auto& look = object::createSystem<CameraLook, CameraLook, Camera>();
+    look.setFunction(object::fn::START, []
+    (object::ecs& container, object::ecs::system& script)
     {
-        look.start([]
-        (System& script)
+        for(entity e : container.entities<CameraLook>()) // This will iterate through each of the entities added to the system. This list should not be altered in any way, as entities are automatically added and removed to their designated systems.
         {
-            for(auto& entity : script.entities()) // This will iterate through each of the entities added to the system. This list should not be altered in any way, as entities are automatically added and removed to their designated systems.
-            {
-                /*
-                    There are two ways of getting an Entity's component: if the Entity is wrapped in the Object structure, getComponent is a method of that struct. Otherwise, getComponent is a function of the object namespace, and the Entity is passed as a parameter.
-                    If the component needs to be modified in any way, it must be stored as reference, as seen below.
-                */
-                CameraLook& cameraLook = object::getComponent<CameraLook>(entity);
-                cameraLook.lastCursorPosition = window::center();
-            }
-        });
-        look.update([]
-        (System& script)
+            /*
+                'getComponent' is a function of the object namespace, and the Entity is passed as a parameter.
+                If the component needs to be modified in any way, it must be stored as reference, as seen below.
+            */
+            CameraLook& cameraLook = object::getComponent<CameraLook>(e);
+            cameraLook.lastCursorPosition = window::center();
+            cameraLook.angle = {4.7f, 16.3f};
+        }
+    });
+    look.setFunction(object::fn::UPDATE, []
+    (object::ecs& container, object::ecs::system& script)
+    {
+        for(auto& entity : container.entities<CameraLook>())
         {
-            for(auto& entity : script.entities())
+            CameraLook& cameraLook = object::getComponent<CameraLook>(entity);
+
+            cameraLook.angle = vec2::modf(cameraLook.angle + (cameraLook.lastCursorPosition - window::cursorScreenPosition()) * cameraLook.mouseSensitivity, 2*M_PI);
+            if(math::abs(cameraLook.angle.y) > M_PI/2)
             {
-                CameraLook& cameraLook = object::getComponent<CameraLook>(entity);
-
-                cameraLook.angle = vec2::modf(cameraLook.angle + (cameraLook.lastCursorPosition - window::cursorScreenPosition()) * cameraLook.mouseSensitivity, 2*M_PI);
-                if(math::abs(cameraLook.angle.y) > M_PI/2)
-                {
-                    cameraLook.angle.y = M_PI/2 * math::sign(cameraLook.angle.y);
-                }
-                object::getComponent<Camera>(window::camera()).front = Vector3(std::sin(cameraLook.angle.x), -std::sin(cameraLook.angle.y), std::cos(cameraLook.angle.x)).normalized(); // Data for the current active camera Object can be requested and set globally from the window namespace.
-
-                cameraLook.lastCursorPosition = window::cursorScreenPosition();
+                cameraLook.angle.y = M_PI/2 * math::sign(cameraLook.angle.y);
             }
-        });
-    }
+            object::getComponent<Camera>(window::camera()).front = Vector3(std::sin(cameraLook.angle.x), -std::sin(cameraLook.angle.y), std::cos(cameraLook.angle.x)).normalized(); // Data for the current active camera Object can be requested and set globally from the window namespace.
 
-    struct Movement : Script // This is an example of a generic script. The fields stored here act as static fields across each of the key functions. Component script fields can also be accessed statically, but this is not usually intended behavior.
+            cameraLook.lastCursorPosition = window::cursorScreenPosition();
+        }
+    });
+
+    struct Movement // This is an example of a generic script. The fields stored here act as static fields across each of the key functions. Component script fields can also be accessed statically, but this is not usually intended behavior.
     {
         float speed = 0.1f;
+        entity camera;
     };
-    Movement& movement = object::initializeScript<Movement>();
+    auto& movement = object::createSystem<Movement>();
     {
-        movement.start([]
-        (System& script)
+        movement.setFunction(object::fn::START, []
+        (object::ecs& container, object::ecs::system& script)
         {
-            Object camera("camera");
-            camera.addComponent<Transform>(Transform{Vector3(0, 0, -20)});
-            camera.addComponent<CameraLook>(); // Notice that one of the requirements for this component (Camera) was added after CameraLook was added. Components never need to be added in a specific order.
+            entity camera = object::createEntity();
+            object::addComponent<Transform>(camera, Transform{Vector3(0, 0, -20)});
+            object::addComponent<CameraLook>(camera); // Notice that one of the requirements for this component (Camera) was added after CameraLook was added. Components never need to be added in a specific order.
+            object::addComponent<Camera>(camera, Camera(Color(0.5f, 0.5f, 5), vec3::forward, vec3::up)); // A camera is required to see created objects.
 
-            Camera& cam = camera.addComponent<Camera>(Camera(Color(0.5f, 0.5f, 5), vec3::forward, vec3::up)); // A camera is required to see created objects.
-            window::setCamera(camera.data); // While only one camera can be active at a single time, the camera can be changed at any point in the event loop.
+            window::setCamera(camera); // While only one camera can be active at a single time, the camera can be changed at any point in the event loop.
         });
-        movement.fixedUpdate([]
-        (System& script)
+        movement.setFunction(object::fn::FIXED_UPDATE, []
+        (object::ecs& container, object::ecs::system& script)
         {
-            Movement& data = script.data<Movement>();
+            Movement& data = script.getInstance<Movement>();
 
-            Object camera = object::find("camera");
-            Camera& cam = camera.getComponent<Camera>();
-            Transform& transform = camera.getComponent<Transform>();
+            entity camera = window::camera();
+            Camera& cam = object::getComponent<Camera>(camera);
+            Transform& transform = object::getComponent<Transform>(camera);
 
             /* Standard format for detecting an input: key::pressed, key::held, key::released. */
             if(key::held(key::W) || key::held(key::UP))
@@ -117,43 +117,45 @@ void project::initialize()
         });
     }
 
-    struct Event : Script
+    struct Event
     {
-        SpotLight *light; // Components stored statically should be stored as pointers; references cannot be statically stored, and simple variables cannot be changed.
-        Model *model;
-        Transform *transform;
+        entity spot, point;
     };
-    Event& event = object::initializeScript<Event>();
+    auto& event = object::createSystem<Event>();
     {
-        event.load([]
-        (System& script)
+        event.setFunction(object::fn::LOAD, []
+        (object::ecs& container, object::ecs::system& script)
         {
-            Event& data = script.data<Event>();
+            Event& data = script.getInstance<Event>();
 
-            Shader& uiShader = shader::get("ui_shader");
+            entity spotlight = object::createEntity();
+            data.spot = spotlight;
+            object::addComponent<Transform>(spotlight, {Vector3(0, 2, 0), 0.25f});
+            object::addComponent<Model>(spotlight, Model(texture::get("default"), mesh::get("cube")));
+            object::addComponent<SimpleShader>(spotlight, color::WHITE);
+            object::addComponent<SpotLight>(spotlight, SpotLight(vec3::down, color::WHITE, 1.0f, object::brightness(5), std::cos(math::radians(30.0f)), std::cos(math::radians(20.0f))));
 
-            Object spotlight("light");
-            spotlight.addComponent<Transform>({Vector3(0, 2, 0), 0.25f});
-            data.model = &spotlight.addComponent<Model>(Model(color::WHITE, Material(shader::get("simple_shader"), shader::simple), mesh::get("cube"), texture::get("default")));
-            data.light = &spotlight.addComponent<SpotLight>(SpotLight(vec3::down, color::WHITE, 1.0f, object::brightness(5), std::cos(math::radians(30.0f)), std::cos(math::radians(20.0f))));
-
-            Object pointlight("area");
-            data.transform = &pointlight.addComponent<Transform>({Vector3(0, -0.1f, 2), 0.1f});
-            pointlight.addComponent<Model>(Model(color::PRIMROSEPETAL, Material(shader::get("simple_shader"), shader::simple), mesh::get("sphere"), texture::get("default")));
-            pointlight.addComponent<PointLight>(PointLight(color::PRIMROSEPETAL, 1.0f, object::brightness(3)));
+            entity pointlight = object::createEntity();
+            data.point = pointlight;
+            object::addComponent<Transform>(pointlight, {Vector3(0, -0.1f, 2), 0.1f});
+            object::addComponent<Model>(pointlight, Model(texture::get("default"), mesh::get("sphere")));
+            object::addComponent<SimpleShader>(pointlight, color::PRIMROSEPETAL);
+            object::addComponent<PointLight>(pointlight, PointLight(color::PRIMROSEPETAL, 1.0f, object::brightness(3)));
         });
-        event.update([]
-        (System& script)
+        event.setFunction(object::fn::UPDATE, []
+        (object::ecs& container, object::ecs::system& script)
         {
-            Event& data = script.data<Event>();
+            Event& data = script.getInstance<Event>();
 
             float frequency = 1.0f;
             float index = math::modf(event::time(), 32);
-            data.light -> color = data.model -> color = Color(std::sin(frequency*index + 0) * 127 + 128, std::sin(frequency*index + 2) * 127 + 128, std::sin(frequency*index + 4) * 127 + 128); // This simply changes the global directional light's color into a rainbow.
-            data.transform -> position = Vector3(std::sin(2*event::time()) * 2, -0.1f, std::cos(2*event::time())) * 2;
+            object::getComponent<SpotLight>(data.spot).color = 
+            object::getComponent<SimpleShader>(data.spot).color = 
+                Color(std::sin(frequency*index + 0) * 127 + 128, std::sin(frequency*index + 2) * 127 + 128, std::sin(frequency*index + 4) * 127 + 128); // This simply changes the spotlight's color into a rainbow.
+            object::getComponent<Transform>(data.point).position = Vector3(std::sin(2*event::time()) * 2, -0.1f, std::cos(2*event::time())) * 2;
         });
-        event.destroy([]
-        (System& script)
+        event.setFunction(object::fn::DESTROY, []
+        (object::ecs& container, object::ecs::system& script)
         {
             /*
                 The 'event' namespace holds some data about how the window's event loop is running, including:

@@ -1,6 +1,7 @@
 #ifndef VENUS
 #define VENUS
 
+#include "audio.h"
 #include "component.h"
 #include "file_util.h"
 #include "input.h"

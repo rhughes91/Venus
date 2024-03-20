@@ -1,10 +1,12 @@
 #define NOMINMAX
 
-#include <iostream>
 #include <algorithm>
 #include <bitset>
-#include <limits>
 #include <filesystem>
+#include <fstream>
+#include <ios>
+#include <iostream>
+#include <limits>
 #include <windows.h>
 
 #include "file_util.h"
@@ -136,6 +138,19 @@ void file::loadFilesInDirectory(const std::string &fileName, void(*load)(const s
 }
 
 Source g_source;
+std::unordered_map<std::string, Font> g_loadedFonts;
+
+void ttf::load(const std::string &fileName)
+{
+    int index = fileName.find_last_of('/')+1;
+    g_loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
+}
+Font& ttf::get(const std::string &fileName)
+{
+    if(!g_loadedFonts.count(fileName))
+        std::cout << "ERROR :: TTF file " << fileName << " could not be found." << std::endl;
+    return g_loadedFonts[fileName];
+}
 
 Source::Source()
 {
@@ -151,6 +166,10 @@ Source::Source()
             if(setting == "source")
             {
                 source += line.substr(index+2);
+            }
+            else if(setting == "audio")
+            {
+                audioSource = line.substr(index+2) + "/";
             }
             else if(setting == "data")
             {
@@ -188,6 +207,14 @@ std::string Source::getCurrentDirectoryName()
 std::string source::root()
 {
     return g_source.getSource();;
+}
+std::string source::audio()
+{
+    return g_source.getAudioSource();
+}
+void source::setAudio(const std::string& source)
+{
+    g_source.setAudioSource(source);
 }
 std::string source::config()
 {
@@ -230,10 +257,113 @@ void source::setShader(const std::string& source)
     g_source.setShaderSource(source);
 }
 
-BinaryFile::BinaryFile(const std::string& path)
+struct BinaryFile
 {
-    file.open(path, std::ios::binary);
-}
+    std::ifstream file;
+    BinaryFile(const std::string& path)
+    {
+        file.open(path, std::ios_base::binary);
+    }
+
+    void close()
+    {
+        file.close();
+    }
+    void seek(int32_t position)
+    {
+        file.seekg(position);
+    }
+    int32_t position()
+    {
+        return file.tellg();
+    }
+
+    bool open()
+    {
+        return file.is_open();
+    }
+
+    uint8_t toUInt8()
+    {
+        char c;
+        file.get(c);
+        return c;
+    }
+    uint16_t toUInt16()
+    {
+        return ((toUInt8() << 8) | toUInt8());
+    }
+    uint16_t toUInt16(uint8_t *num)
+    {
+        uint64_t result;
+        result = (result << 8) | num[0];
+        result = (result << 8) | num[1];
+        return result;
+    }
+    int16_t toInt16()
+    {
+        uint16_t number = toUInt16();
+        if(number & 0x8000)
+            number -= 1 << 16;
+        return number;
+    }
+    int16_t toFWord()
+    {
+        return toInt16();
+    }
+    int16_t toUFWord()
+    {
+        return toUInt16();
+    }
+    int32_t toInt32()
+    {
+        return (toUInt8() << 24) | (toUInt8() << 16) | (toUInt8() << 8) | toUInt8();
+    }
+    uint32_t toUInt32()
+    {
+        return toInt32();
+    }
+    uint16_t toUInt32(uint8_t *num)
+    {
+        uint64_t result;
+        result = (result << 8) | num[0];
+        result = (result << 8) | num[1];
+        result = (result << 8) | num[2];
+        result = (result << 8) | num[3];
+        return result;
+    }
+    uint64_t toUInt64()
+    {
+        uint64_t result;
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        result = (result << 8) | toUInt8();
+        return result;
+    }
+    std::string toString(int length)
+    {
+        std::string result;
+        for (int i = 0; i < length; i++)
+        {
+            result += char(toUInt8());
+        }
+        return result;
+    }
+    float toFixed()
+    {
+        return toInt32() / (1 << 16);
+    }
+    uint32_t toDate()
+    {
+        uint32_t macTime = toUInt32() * 0x100000000 + toUInt32();
+        return macTime * 1000;
+    }
+};
 
 struct Glyph
 {
@@ -691,7 +821,7 @@ struct TTF
         hhea = HorizontalHeader(file, tables["hhea"][1]);
         hmtx = HorizontalMetrics(file, tables["hmtx"][1], maxp.numGlyphs, hhea.numOfLongHorMetrics);
         loca = IndexLocations(file, tables["loca"][1], head.indexToLocFormat, maxp.numGlyphs);
-        glyf = GlyphData(file, tables["glyf"][1], loca.locations, 0.025f / head.unitsPerEm);
+        glyf = GlyphData(file, tables["glyf"][1], loca.locations, 1);
         cmap = CharacterMap(file, tables["cmap"][1]);
 
         if(cmap.error)
@@ -767,8 +897,9 @@ Font file::loadTTF(const std::string &fileName)
             break;
             default:
                 font.maxScale = vec2::zero;
+                font.unitsPerEm = ttf.head.unitsPerEm;
                 font.characters = std::unordered_map<char, CharacterTTF>();
-                for(int i=' '; i<='~'; i++)
+                for(int i=0; i<='~'; i++)
                 {
                     uint16_t index = ttf.cmap.glyphIndexMap[i];
                     if(index < ttf.glyf.glyphs.size() && index > 0)
@@ -776,7 +907,7 @@ Font file::loadTTF(const std::string &fileName)
                         Glyph glyph = ttf.glyf.glyphs[index];
                         Metric metric = ttf.hmtx.hMetrics[index];
                         
-                        font.characters[i] = {glyph.xMin, glyph.yMin, {(float)(glyph.xMax - glyph.xMin) / ttf.head.unitsPerEm, (float)(glyph.yMax - glyph.yMin) / ttf.head.unitsPerEm}, (metric.leftSideBearing / (float)ttf.head.unitsPerEm), (float)(metric.advanceWidth - metric.leftSideBearing - (glyph.xMax - glyph.xMin)) / ttf.head.unitsPerEm, glyph.contourEnds, glyph.points};
+                        font.characters[i] = {Vector2I(glyph.xMin, glyph.yMin), Vector2I(glyph.xMax - glyph.xMin, glyph.yMax - glyph.yMin), metric.leftSideBearing, metric.advanceWidth - metric.leftSideBearing - (glyph.xMax - glyph.xMin), glyph.contourEnds, glyph.points};
                         font.maxScale = vec2::max(font.maxScale, font.characters[i].scale);
                     }
                 }
@@ -928,3 +1059,28 @@ std::vector<char> file::loadPNG(const std::string &fileName)
     }
     return result;
 }
+
+void file::loadWAV(const std::string& fileName)
+{
+
+}
+
+// bool file::save(const std::string &fileName, const std::vector<char>& data)
+// {
+//     std::ofstream output((g_source.getSource() + g_source.getConfigSource() + fileName).c_str(), std::fstream::app | std::ios::out | std::ios::binary);
+//     if(output)
+//     {
+//         for(char c : data)
+//         {
+//             output << c;
+//         }
+//         output << '\n';
+//     }
+//     else
+//     {
+//         std::cout << (g_source.getSource() + g_source.getConfigSource() + fileName) << '\n';
+//         return false;
+//     }
+//     output.close();
+//     return true;
+// }

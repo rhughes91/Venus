@@ -1,7 +1,6 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <iostream>
 #include <string>
 
 // Color (struct): structure that holds four variables (r, g, b, a) that represent the four basic color channels (red, green, blue, alpha)
@@ -35,7 +34,21 @@ struct Color8
     Color8(uint8_t value, uint8_t alpha) : r(value), g(value), b(value), a(alpha) {}
     Color8(uint8_t red, uint8_t green, uint8_t blue) : r{red}, g{green}, b{blue}, a{255}{};
     Color8(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) : r{red}, g{green}, b{blue}, a{alpha}{};
+
+    operator std::string() const
+    {
+        return std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ", " + std::to_string(a);
+    }
 };
+
+inline operator==(const Color8& color1, const Color8& color2)
+{
+    return color1.r == color2.r && color1.g == color2.g && color1.b == color2.b && color1.a == color2.a;
+}
+inline operator!=(const Color8& color1, const Color8& color2)
+{
+    return !(color1 == color2);
+}
 
 // color (namespace): provides easy access to basic colors
 namespace color
@@ -48,6 +61,14 @@ namespace color
         result.b = blue;
         result.a = alpha;
         return result;
+    }
+    inline Color hex(uint32_t hex)
+    {
+        return Color(((hex >> 16) & 0xFF), ((hex >> 8) & 0xFF), ((hex) & 0xFF));
+    }
+    inline Color hexa(uint32_t hex, float alpha)
+    {
+        return Color(((hex >> 16) & 0xFF), ((hex >> 8) & 0xFF), ((hex) & 0xFF), alpha);
     }
     const Color
     ABSOLUTEZERO(0, 72, 186),
@@ -466,5 +487,7 @@ inline Color &operator /=(Color &color1, float num)
     return color1;
 }
 std::ostream& operator<<(std::ostream& os, const Color& obj);
+
+inline Color8 operator *(const Color8 &color, float num) {return Color8(color.r*num, color.g*num, color.b*num, color.a);}
 
 #endif

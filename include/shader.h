@@ -34,7 +34,6 @@ struct Shader
     void setMat4(const std::string &name, const float *, bool) const;
 
     private:
-        std::string m_vertexPath, m_fragmentPath;
         uint32_t compileShader(const std::string &contents, uint32_t type) const;
 };
 
@@ -54,6 +53,16 @@ struct Vertex
     Vector2 uv;
 };
 
+struct MeshModule
+{
+    Transform transform;
+    Vector2 uvOffset = 0, uvScale = 1;
+    Color hue = color::WHITE;
+
+    MeshModule() {}
+    MeshModule(const Transform& transform__) : transform(transform__), uvOffset(0), uvScale(1) {}
+    MeshModule(const Transform& transform__, const Vector2& uvOffset__, const Vector2& uvScale__ = 1): transform(transform__), uvOffset(uvOffset__), uvScale(uvScale__) {}};
+
 // Mesh (struct): wrapper for the Vertex Array Object and Vertex Buffer Object necessary to render a mesh
 struct Mesh
 {
@@ -62,10 +71,15 @@ struct Mesh
     Vector3 dimensions;
 
     Mesh() {}
-    Mesh(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__);
-    Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__);
+    Mesh(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__)
+    {
+        reinit(vertices__, texture__, dimensions__);
+    }
+    Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : vertices(vertices__), dimensions(dimensions__) {}
 
-    void append(const Transform& parentTransform, const std::vector<Transform>& additions);
+    void append(const Transform& parentTransform, const std::vector<MeshModule>& additions);
+    void generate();
+    void reinit(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__);
     void refresh();
     void draw(const uint32_t texture) const;
     void remove();
@@ -73,10 +87,10 @@ struct Mesh
 
 struct MeshAddon
 {
-    std::vector<Transform> additions;
+    std::vector<MeshModule> additions;
 
     MeshAddon() {}
-    MeshAddon(const std::vector<Transform>& additions__) : additions(additions__) {}
+    MeshAddon(const std::vector<MeshModule>& additions__) : additions(additions__) {}
 };
 
 // shape (namespace): provides basic Mesh shapes without needing to load a file
@@ -95,10 +109,12 @@ namespace mesh
     Mesh &load(const std::string& path);
     Mesh &load(const std::string& path, const Mesh& mesh);
     void load(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
+    void set(const std::string& path, const Mesh& mesh);
     Mesh &get(const std::string& path);
     std::vector<Mesh> get(const std::string& path, const std::vector<std::string>& subPaths, const std::string& type);
 
     void remove();
+    bool contains(const std::string& path);
 };
 
 namespace file
@@ -106,5 +122,102 @@ namespace file
     // loads .obj file at 'filename' :: applied textures will be applied in a checkerboard pattern of size 'tiling'
     Mesh loadObjFile(const std::string &fileName);
 }
+
+class Model;
+class Sprite;
+
+struct SimpleShader
+{
+    Color color = color::WHITE;
+    Vector2 offset, scale = 1;
+
+    bool flip = false;
+
+    SimpleShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1) : color(objColor), offset(uvOffset), scale(uvScale), flip(false) {}
+};
+struct AdvancedShader : SimpleShader
+{
+    float ambient, diffuse, specular = 0;
+    int32_t shine = 0;
+
+    AdvancedShader(const Color& objColor = color::WHITE, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
+    AdvancedShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor, uvOffset, uvScale), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
+};
+
+//
+namespace shader
+{
+    void simple(Shader& shader, const Transform& transform, const Camera& camera, const Transform& cameraTransform, const SimpleShader& mat);
+    void ui(uint32_t entity, const Sprite& sprite, const Camera& camera, const Transform& cameraTransform);
+    void advanced(Shader& shader, const Transform& transform, const Camera& camera, const Transform& cameraTransform, const AdvancedShader& mat);
+}
+
+// Model (struct): holds an entity's Material and Mesh data which allows it to be rendered
+struct Model
+{
+    Mesh data;
+    Texture texture;
+
+    Model() {}
+    Model(const Texture& texture__, Mesh data__ = mesh::get("square")) : data(data__), texture(texture__) {}
+
+    void append(const Transform& parentTransform, const std::vector<MeshModule>& additions)
+    {
+        data.append(parentTransform, additions);
+    }
+    void refresh()
+    {
+        data.refresh();
+    }
+    
+    void render()
+    {
+        data.draw(texture.texture);
+    }
+};
+
+struct Sprite
+{
+    Texture texture;
+    Color color;
+    Shader shader;
+    Vector2 offset, scale = 1;
+
+    bool updateSorting = false, flip = false;
+
+    // void(*run)(Entity entity, const Sprite& sprite, const Camera& camera, const Transform& cameraTransform, bool shaderMatch);
+
+    Sprite(){}
+    Sprite(const Texture& texture__, const Color& color__ = color::WHITE, const Shader& shader__ = shader::get("simple_shader")) : texture(texture__), color(color__), shader(shader__)
+    {
+        square = mesh::get("square");
+    }
+    
+    void append(const Transform& parentTransform, const std::vector<MeshModule>& additions)
+    {
+        square.append(parentTransform, additions);
+    }
+    void refresh()
+    {
+        square.refresh();
+    }
+    void render()
+    {
+        square.draw(texture.texture);
+    }
+
+    void setSorting(float sorting__)
+    {
+        updateSorting = (sorting != sorting__);
+        sorting = sorting__;
+    }
+    float getSorting()
+    {
+        return sorting;
+    }
+
+    Mesh square;
+    float sorting = 0;
+};
 
 #endif

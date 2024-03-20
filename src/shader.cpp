@@ -1,19 +1,21 @@
 #include "glad/glad.h"
 #include <string>
+#include <iostream>
 
 #include "file_util.h"
 #include "shader.h"
 #include "structure.h"
 
+std::unordered_map<std::string, Mesh> g_loadedMeshes;
+std::unordered_map<std::string, Shader> g_loadedShaders;
+
 Shader::Shader(std::string vertexPath, std::string fragmentPath)
 {
-    m_vertexPath = vertexPath;
-    m_fragmentPath = fragmentPath;
     ID = glCreateProgram();
     uint32_t shader;
     if(shader = compileShader
     (
-        file::loadFileToString((source::shader()+m_vertexPath+".hlsl").c_str()), GL_VERTEX_SHADER
+        file::loadFileToString((source::shader()+vertexPath+".hlsl").c_str()), GL_VERTEX_SHADER
     ))
     {
         glAttachShader(ID, shader);
@@ -22,7 +24,7 @@ Shader::Shader(std::string vertexPath, std::string fragmentPath)
     else return;
     if(shader = compileShader
     (
-        file::loadFileToString((source::shader()+m_fragmentPath+".hlsl").c_str()), GL_FRAGMENT_SHADER
+        file::loadFileToString((source::shader()+fragmentPath+".hlsl").c_str()), GL_FRAGMENT_SHADER
     ))
     {
         glAttachShader(ID, shader);
@@ -112,60 +114,86 @@ uint32_t Shader::compileShader(const std::string &contents, uint32_t type) const
     return shader;
 }
 
-Mesh::Mesh(const std::vector<Vector3>& vertices__, const std::vector<float>& texture__, const Vector3& dimensions__) : dimensions(dimensions__)
+void shader::load(const std::string& path, const Shader& shader)
 {
-    vertices.clear();
-    std::vector<float> textureCoords = std::vector<float>(2 * vertices__.size());
-    for(int i=0; i<vertices__.size(); i++)
+    g_loadedShaders[path] = shader;
+}
+Shader &shader::get(const std::string& path)
+{
+    if(!g_loadedShaders.count(path))
     {
-        textureCoords[i*2] = texture__[(i*2) % texture__.size()];
-        textureCoords[i*2 + 1] = texture__[(i*2 + 1) % texture__.size()];
+        std::cout << "ERROR :: Shader at \'" << path << "\' could not be found." << std::endl;
+        // return mesh::get("square");
     }
+    return g_loadedShaders.at(path);
+}
+void shader::remove()
+{
+    for (auto &pair : g_loadedShaders)
+    {
+        pair.second.remove();
+    }
+}
+
+void Mesh::reinit(const std::vector<Vector3>& vertices__, const std::vector<float>& texture__, const Vector3& dimensions__)
+{
+    dimensions = dimensions__;
+    vertices.clear();
+    if(!vertices__.size() || !texture__.size())
+        return;
+
     for(int i=0; i<vertices__.size(); i+=3)
     {
         Vector3 normal = vec3::triSurface(vertices__[i], vertices__[i+1], vertices__[i+2]);
         for(int j=0; j<3; j++)
         {
-            vertices.push_back({vertices__[i+j], normal, Vector2(textureCoords[2*(i+j)], textureCoords[2*(i+j)+1])});
+            vertices.push_back({vertices__[i+j], normal, Vector2(texture__[(2*(i+j)) % texture__.size()], texture__[(2*(i+j)+1) % texture__.size()])});
         }
     }
-    
 }
-Mesh::Mesh(const std::vector<Vertex> &vertices__, const Vector3& dimensions__) : vertices(vertices__), dimensions(dimensions__)
-{
-    
-}
-void Mesh::append(const Transform& parentTransform, const std::vector<Transform>& additions)
+void Mesh::append(const Transform& parentTransform, const std::vector<MeshModule>& additions)
 {
     std::vector<Vertex> newVertices = vertices;
-    for(auto transform : additions)
+    for(auto module : additions)
     {
-        transform.position = (mat4x4)parentTransform.rotation.conjugate() * transform.position;
+        module.transform.position = (mat4x4)parentTransform.rotation.conjugate() * module.transform.position;
 
-        transform.position.x /= parentTransform.scale.x == 0 ? 1:parentTransform.scale.x;
-        transform.position.y /= parentTransform.scale.y == 0 ? 1:parentTransform.scale.y;
-        transform.position.z /= parentTransform.scale.z == 0 ? 1:parentTransform.scale.z;
+        module.transform.position.x /= parentTransform.scale.x == 0 ? 1:parentTransform.scale.x;
+        module.transform.position.y /= parentTransform.scale.y == 0 ? 1:parentTransform.scale.y;
+        module.transform.position.z /= parentTransform.scale.z == 0 ? 1:parentTransform.scale.z;
         
-        transform.position = (mat4x4)parentTransform.rotation * transform.position;
+        module.transform.position = (mat4x4)parentTransform.rotation * module.transform.position;
 
         for(auto vertex : newVertices)
         {
-            vertex.position = (mat4x4)transform.rotation * (mat4x4)parentTransform.rotation * vertex.position;
-            vertex.position += transform.position;
+            vertex.position = (mat4x4)module.transform.rotation * (mat4x4)parentTransform.rotation * vertex.position;
+            vertex.position += module.transform.position;
             vertex.position = (mat4x4)parentTransform.rotation.conjugate() * vertex.position;
+            vertex.uv = vertex.uv * module.uvScale + module.uvOffset;
             vertices.push_back(vertex);
         }
     }
+
+    std::string addendumPath = "Mesh:"+std::to_string(VAO)+":"+std::to_string(VBO);
+    if(!mesh::contains(addendumPath))
+    {
+        generate();
+        addendumPath = "Mesh:"+std::to_string(VAO)+":"+std::to_string(VBO);
+    }
+    mesh::set(addendumPath, *this);
+    refresh();
 }
-void Mesh::refresh()
+void Mesh::generate()
 {
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-
     glGenBuffers(1, &VBO);
+}
+void Mesh::refresh()
+{
+    glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW); 
 
     // vertex positions
     glEnableVertexAttribArray(0);	
@@ -183,50 +211,104 @@ void Mesh::remove()
     glDeleteBuffers(1, &VBO);
 }
 
+Mesh &mesh::load(const std::string &path)
+{
+    g_loadedMeshes[path] = file::loadObjFile(path);
+    g_loadedMeshes[path].generate();
+    return(g_loadedMeshes[path]);
+}
+Mesh &mesh::load(const std::string& path, const Mesh& mesh)
+{
+    g_loadedMeshes[path] = mesh;
+    g_loadedMeshes[path].generate();
+    return(g_loadedMeshes[path]);
+}
+void mesh::load(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
+{
+    for (std::string subPath : subPaths)
+    {
+        mesh::load(path + subPath + "." + type);
+    }
+}
+void mesh::set(const std::string& path, const Mesh& mesh)
+{
+    g_loadedMeshes[path] = mesh;
+}
+Mesh &mesh::get(const std::string &path)
+{
+    if(!g_loadedMeshes.count(path))
+    {
+        std::cout << "ERROR :: Mesh at \'" << path << "\' could not be found." << std::endl;
+        return mesh::get("square");
+    }
+    return g_loadedMeshes.at(path);
+}
+std::vector<Mesh> mesh::get(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
+{
+    std::vector<Mesh> meshes;
+    for (std::string subPath : subPaths)
+    {
+        meshes.push_back(g_loadedMeshes[path + subPath + "." + type]);
+    }
+    return meshes;
+}
+void mesh::remove()
+{
+    for (auto &pair : g_loadedMeshes)
+    {
+        pair.second.remove();
+    }
+}
+bool mesh::contains(const std::string& path)
+{
+    return g_loadedMeshes.count(path);
+}
+
 Mesh shape::sphere(float radius, int32_t lod)
 {
-    float sqrt2 = std::sqrt(2)/2;
+    float value = 0.5f;
+    float sqrt2 = std::sqrt(4*value)/2;
     std::vector<Vector3> vectors
     {
         // TOWARDS-TOP
-        Vector3(-0.5f, 0, -0.5f),
+        Vector3(-value, 0, -value),
         Vector3(0, sqrt2, 0),
-        Vector3(0.5f, 0, -0.5f),
+        Vector3(value, 0, -value),
 
         // AWAY-TOP
-        Vector3(0.5f, 0, 0.5f),
+        Vector3(value, 0, value),
         Vector3(0, sqrt2, 0),
-        Vector3(-0.5f, 0, 0.5f),
+        Vector3(-value, 0, value),
         
         // RIGHT-TOP
-        Vector3(-0.5f, 0, 0.5f),
+        Vector3(-value, 0, value),
         Vector3(0, sqrt2, 0),
-        Vector3(-0.5f, 0, -0.5f),      
+        Vector3(-value, 0, -value),      
 
         // LEFT-TOP
-        Vector3(0.5f, 0, -0.5f),
+        Vector3(value, 0, -value),
         Vector3(0, sqrt2, 0),
-        Vector3(0.5f, 0, 0.5f),
+        Vector3(value, 0, value),
 
         // TOWARDS-BOTTOM
-        Vector3(0.5f, 0, -0.5f),
+        Vector3(value, 0, -value),
         Vector3(0, -sqrt2, 0),
-        Vector3(-0.5f, 0, -0.5f),
+        Vector3(-value, 0, -value),
 
         // AWAY-BOTTOM
-        Vector3(-0.5f, 0, 0.5f),
+        Vector3(-value, 0, value),
         Vector3(0, -sqrt2, 0),
-        Vector3(0.5f, 0, 0.5f),
+        Vector3(value, 0, value),
         
         // RIGHT-BOTTOM
-        Vector3(-0.5f, 0, -0.5f),
+        Vector3(-value, 0, -value),
         Vector3(0, -sqrt2, 0),
-        Vector3(-0.5f, 0, 0.5f),      
+        Vector3(-value, 0, value),      
 
         // LEFT-BOTTOM
-        Vector3(0.5f, 0, 0.5f),
+        Vector3(value, 0, value),
         Vector3(0, -sqrt2, 0),
-        Vector3(0.5f, 0, -0.5f),
+        Vector3(value, 0, -value),
     };
 
     vectors = shape::triangulate(vectors, lod);
@@ -239,7 +321,8 @@ Mesh shape::sphere(float radius, int32_t lod)
         0, 1,
         1, 0,
     };
-    Mesh result = Mesh(vectors, texture, Vector3(1, 1, 0));
+    Mesh result = Mesh(vectors, texture, Vector3(1, 1, 1));
+
     return result;
 }
 Mesh shape::square(int32_t tiling)

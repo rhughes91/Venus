@@ -83,26 +83,11 @@ src/CMakeFiles/venus_lib.dir/event.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/venus_lib.dir/event.cpp.s"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Projects\Venus\src\event.cpp -o CMakeFiles\venus_lib.dir\event.cpp.s
 
-src/CMakeFiles/venus_lib.dir/global.cpp.obj: src/CMakeFiles/venus_lib.dir/flags.make
-src/CMakeFiles/venus_lib.dir/global.cpp.obj: src/CMakeFiles/venus_lib.dir/includes_CXX.rsp
-src/CMakeFiles/venus_lib.dir/global.cpp.obj: C:/Projects/Venus/src/global.cpp
-src/CMakeFiles/venus_lib.dir/global.cpp.obj: src/CMakeFiles/venus_lib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/CMakeFiles/venus_lib.dir/global.cpp.obj"
-	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/venus_lib.dir/global.cpp.obj -MF CMakeFiles\venus_lib.dir\global.cpp.obj.d -o CMakeFiles\venus_lib.dir\global.cpp.obj -c C:\Projects\Venus\src\global.cpp
-
-src/CMakeFiles/venus_lib.dir/global.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/venus_lib.dir/global.cpp.i"
-	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Projects\Venus\src\global.cpp > CMakeFiles\venus_lib.dir\global.cpp.i
-
-src/CMakeFiles/venus_lib.dir/global.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/venus_lib.dir/global.cpp.s"
-	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Projects\Venus\src\global.cpp -o CMakeFiles\venus_lib.dir\global.cpp.s
-
 src/CMakeFiles/venus_lib.dir/graphics.cpp.obj: src/CMakeFiles/venus_lib.dir/flags.make
 src/CMakeFiles/venus_lib.dir/graphics.cpp.obj: src/CMakeFiles/venus_lib.dir/includes_CXX.rsp
 src/CMakeFiles/venus_lib.dir/graphics.cpp.obj: C:/Projects/Venus/src/graphics.cpp
 src/CMakeFiles/venus_lib.dir/graphics.cpp.obj: src/CMakeFiles/venus_lib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object src/CMakeFiles/venus_lib.dir/graphics.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object src/CMakeFiles/venus_lib.dir/graphics.cpp.obj"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/venus_lib.dir/graphics.cpp.obj -MF CMakeFiles\venus_lib.dir\graphics.cpp.obj.d -o CMakeFiles\venus_lib.dir\graphics.cpp.obj -c C:\Projects\Venus\src\graphics.cpp
 
 src/CMakeFiles/venus_lib.dir/graphics.cpp.i: cmake_force
@@ -117,7 +102,7 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: src/CMakeFiles/venus_lib.dir/flags.m
 src/CMakeFiles/venus_lib.dir/setup.cpp.obj: src/CMakeFiles/venus_lib.dir/includes_CXX.rsp
 src/CMakeFiles/venus_lib.dir/setup.cpp.obj: C:/Projects/Venus/src/setup.cpp
 src/CMakeFiles/venus_lib.dir/setup.cpp.obj: src/CMakeFiles/venus_lib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object src/CMakeFiles/venus_lib.dir/setup.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object src/CMakeFiles/venus_lib.dir/setup.cpp.obj"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/venus_lib.dir/setup.cpp.obj -MF CMakeFiles\venus_lib.dir\setup.cpp.obj.d -o CMakeFiles\venus_lib.dir\setup.cpp.obj -c C:\Projects\Venus\src\setup.cpp
 
 src/CMakeFiles/venus_lib.dir/setup.cpp.i: cmake_force
@@ -132,7 +117,7 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: src/CMakeFiles/venus_lib.dir/flags.
 src/CMakeFiles/venus_lib.dir/shader.cpp.obj: src/CMakeFiles/venus_lib.dir/includes_CXX.rsp
 src/CMakeFiles/venus_lib.dir/shader.cpp.obj: C:/Projects/Venus/src/shader.cpp
 src/CMakeFiles/venus_lib.dir/shader.cpp.obj: src/CMakeFiles/venus_lib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object src/CMakeFiles/venus_lib.dir/shader.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object src/CMakeFiles/venus_lib.dir/shader.cpp.obj"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/venus_lib.dir/shader.cpp.obj -MF CMakeFiles\venus_lib.dir\shader.cpp.obj.d -o CMakeFiles\venus_lib.dir\shader.cpp.obj -c C:\Projects\Venus\src\shader.cpp
 
 src/CMakeFiles/venus_lib.dir/shader.cpp.i: cmake_force
@@ -147,7 +132,7 @@ src/CMakeFiles/venus_lib.dir/vector.cpp.obj: src/CMakeFiles/venus_lib.dir/flags.
 src/CMakeFiles/venus_lib.dir/vector.cpp.obj: src/CMakeFiles/venus_lib.dir/includes_CXX.rsp
 src/CMakeFiles/venus_lib.dir/vector.cpp.obj: C:/Projects/Venus/src/vector.cpp
 src/CMakeFiles/venus_lib.dir/vector.cpp.obj: src/CMakeFiles/venus_lib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object src/CMakeFiles/venus_lib.dir/vector.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object src/CMakeFiles/venus_lib.dir/vector.cpp.obj"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/venus_lib.dir/vector.cpp.obj -MF CMakeFiles\venus_lib.dir\vector.cpp.obj.d -o CMakeFiles\venus_lib.dir\vector.cpp.obj -c C:\Projects\Venus\src\vector.cpp
 
 src/CMakeFiles/venus_lib.dir/vector.cpp.i: cmake_force
@@ -161,7 +146,6 @@ src/CMakeFiles/venus_lib.dir/vector.cpp.s: cmake_force
 # Object files for target venus_lib
 venus_lib_OBJECTS = \
 "CMakeFiles/venus_lib.dir/event.cpp.obj" \
-"CMakeFiles/venus_lib.dir/global.cpp.obj" \
 "CMakeFiles/venus_lib.dir/graphics.cpp.obj" \
 "CMakeFiles/venus_lib.dir/setup.cpp.obj" \
 "CMakeFiles/venus_lib.dir/shader.cpp.obj" \
@@ -171,14 +155,13 @@ venus_lib_OBJECTS = \
 venus_lib_EXTERNAL_OBJECTS =
 
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/event.cpp.obj
-src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/global.cpp.obj
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/graphics.cpp.obj
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/setup.cpp.obj
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/shader.cpp.obj
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/vector.cpp.obj
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/build.make
 src/libvenus_lib.a: src/CMakeFiles/venus_lib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX static library libvenus_lib.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX static library libvenus_lib.a"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && $(CMAKE_COMMAND) -P CMakeFiles\venus_lib.dir\cmake_clean_target.cmake
 	cd /d C:\Projects\Venus\build\TestProject\cmake\src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\venus_lib.dir\link.txt --verbose=$(VERBOSE)
 

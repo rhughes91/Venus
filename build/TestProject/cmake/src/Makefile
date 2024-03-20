@@ -116,18 +116,18 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/venus_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/venus_lib.dir/rule
-.PHONY : src/CMakeFiles/venus_lib.dir/rule
+src/CMakeFiles/ecs_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/ecs_lib.dir/rule
+.PHONY : src/CMakeFiles/ecs_lib.dir/rule
 
 # Convenience name for target.
-venus_lib: src/CMakeFiles/venus_lib.dir/rule
-.PHONY : venus_lib
+ecs_lib: src/CMakeFiles/ecs_lib.dir/rule
+.PHONY : ecs_lib
 
 # fast build rule for target.
-venus_lib/fast:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
-.PHONY : venus_lib/fast
+ecs_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
+.PHONY : ecs_lib/fast
 
 # Convenience name for target.
 src/CMakeFiles/file_lib.dir/rule:
@@ -144,18 +144,70 @@ file_lib/fast:
 .PHONY : file_lib/fast
 
 # Convenience name for target.
-src/CMakeFiles/ecs_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/ecs_lib.dir/rule
-.PHONY : src/CMakeFiles/ecs_lib.dir/rule
+src/CMakeFiles/audio_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/audio_lib.dir/rule
+.PHONY : src/CMakeFiles/audio_lib.dir/rule
 
 # Convenience name for target.
-ecs_lib: src/CMakeFiles/ecs_lib.dir/rule
-.PHONY : ecs_lib
+audio_lib: src/CMakeFiles/audio_lib.dir/rule
+.PHONY : audio_lib
 
 # fast build rule for target.
-ecs_lib/fast:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
-.PHONY : ecs_lib/fast
+audio_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\audio_lib.dir\build.make src/CMakeFiles/audio_lib.dir/build
+.PHONY : audio_lib/fast
+
+# Convenience name for target.
+src/CMakeFiles/venus_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/venus_lib.dir/rule
+.PHONY : src/CMakeFiles/venus_lib.dir/rule
+
+# Convenience name for target.
+venus_lib: src/CMakeFiles/venus_lib.dir/rule
+.PHONY : venus_lib
+
+# fast build rule for target.
+venus_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
+.PHONY : venus_lib/fast
+
+# Convenience name for target.
+src/CMakeFiles/global_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/global_lib.dir/rule
+.PHONY : src/CMakeFiles/global_lib.dir/rule
+
+# Convenience name for target.
+global_lib: src/CMakeFiles/global_lib.dir/rule
+.PHONY : global_lib
+
+# fast build rule for target.
+global_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/build
+.PHONY : global_lib/fast
+
+audio.obj: audio.cpp.obj
+.PHONY : audio.obj
+
+# target to build an object file
+audio.cpp.obj:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\audio_lib.dir\build.make src/CMakeFiles/audio_lib.dir/audio.cpp.obj
+.PHONY : audio.cpp.obj
+
+audio.i: audio.cpp.i
+.PHONY : audio.i
+
+# target to preprocess a source file
+audio.cpp.i:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\audio_lib.dir\build.make src/CMakeFiles/audio_lib.dir/audio.cpp.i
+.PHONY : audio.cpp.i
+
+audio.s: audio.cpp.s
+.PHONY : audio.s
+
+# target to generate assembly for a file
+audio.cpp.s:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\audio_lib.dir\build.make src/CMakeFiles/audio_lib.dir/audio.cpp.s
+.PHONY : audio.cpp.s
 
 event.obj: event.cpp.obj
 .PHONY : event.obj
@@ -210,7 +262,7 @@ global.obj: global.cpp.obj
 
 # target to build an object file
 global.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/global.cpp.obj
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/global.cpp.obj
 .PHONY : global.cpp.obj
 
 global.i: global.cpp.i
@@ -218,7 +270,7 @@ global.i: global.cpp.i
 
 # target to preprocess a source file
 global.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/global.cpp.i
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/global.cpp.i
 .PHONY : global.cpp.i
 
 global.s: global.cpp.s
@@ -226,7 +278,7 @@ global.s: global.cpp.s
 
 # target to generate assembly for a file
 global.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/global.cpp.s
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/global.cpp.s
 .PHONY : global.cpp.s
 
 graphics.obj: graphics.cpp.obj
@@ -357,9 +409,14 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
+	@echo ... audio_lib
 	@echo ... ecs_lib
 	@echo ... file_lib
+	@echo ... global_lib
 	@echo ... venus_lib
+	@echo ... audio.obj
+	@echo ... audio.i
+	@echo ... audio.s
 	@echo ... event.obj
 	@echo ... event.i
 	@echo ... event.s

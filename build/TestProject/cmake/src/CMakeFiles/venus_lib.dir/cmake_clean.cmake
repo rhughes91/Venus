@@ -1,8 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/venus_lib.dir/event.cpp.obj"
   "CMakeFiles/venus_lib.dir/event.cpp.obj.d"
-  "CMakeFiles/venus_lib.dir/global.cpp.obj"
-  "CMakeFiles/venus_lib.dir/global.cpp.obj.d"
   "CMakeFiles/venus_lib.dir/graphics.cpp.obj"
   "CMakeFiles/venus_lib.dir/graphics.cpp.obj.d"
   "CMakeFiles/venus_lib.dir/setup.cpp.obj"

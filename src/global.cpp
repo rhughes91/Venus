@@ -1,102 +1,18 @@
 #include "file_util.h"
+#include "audio.h"
+#include "setup.h"
 #include "shader.h"
 #include "structure.h"
+
+#include <iostream>
 #include <windows.h>
 
 Time g_time;
+uint32_t currentWindow = 0;
+std::vector<Window> g_windows;
 
-float event::delta()
-{
-    return g_time.deltaTime;
-}
-float event::framerate()
-{
-    return (g_time.framerates[0] + g_time.framerates[1] + g_time.framerates[2] + g_time.framerates[3] + g_time.framerates[4] + g_time.framerates[5] + g_time.framerates[6] + g_time.framerates[7] + g_time.framerates[8] + g_time.framerates[9])/10.f;
-}
-float event::time()
-{
-    return g_time.runtime;
-}
-void event::freezeTime(bool freeze)
-{
-    g_time.frozen = freeze;
-}
+std::unordered_map<std::string, Texture> g_loadedTextures;
+std::unordered_map<std::string, Audio> g_loadedAudios;
 
-std::unordered_map<std::string, Mesh> g_loadedMeshes;
-std::unordered_map<std::string, uint32_t> g_loadedTextures;
-std::unordered_map<std::string, Shader> g_loadedShaders;
-std::unordered_map<std::string, Font> g_loadedFonts;
-
-Mesh &mesh::load(const std::string &path)
-{
-    return(g_loadedMeshes[path] = file::loadObjFile(path));
-}
-Mesh &mesh::load(const std::string& path, const Mesh& mesh)
-{
-    return(g_loadedMeshes[path] = mesh);
-}
-void mesh::load(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
-{
-    for (std::string subPath : subPaths)
-    {
-        mesh::load(path + subPath + "." + type);
-    }
-}
-Mesh &mesh::get(const std::string &path)
-{
-    if(!g_loadedMeshes.count(path))
-    {
-        std::cout << "ERROR :: Mesh at \'" << path << "\' could not be found." << std::endl;
-        return mesh::get("square");
-    }
-    return g_loadedMeshes.at(path);
-}
-std::vector<Mesh> mesh::get(const std::string &path, const std::vector<std::string> &subPaths, const std::string &type)
-{
-    std::vector<Mesh> meshes;
-    for (std::string subPath : subPaths)
-    {
-        meshes.push_back(g_loadedMeshes[path + subPath + "." + type]);
-    }
-    return meshes;
-}
-void mesh::remove()
-{
-    for (auto &pair : g_loadedMeshes)
-    {
-        pair.second.remove();
-    }
-}
-
-void shader::load(const std::string& path, const Shader& shader)
-{
-    g_loadedShaders[path] = shader;
-}
-Shader &shader::get(const std::string& path)
-{
-    if(!g_loadedShaders.count(path))
-    {
-        std::cout << "ERROR :: Shader at \'" << path << "\' could not be found." << std::endl;
-        // return mesh::get("square");
-    }
-    return g_loadedShaders.at(path);
-}
-void shader::remove()
-{
-    for (auto &pair : g_loadedShaders)
-    {
-        pair.second.remove();
-    }
-}
-
-void ttf::load(const std::string &fileName)
-{
-    int index = fileName.find_last_of('/')+1;
-    g_loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
-}
-Font& ttf::get(const std::string &fileName)
-{
-    if(!g_loadedFonts.count(fileName))
-        std::cout << "ERROR :: TTF file " << fileName << " could not be found." << std::endl;
-    return g_loadedFonts[fileName];
-}
+object::ecs g_manager;
+ProjectManager g_handler;

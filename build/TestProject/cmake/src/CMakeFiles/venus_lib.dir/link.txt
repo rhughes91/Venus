@@ -1,2 +1,2 @@
-C:\msys64\mingw64\bin\ar.exe qc libvenus_lib.a CMakeFiles/venus_lib.dir/event.cpp.obj CMakeFiles/venus_lib.dir/global.cpp.obj CMakeFiles/venus_lib.dir/graphics.cpp.obj CMakeFiles/venus_lib.dir/setup.cpp.obj CMakeFiles/venus_lib.dir/shader.cpp.obj CMakeFiles/venus_lib.dir/vector.cpp.obj
+C:\msys64\mingw64\bin\ar.exe qc libvenus_lib.a CMakeFiles/venus_lib.dir/event.cpp.obj CMakeFiles/venus_lib.dir/graphics.cpp.obj CMakeFiles/venus_lib.dir/setup.cpp.obj CMakeFiles/venus_lib.dir/shader.cpp.obj CMakeFiles/venus_lib.dir/vector.cpp.obj
 C:\msys64\mingw64\bin\ranlib.exe libvenus_lib.a

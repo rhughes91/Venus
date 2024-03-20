@@ -103,9 +103,8 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/cerrno \
  C:/msys64/mingw64/include/c++/12.1.0/bits/charconv.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_string.tcc \
- C:/Projects/Venus/include/file_util.h \
- C:/msys64/mingw64/include/c++/12.1.0/fstream \
- C:/msys64/mingw64/include/c++/12.1.0/istream \
+ C:/msys64/mingw64/include/c++/12.1.0/iostream \
+ C:/msys64/mingw64/include/c++/12.1.0/ostream \
  C:/msys64/mingw64/include/c++/12.1.0/ios \
  C:/msys64/mingw64/include/c++/12.1.0/exception \
  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
@@ -129,13 +128,10 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
- C:/msys64/mingw64/include/c++/12.1.0/ostream \
  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
+ C:/msys64/mingw64/include/c++/12.1.0/istream \
  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
- C:/msys64/mingw64/include/c++/12.1.0/bits/codecvt.h \
- C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/basic_file.h \
- C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/c++io.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/fstream.tcc \
+ C:/Projects/Venus/include/file_util.h \
  C:/msys64/mingw64/include/c++/12.1.0/vector \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
@@ -152,7 +148,6 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
  C:/Projects/Venus/include/vector.h \
- C:/msys64/mingw64/include/c++/12.1.0/iostream \
  C:/msys64/mingw64/include/c++/12.1.0/math.h \
  C:/msys64/mingw64/include/c++/12.1.0/cmath \
  C:/msys64/mingw64/include/math.h \
@@ -170,25 +165,103 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
  C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/immintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/x86gprintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/ia32intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/adxintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/bmiintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/bmi2intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/cetintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/cldemoteintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/clflushoptintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/clwbintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/clzerointrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/enqcmdintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/fxsrintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/lzcntintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/lwpintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/movdirintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/mwaitintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/mwaitxintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/pconfigintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/popcntintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/pkuintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/rdseedintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/rtmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/serializeintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/sgxintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/tbmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/tsxldtrkintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/uintrintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/waitpkgintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/wbnoinvdintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xsaveintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xsavecintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xsaveoptintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xsavesintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xtestintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/hresetintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/mmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xmmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/emmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/pmmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/tmmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/smmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/wmmintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avxintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avxvnniintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx2intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512fintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512erintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512pfintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512cdintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512bwintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512dqintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vlbwintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vldqintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512ifmaintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512ifmavlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vbmiintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vbmivlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx5124fmapsintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx5124vnniwintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vpopcntdqintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vbmi2intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vbmi2vlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vnniintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vnnivlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vpopcntdqvlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512bitalgintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vp2intersectintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512vp2intersectvlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512fp16intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512fp16vlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/shaintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/fmaintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/f16cintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/gfniintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/vaesintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/vpclmulqdqintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512bf16vlintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512bf16intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxtileintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxint8intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxbf16intrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/prfchwintrin.h \
+ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/keylockerintrin.h \
  C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/color.h \
  C:/Projects/Venus/include/component.h \
- C:/Projects/Venus/include/structure.h \
- C:/msys64/mingw64/include/c++/12.1.0/algorithm \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_algo.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/algorithmfwd.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_heap.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tempbuf.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/uniform_int_dist.h \
- C:/msys64/mingw64/include/c++/12.1.0/pstl/glue_algorithm_defs.h \
- C:/msys64/mingw64/include/c++/12.1.0/pstl/execution_defs.h \
+ C:/msys64/mingw64/include/c++/12.1.0/set \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
+ C:/Projects/Venus/include/graphics.h C:/Projects/Venus/include/machine.h \
  C:/msys64/mingw64/include/c++/12.1.0/array \
  C:/msys64/mingw64/include/c++/12.1.0/compare \
  C:/msys64/mingw64/include/c++/12.1.0/bitset \
- C:/msys64/mingw64/include/c++/12.1.0/map \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tree.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_map.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multimap.h \
  C:/msys64/mingw64/include/c++/12.1.0/memory \
+ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_tempbuf.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_raw_storage_iter.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/align.h \
  C:/msys64/mingw64/include/c++/12.1.0/bit \
@@ -202,13 +275,8 @@ src/CMakeFiles/venus_lib.dir/shader.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/atomic_lockfree_defines.h \
  C:/msys64/mingw64/include/c++/12.1.0/backward/auto_ptr.h \
  C:/msys64/mingw64/include/c++/12.1.0/pstl/glue_memory_defs.h \
- C:/msys64/mingw64/include/c++/12.1.0/queue \
- C:/msys64/mingw64/include/c++/12.1.0/deque \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_deque.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/deque.tcc \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_queue.h \
- C:/msys64/mingw64/include/c++/12.1.0/set \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_set.h \
- C:/msys64/mingw64/include/c++/12.1.0/bits/stl_multiset.h \
- C:/Projects/Venus/include/setup.h C:/Projects/Venus/include/graphics.h \
- C:/Projects/Venus/include/shader.h C:/Projects/Venus/include/file_util.h
+ C:/msys64/mingw64/include/c++/12.1.0/pstl/execution_defs.h \
+ C:/Projects/Venus/include/structure.h \
+ C:/msys64/mingw64/include/c++/12.1.0/cstring \
+ C:/msys64/mingw64/include/string.h \
+ C:/msys64/mingw64/include/sec_api/string_s.h

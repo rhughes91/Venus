@@ -4,6 +4,8 @@ file(REMOVE_RECURSE
   "C:/Projects/Venus/build/TestProject/TestProject.pdb"
   "CMakeFiles/TestProject.dir/main.cpp.obj"
   "CMakeFiles/TestProject.dir/main.cpp.obj.d"
+  "CMakeFiles/TestProject.dir/project.cpp.obj"
+  "CMakeFiles/TestProject.dir/project.cpp.obj.d"
   "libTestProject.dll.a"
 )
 

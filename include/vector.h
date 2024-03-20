@@ -1,14 +1,15 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <iostream>
 #include <string>
 
 #define M_PI 3.14159265358979323846
 #include <math.h>
 #include <vector>
+#include <immintrin.h>
 
 struct Vector2;
+struct Vector2I;
 struct Vector4;
 struct Quaternion;
 struct Quad;
@@ -18,7 +19,7 @@ namespace math
 {
     inline float abs(float value)                               // returns the absolute value of the given 'value'
     {
-        return std::sqrt(value*value);
+        return value < 0 ? -value:value;
     }
     inline float clamp(float value, float low, float high)      // returns the given 'value' clamped between the provided 'low' and 'high' values
     {
@@ -105,6 +106,11 @@ struct Vector2
         return length == 0 ? Vector2():Vector2(x/length, y/length);
     }
 
+    Vector2 yx() const
+    {
+        return Vector2(y, x);
+    }
+
     void normalize() // changes this Vector2 into a direction vector (magnitude becomes one)
     {
         float length = Vector2::length();
@@ -114,6 +120,7 @@ struct Vector2
             y = y/length;
         }
     }
+    explicit operator Vector2I() const;
 };
 
 // Vector2 (operators): standard operators for two dimensional vectors
@@ -176,13 +183,14 @@ inline bool operator >=(const Vector2 &vec1, const Vector2 &vec2)
 }
 
 // Vector3 (structure: extends Vector2) structure that holds three variables (x, y, z) and allows three dimensional vector operations
-struct Vector3 : Vector2
+struct Vector3
 {
-    float z;
-    Vector3() : Vector2(0, 0), z(0) {}
-    Vector3(float value) : Vector2(value, value), z(value) {}
-    Vector3(float x__, float y__) : Vector2(x__, y__), z(0) {}
-    Vector3(float x__, float y__, float z__) : Vector2(x__, y__), z(z__) {}
+    float x, y, z;
+    Vector3() : x(0), y(0), z(0) {}
+
+    Vector3(float value) : x(value), y(value), z(value) {}
+    Vector3(float x__, float y__) : x(x__), y(y__), z(0) {}
+    Vector3(float x__, float y__, float z__) : x(x__), y(y__), z(z__) {}
     Vector3(const Vector2 &vector, float z__) : Vector3(vector.x, vector.y, z__) {}
 
     Vector3 xy() const // returns a new Vector3 with only the x and y components of this Vector3
@@ -200,7 +208,11 @@ struct Vector3 : Vector2
 
     operator std::string() const
     {
-        return std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
+        return "Vector3(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")";
+    }
+    operator Vector2() const
+    {
+        return Vector2(x, y);
     }
 
     float length() const                        // returns the magnitude of this Vector3
@@ -225,6 +237,11 @@ struct Vector3 : Vector2
         return length == 0 ? Vector3():Vector3(x/length, y/length, z/length);
     }
     
+    Vector3 yx() const
+    {
+        return Vector3(y, x, z);
+    }
+
     void normalize()    // changes this Vector3 into a direction vector (magnitude becomes one)
     {
         float length = Vector3::length();
@@ -306,6 +323,8 @@ struct Vector4 : Vector3
     float w;
 
     Vector4() : Vector3(), w(0) {}
+    Vector4(const Vector2 vec2) : Vector3(vec2, 0), w(0) {}
+    Vector4(const Vector3 vec3) : Vector3(vec3.x, vec3.y, vec3.z), w(0) {}
     Vector4(float x__, float y__, float z__, float w__) : Vector3(x__, y__, z__), w(w__) {}
 };
 
@@ -383,7 +402,7 @@ struct Vector2I
         int x, y;
     
     Vector2I() : x(0), y(0){}
-    Vector2I(float x__, float y__) : x(x__), y(y__){}
+    Vector2I(int x__, int y__) : x(x__), y(y__){}
 
     operator std::string() const
     {
@@ -415,6 +434,11 @@ struct Vector2I
         return Vector2I(math::sign0(x), math::sign0(y));
     }
     
+    Vector2I yx() const
+    {
+        return Vector2I(y, x);
+    }
+
     float length() const                    // returns the magnitude of this Vector2I
     {
         return std::sqrt(x*x+y*y);
@@ -503,6 +527,7 @@ struct Vector3I : Vector2I
     int z, w;
     Vector3I() : Vector2I(0, 0), z(0), w(1) {}
     Vector3I(float x__, float y__, float z__) : Vector2I(x__, y__), z(z__), w(1) {}
+    Vector3I(const Vector3& vec3) : Vector2I((int)vec3.x, (int)vec3.y), z((int)vec3.z), w(1) {}
 
     operator std::string() const
     {
@@ -614,7 +639,7 @@ inline bool operator >=(const Vector3I &vec1, const Vector3I &vec2)
 
 struct Point
 {
-    Vector2 position;
+    Vector2I position;
     bool onCurve;
 
     Point(bool onCurve__) : onCurve(onCurve__) {}
@@ -627,12 +652,12 @@ struct mat4x4
 
     mat4x4()
     {
-        for(int i=0; i<16; i++) matrix[i] = 0;
+        matrix[0] = matrix[1] = matrix[2] = matrix[3] = matrix[4] = matrix[5] = matrix[6] = matrix[7] = matrix[8] = matrix[9] = matrix[10] = matrix[11] = matrix[12] = matrix[13] = matrix[14] = matrix[15] = 0;
     }
     explicit mat4x4(float scale) // creates a scaled identity matrix by quantity 'scale'
     {
-        for(int i=0; i<16; i++) matrix[i] = 0;
         matrix[0] = matrix[5] = matrix[10] = matrix[15] = scale;
+        matrix[1] = matrix[2] = matrix[3] = matrix[4] = matrix[6] = matrix[7] = matrix[8] = matrix[9] = matrix[11] = matrix[12] = matrix[13] = matrix[14] = 0;
     }
 
     mat4x4 inverted() const                        // returns the inverted form of this matrix :: https://semath.info/src/inverse-cofactor-ex4.html
@@ -649,30 +674,6 @@ struct mat4x4
         matrix[13] * matrix[6]  * matrix[11] - 
         matrix[13] * matrix[7]  * matrix[10];
 
-        inv.matrix[4] = 
-       -matrix[4]  * matrix[10] * matrix[15] + 
-        matrix[4]  * matrix[11] * matrix[14] + 
-        matrix[8]  * matrix[6]  * matrix[15] - 
-        matrix[8]  * matrix[7]  * matrix[14] - 
-        matrix[12] * matrix[6]  * matrix[11] + 
-        matrix[12] * matrix[7]  * matrix[10];
-
-        inv.matrix[8] = 
-        matrix[4]  * matrix[9] * matrix[15] - 
-        matrix[4]  * matrix[11] * matrix[13] - 
-        matrix[8]  * matrix[5] * matrix[15] + 
-        matrix[8]  * matrix[7] * matrix[13] + 
-        matrix[12] * matrix[5] * matrix[11] - 
-        matrix[12] * matrix[7] * matrix[9];
-
-        inv.matrix[12] = 
-       -matrix[4]  * matrix[9] * matrix[14] + 
-        matrix[4]  * matrix[10] * matrix[13] +
-        matrix[8]  * matrix[5] * matrix[14] - 
-        matrix[8]  * matrix[6] * matrix[13] - 
-        matrix[12] * matrix[5] * matrix[10] + 
-        matrix[12] * matrix[6] * matrix[9];
-
         inv.matrix[1] = 
        -matrix[1]  * matrix[10] * matrix[15] + 
         matrix[1]  * matrix[11] * matrix[14] + 
@@ -680,30 +681,6 @@ struct mat4x4
         matrix[9]  * matrix[3] * matrix[14] - 
         matrix[13] * matrix[2] * matrix[11] + 
         matrix[13] * matrix[3] * matrix[10];
-
-        inv.matrix[5] = 
-        matrix[0]  * matrix[10] * matrix[15] - 
-        matrix[0]  * matrix[11] * matrix[14] - 
-        matrix[8]  * matrix[2] * matrix[15] + 
-        matrix[8]  * matrix[3] * matrix[14] + 
-        matrix[12] * matrix[2] * matrix[11] - 
-        matrix[12] * matrix[3] * matrix[10];
-
-        inv.matrix[9] = 
-       -matrix[0]  * matrix[9] * matrix[15] + 
-        matrix[0]  * matrix[11] * matrix[13] + 
-        matrix[8]  * matrix[1] * matrix[15] - 
-        matrix[8]  * matrix[3] * matrix[13] - 
-        matrix[12] * matrix[1] * matrix[11] + 
-        matrix[12] * matrix[3] * matrix[9];
-
-        inv.matrix[13] = 
-        matrix[0]  * matrix[9] * matrix[14] - 
-        matrix[0]  * matrix[10] * matrix[13] - 
-        matrix[8]  * matrix[1] * matrix[14] + 
-        matrix[8]  * matrix[2] * matrix[13] + 
-        matrix[12] * matrix[1] * matrix[10] - 
-        matrix[12] * matrix[2] * matrix[9];
 
         inv.matrix[2] = 
         matrix[1]  * matrix[6] * matrix[15] - 
@@ -713,30 +690,6 @@ struct mat4x4
         matrix[13] * matrix[2] * matrix[7] - 
         matrix[13] * matrix[3] * matrix[6];
 
-        inv.matrix[6] = 
-       -matrix[0]  * matrix[6] * matrix[15] + 
-        matrix[0]  * matrix[7] * matrix[14] + 
-        matrix[4]  * matrix[2] * matrix[15] - 
-        matrix[4]  * matrix[3] * matrix[14] - 
-        matrix[12] * matrix[2] * matrix[7] + 
-        matrix[12] * matrix[3] * matrix[6];
-
-        inv.matrix[10] = 
-        matrix[0]  * matrix[5] * matrix[15] - 
-        matrix[0]  * matrix[7] * matrix[13] - 
-        matrix[4]  * matrix[1] * matrix[15] + 
-        matrix[4]  * matrix[3] * matrix[13] + 
-        matrix[12] * matrix[1] * matrix[7] - 
-        matrix[12] * matrix[3] * matrix[5];
-
-        inv.matrix[14] =
-       -matrix[0]  * matrix[5] * matrix[14] + 
-        matrix[0]  * matrix[6] * matrix[13] + 
-        matrix[4]  * matrix[1] * matrix[14] - 
-        matrix[4]  * matrix[2] * matrix[13] - 
-        matrix[12] * matrix[1] * matrix[6] + 
-        matrix[12] * matrix[2] * matrix[5];
-
         inv.matrix[3] = 
        -matrix[1] * matrix[6] * matrix[11] + 
         matrix[1] * matrix[7] * matrix[10] + 
@@ -744,6 +697,30 @@ struct mat4x4
         matrix[5] * matrix[3] * matrix[10] - 
         matrix[9] * matrix[2] * matrix[7] + 
         matrix[9] * matrix[3] * matrix[6];
+
+        inv.matrix[4] = 
+       -matrix[4]  * matrix[10] * matrix[15] + 
+        matrix[4]  * matrix[11] * matrix[14] + 
+        matrix[8]  * matrix[6]  * matrix[15] - 
+        matrix[8]  * matrix[7]  * matrix[14] - 
+        matrix[12] * matrix[6]  * matrix[11] + 
+        matrix[12] * matrix[7]  * matrix[10];
+
+        inv.matrix[5] = 
+        matrix[0]  * matrix[10] * matrix[15] - 
+        matrix[0]  * matrix[11] * matrix[14] - 
+        matrix[8]  * matrix[2] * matrix[15] + 
+        matrix[8]  * matrix[3] * matrix[14] + 
+        matrix[12] * matrix[2] * matrix[11] - 
+        matrix[12] * matrix[3] * matrix[10];
+
+        inv.matrix[6] = 
+       -matrix[0]  * matrix[6] * matrix[15] + 
+        matrix[0]  * matrix[7] * matrix[14] + 
+        matrix[4]  * matrix[2] * matrix[15] - 
+        matrix[4]  * matrix[3] * matrix[14] - 
+        matrix[12] * matrix[2] * matrix[7] + 
+        matrix[12] * matrix[3] * matrix[6];
 
         inv.matrix[7] = 
         matrix[0] * matrix[6] * matrix[11] - 
@@ -753,6 +730,30 @@ struct mat4x4
         matrix[8] * matrix[2] * matrix[7] - 
         matrix[8] * matrix[3] * matrix[6];
 
+        inv.matrix[8] = 
+        matrix[4]  * matrix[9] * matrix[15] - 
+        matrix[4]  * matrix[11] * matrix[13] - 
+        matrix[8]  * matrix[5] * matrix[15] + 
+        matrix[8]  * matrix[7] * matrix[13] + 
+        matrix[12] * matrix[5] * matrix[11] - 
+        matrix[12] * matrix[7] * matrix[9];
+        
+        inv.matrix[9] = 
+       -matrix[0]  * matrix[9] * matrix[15] + 
+        matrix[0]  * matrix[11] * matrix[13] + 
+        matrix[8]  * matrix[1] * matrix[15] - 
+        matrix[8]  * matrix[3] * matrix[13] - 
+        matrix[12] * matrix[1] * matrix[11] + 
+        matrix[12] * matrix[3] * matrix[9];
+
+        inv.matrix[10] = 
+        matrix[0]  * matrix[5] * matrix[15] - 
+        matrix[0]  * matrix[7] * matrix[13] - 
+        matrix[4]  * matrix[1] * matrix[15] + 
+        matrix[4]  * matrix[3] * matrix[13] + 
+        matrix[12] * matrix[1] * matrix[7] - 
+        matrix[12] * matrix[3] * matrix[5];
+
         inv.matrix[11] = 
        -matrix[0] * matrix[5] * matrix[11] + 
         matrix[0] * matrix[7] * matrix[9] + 
@@ -760,6 +761,30 @@ struct mat4x4
         matrix[4] * matrix[3] * matrix[9] - 
         matrix[8] * matrix[1] * matrix[7] + 
         matrix[8] * matrix[3] * matrix[5];
+
+        inv.matrix[12] = 
+       -matrix[4]  * matrix[9] * matrix[14] + 
+        matrix[4]  * matrix[10] * matrix[13] +
+        matrix[8]  * matrix[5] * matrix[14] - 
+        matrix[8]  * matrix[6] * matrix[13] - 
+        matrix[12] * matrix[5] * matrix[10] + 
+        matrix[12] * matrix[6] * matrix[9];
+
+        inv.matrix[13] = 
+        matrix[0]  * matrix[9] * matrix[14] - 
+        matrix[0]  * matrix[10] * matrix[13] - 
+        matrix[8]  * matrix[1] * matrix[14] + 
+        matrix[8]  * matrix[2] * matrix[13] + 
+        matrix[12] * matrix[1] * matrix[10] - 
+        matrix[12] * matrix[2] * matrix[9];
+
+        inv.matrix[14] =
+       -matrix[0]  * matrix[5] * matrix[14] + 
+        matrix[0]  * matrix[6] * matrix[13] + 
+        matrix[4]  * matrix[1] * matrix[14] - 
+        matrix[4]  * matrix[2] * matrix[13] - 
+        matrix[12] * matrix[1] * matrix[6] + 
+        matrix[12] * matrix[2] * matrix[5];
 
         inv.matrix[15] = 
         matrix[0] * matrix[5] * matrix[10] - 
@@ -855,7 +880,7 @@ struct mat4x4
         "| " +std::to_string(matrix[12]) + ", " + std::to_string(matrix[13]) + ", " + std::to_string(matrix[14]) + ", " + std::to_string(matrix[15]) + " |\n";
     }
 };
-
+#include <iostream>
 // mat4x4 (operators): standard operators for 4 by 4 matrices
 inline Vector4 operator *(const mat4x4 &mat, const Vector4 &vector)
 {
@@ -882,25 +907,98 @@ inline mat4x4 operator *(const mat4x4 &mat1, const mat4x4 &mat2)
 {
     mat4x4 result(0);
 
-    result.matrix[0] = mat1.matrix[0]*mat2.matrix[0] + mat1.matrix[1]*mat2.matrix[4] + mat1.matrix[2]*mat2.matrix[8] + mat1.matrix[3]*mat2.matrix[12];
-    result.matrix[1] = mat1.matrix[0]*mat2.matrix[1] + mat1.matrix[1]*mat2.matrix[5] + mat1.matrix[2]*mat2.matrix[9] + mat1.matrix[3]*mat2.matrix[13];
-    result.matrix[2] = mat1.matrix[0]*mat2.matrix[2] + mat1.matrix[1]*mat2.matrix[6] + mat1.matrix[2]*mat2.matrix[10] + mat1.matrix[3]*mat2.matrix[14];
-    result.matrix[3] = mat1.matrix[0]*mat2.matrix[3] + mat1.matrix[1]*mat2.matrix[7] + mat1.matrix[2]*mat2.matrix[11] + mat1.matrix[3]*mat2.matrix[15];
+    __m128 regOne, regTwo, regThree;
+    regOne = _mm_load1_ps(mat1.matrix);
+    regTwo = _mm_load_ps(mat2.matrix);
+    regThree = _mm_mul_ps(regOne, regTwo);
+    regOne = _mm_load1_ps(mat1.matrix + 1);
+    regTwo = _mm_load_ps(mat2.matrix + 4);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 2);
+    regTwo = _mm_load_ps(mat2.matrix + 8);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 3);
+    regTwo = _mm_load_ps(mat2.matrix + 12);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
 
-    result.matrix[4] = mat1.matrix[4]*mat2.matrix[0] + mat1.matrix[5]*mat2.matrix[4] + mat1.matrix[6]*mat2.matrix[8] + mat1.matrix[7]*mat2.matrix[12];
-    result.matrix[5] = mat1.matrix[4]*mat2.matrix[1] + mat1.matrix[5]*mat2.matrix[5] + mat1.matrix[6]*mat2.matrix[9] + mat1.matrix[7]*mat2.matrix[13];
-    result.matrix[6] = mat1.matrix[4]*mat2.matrix[2] + mat1.matrix[5]*mat2.matrix[6] + mat1.matrix[6]*mat2.matrix[10] + mat1.matrix[7]*mat2.matrix[14];
-    result.matrix[7] = mat1.matrix[4]*mat2.matrix[3] + mat1.matrix[5]*mat2.matrix[7] + mat1.matrix[6]*mat2.matrix[11] + mat1.matrix[7]*mat2.matrix[15];
+    _mm_store_ps(result.matrix, regThree);
 
-    result.matrix[8] = mat1.matrix[8]*mat2.matrix[0] + mat1.matrix[9]*mat2.matrix[4] + mat1.matrix[10]*mat2.matrix[8] + mat1.matrix[11]*mat2.matrix[12];
-    result.matrix[9] = mat1.matrix[8]*mat2.matrix[1] + mat1.matrix[9]*mat2.matrix[5] + mat1.matrix[10]*mat2.matrix[9] + mat1.matrix[11]*mat2.matrix[13];
-    result.matrix[10] = mat1.matrix[8]*mat2.matrix[2] + mat1.matrix[9]*mat2.matrix[6] + mat1.matrix[10]*mat2.matrix[10] + mat1.matrix[11]*mat2.matrix[14];
-    result.matrix[11] = mat1.matrix[8]*mat2.matrix[3] + mat1.matrix[9]*mat2.matrix[7] + mat1.matrix[10]*mat2.matrix[11] + mat1.matrix[11]*mat2.matrix[15];
+    regOne = _mm_load1_ps(mat1.matrix + 4);
+    regTwo = _mm_load_ps(mat2.matrix);
+    regThree = _mm_mul_ps(regOne, regTwo);
+    regOne = _mm_load1_ps(mat1.matrix + 5);
+    regTwo = _mm_load_ps(mat2.matrix + 4);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 6);
+    regTwo = _mm_load_ps(mat2.matrix + 8);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 7);
+    regTwo = _mm_load_ps(mat2.matrix + 12);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
 
-    result.matrix[12] = mat1.matrix[12]*mat2.matrix[0] + mat1.matrix[13]*mat2.matrix[4] + mat1.matrix[14]*mat2.matrix[8] + mat1.matrix[15]*mat2.matrix[12];
-    result.matrix[13] = mat1.matrix[12]*mat2.matrix[1] + mat1.matrix[13]*mat2.matrix[5] + mat1.matrix[14]*mat2.matrix[9] + mat1.matrix[15]*mat2.matrix[13];
-    result.matrix[14] = mat1.matrix[12]*mat2.matrix[2] + mat1.matrix[13]*mat2.matrix[6] + mat1.matrix[14]*mat2.matrix[10] + mat1.matrix[15]*mat2.matrix[14];
-    result.matrix[15] = mat1.matrix[12]*mat2.matrix[3] + mat1.matrix[13]*mat2.matrix[7] + mat1.matrix[14]*mat2.matrix[11] + mat1.matrix[15]*mat2.matrix[15];
+    _mm_store_ps(result.matrix + 4, regThree);
+
+    regOne = _mm_load1_ps(mat1.matrix + 8);
+    regTwo = _mm_load_ps(mat2.matrix);
+    regThree = _mm_mul_ps(regOne, regTwo);
+    regOne = _mm_load1_ps(mat1.matrix + 9);
+    regTwo = _mm_load_ps(mat2.matrix + 4);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 10);
+    regTwo = _mm_load_ps(mat2.matrix + 8);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 11);
+    regTwo = _mm_load_ps(mat2.matrix + 12);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+
+    _mm_store_ps(result.matrix + 8, regThree);
+
+    regOne = _mm_load1_ps(mat1.matrix + 12);
+    regTwo = _mm_load_ps(mat2.matrix);
+    regThree = _mm_mul_ps(regOne, regTwo);
+    regOne = _mm_load1_ps(mat1.matrix + 13);
+    regTwo = _mm_load_ps(mat2.matrix + 4);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 14);
+    regTwo = _mm_load_ps(mat2.matrix + 8);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+    regOne = _mm_load1_ps(mat1.matrix + 15);
+    regTwo = _mm_load_ps(mat2.matrix + 12);
+    regOne = _mm_mul_ps(regOne, regTwo);
+    regThree = _mm_add_ps(regOne, regThree);
+
+    _mm_store_ps(result.matrix + 12, regThree);
+
+    // result.matrix[0] = mat1.matrix[0]*mat2.matrix[0] + mat1.matrix[1]*mat2.matrix[4] + mat1.matrix[2]*mat2.matrix[8] + mat1.matrix[3]*mat2.matrix[12];
+    // result.matrix[1] = mat1.matrix[0]*mat2.matrix[1] + mat1.matrix[1]*mat2.matrix[5] + mat1.matrix[2]*mat2.matrix[9] + mat1.matrix[3]*mat2.matrix[13];
+    // result.matrix[2] = mat1.matrix[0]*mat2.matrix[2] + mat1.matrix[1]*mat2.matrix[6] + mat1.matrix[2]*mat2.matrix[10] + mat1.matrix[3]*mat2.matrix[14];
+    // result.matrix[3] = mat1.matrix[0]*mat2.matrix[3] + mat1.matrix[1]*mat2.matrix[7] + mat1.matrix[2]*mat2.matrix[11] + mat1.matrix[3]*mat2.matrix[15];
+
+    // result.matrix[4] = mat1.matrix[4]*mat2.matrix[0] + mat1.matrix[5]*mat2.matrix[4] + mat1.matrix[6]*mat2.matrix[8] + mat1.matrix[7]*mat2.matrix[12];
+    // result.matrix[5] = mat1.matrix[4]*mat2.matrix[1] + mat1.matrix[5]*mat2.matrix[5] + mat1.matrix[6]*mat2.matrix[9] + mat1.matrix[7]*mat2.matrix[13];
+    // result.matrix[6] = mat1.matrix[4]*mat2.matrix[2] + mat1.matrix[5]*mat2.matrix[6] + mat1.matrix[6]*mat2.matrix[10] + mat1.matrix[7]*mat2.matrix[14];
+    // result.matrix[7] = mat1.matrix[4]*mat2.matrix[3] + mat1.matrix[5]*mat2.matrix[7] + mat1.matrix[6]*mat2.matrix[11] + mat1.matrix[7]*mat2.matrix[15];
+
+    // result.matrix[8] = mat1.matrix[8]*mat2.matrix[0] + mat1.matrix[9]*mat2.matrix[4] + mat1.matrix[10]*mat2.matrix[8] + mat1.matrix[11]*mat2.matrix[12];
+    // result.matrix[9] = mat1.matrix[8]*mat2.matrix[1] + mat1.matrix[9]*mat2.matrix[5] + mat1.matrix[10]*mat2.matrix[9] + mat1.matrix[11]*mat2.matrix[13];
+    // result.matrix[10] = mat1.matrix[8]*mat2.matrix[2] + mat1.matrix[9]*mat2.matrix[6] + mat1.matrix[10]*mat2.matrix[10] + mat1.matrix[11]*mat2.matrix[14];
+    // result.matrix[11] = mat1.matrix[8]*mat2.matrix[3] + mat1.matrix[9]*mat2.matrix[7] + mat1.matrix[10]*mat2.matrix[11] + mat1.matrix[11]*mat2.matrix[15];
+
+    // result.matrix[12] = mat1.matrix[12]*mat2.matrix[0] + mat1.matrix[13]*mat2.matrix[4] + mat1.matrix[14]*mat2.matrix[8] + mat1.matrix[15]*mat2.matrix[12];
+    // result.matrix[13] = mat1.matrix[12]*mat2.matrix[1] + mat1.matrix[13]*mat2.matrix[5] + mat1.matrix[14]*mat2.matrix[9] + mat1.matrix[15]*mat2.matrix[13];
+    // result.matrix[14] = mat1.matrix[12]*mat2.matrix[2] + mat1.matrix[13]*mat2.matrix[6] + mat1.matrix[14]*mat2.matrix[10] + mat1.matrix[15]*mat2.matrix[14];
+    // result.matrix[15] = mat1.matrix[12]*mat2.matrix[3] + mat1.matrix[13]*mat2.matrix[7] + mat1.matrix[14]*mat2.matrix[11] + mat1.matrix[15]*mat2.matrix[15];
 
     return result;
 }
@@ -1130,9 +1228,11 @@ namespace vec3
     
     Vector3 abs(const Vector3 &vector);                                                        // returns "math::abs" of each of its components as a new Vector3
     Vector3 lerp(const Vector3& vec1, const Vector3& vec2, float weight);                      // returns 'vec1' linearly interpolated to 'vec2' by weight
-    Vector3 max(const Vector3 &vec1, const Vector3 &vec2);                                     // returns "std::max" of each of its components as a new Vector3
+    Vector3 max(const Vector3 &vec1, const Vector3 &vec2);  
+    Vector3 min(const Vector3 &vec1, const Vector3 &vec2);                                     // returns "std::max" of each of its components as a new Vector3
     Vector3 modf(const Vector3& vector, float divisor);
     Vector3 pow(const Vector3 &vector, float exponent);                                        // returns "std::pow" of each of its components as a new Vector3
+    Vector3 round(const Vector3& vector);
     Vector3 roundTo(const Vector3& vector, int32_t precision);                                 // returns "math::roundTo" of each of its components as a new Vector3
     Vector3 sign(const Vector3 &vector);                                                       // returns "math::sign" of each of its components as a new Vector3
     Vector3 sign0(const Vector3 &vector);                                                      // returns "math::sign0" of each of its components as a new Vector3
@@ -1172,6 +1272,7 @@ namespace std
 }
 std::string to_string(const Vector3& vector);
 std::ostream& operator<<(std::ostream& os, const Vector2& obj);
+std::ostream& operator<<(std::ostream& os, const Vector2I& obj);
 std::ostream& operator<<(std::ostream& os, const Vector3& obj);
 std::ostream& operator<<(std::ostream& os, const Vector4& obj);
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj);

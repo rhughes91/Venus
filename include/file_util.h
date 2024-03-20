@@ -1,7 +1,6 @@
 #ifndef FILEUTIL_H
 #define FILEUTIL_H
 
-#include <fstream>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -10,7 +9,7 @@
 
 class Source
 {
-    std::string source, configSource, textureSource, fontSource, modelSource, shaderSource;
+    std::string source, audioSource, configSource, textureSource, fontSource, modelSource, shaderSource;
     std::string getCurrentDirectoryName();
 
     public:
@@ -19,6 +18,15 @@ class Source
         std::string getSource()
         {
             return source;
+        }
+
+        std::string getAudioSource()
+        {
+            return audioSource;
+        }
+        void setAudioSource(const std::string& src)
+        {
+            audioSource = src;
         }
 
         std::string getConfigSource()
@@ -70,6 +78,9 @@ namespace source
 {
     std::string root();
 
+    std::string audio();
+    void setAudio(const std::string& source);
+
     std::string config();
     void setConfig(const std::string& source);
 
@@ -86,116 +97,11 @@ namespace source
     void setShader(const std::string& source);
 }
 
-struct BinaryFile
-{
-    std::ifstream file;
-    BinaryFile(const std::string& path);
-
-    void close()
-    {
-        file.close();
-    }
-    void seek(int32_t position)
-    {
-        file.seekg(position);
-    }
-    int32_t position()
-    {
-        return file.tellg();
-    }
-
-    bool open()
-    {
-        return file.is_open();
-    }
-
-    uint8_t toUInt8()
-    {
-        char c;
-        file.get(c);
-        return c;
-    }
-    uint16_t toUInt16()
-    {
-        return ((toUInt8() << 8) | toUInt8());
-    }
-    uint16_t toUInt16(uint8_t *num)
-    {
-        uint64_t result;
-        result = (result << 8) | num[0];
-        result = (result << 8) | num[1];
-        return result;
-    }
-    int16_t toInt16()
-    {
-        uint16_t number = toUInt16();
-        if(number & 0x8000)
-            number -= 1 << 16;
-        return number;
-    }
-    int16_t toFWord()
-    {
-        return toInt16();
-    }
-    int16_t toUFWord()
-    {
-        return toUInt16();
-    }
-    int32_t toInt32()
-    {
-        return (toUInt8() << 24) | (toUInt8() << 16) | (toUInt8() << 8) | toUInt8();
-    }
-    uint32_t toUInt32()
-    {
-        return toInt32();
-    }
-    uint16_t toUInt32(uint8_t *num)
-    {
-        uint64_t result;
-        result = (result << 8) | num[0];
-        result = (result << 8) | num[1];
-        result = (result << 8) | num[2];
-        result = (result << 8) | num[3];
-        return result;
-    }
-    uint64_t toUInt64()
-    {
-        uint64_t result;
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        result = (result << 8) | toUInt8();
-        return result;
-    }
-    std::string toString(int length)
-    {
-        std::string result;
-        for (int i = 0; i < length; i++)
-        {
-            result += char(toUInt8());
-        }
-        return result;
-    }
-    float toFixed()
-    {
-        return toInt32() / (1 << 16);
-    }
-    uint32_t toDate()
-    {
-        uint32_t macTime = toUInt32() * 0x100000000 + toUInt32();
-        return macTime * 1000;
-    }
-};
-
 struct CharacterTTF
 {
-    int16_t xMin, yMin;
-    Vector2 scale;
-    float lsb, rsb;
+    Vector2I min;
+    Vector2I scale;
+    int32_t lsb, rsb;
     std::vector<uint16_t> contourEnds;
     std::vector<Point> points;
 };
@@ -203,6 +109,7 @@ struct Font
 {
     Vector2 maxScale = 0;
     std::unordered_map<char, CharacterTTF> characters;
+    uint16_t unitsPerEm;
 };
 
 namespace file
@@ -218,6 +125,10 @@ namespace file
     Font loadTTF(const std::string &fileName);
 
     std::vector<char> loadPNG(const std::string &fileName);
+
+    void loadWAV(const std::string& fileName);
+
+    // bool save(const std::string &fileName, const std::vector<char>& data);
 }
 
 namespace binary

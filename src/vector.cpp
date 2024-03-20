@@ -89,6 +89,10 @@ Vector2 vec2::sign0(const Vector2 &vector)
 {
     return Vector2(math::sign0(vector.x), math::sign0(vector.y));
 }
+Vector2::operator Vector2I() const
+{
+    return Vector2I((int)x, (int)y);
+}
 
 float quadraticBezier(float one, float two, float three, float partition)
 {
@@ -131,6 +135,10 @@ Vector3 vec3::max(const Vector3 &vec1, const Vector3 &vec2)
 {
     return Vector3(std::max(vec1.x, vec2.x), std::max(vec1.y, vec2.y), std::max(vec1.z, vec2.z));
 }
+Vector3 vec3::min(const Vector3 &vec1, const Vector3 &vec2)
+{
+    return Vector3(std::min(vec1.x, vec2.x), std::min(vec1.y, vec2.y), std::min(vec1.z, vec2.z));
+}
 Vector3 vec3::abs(const Vector3 &vector)
 {
     return Vector3(math::abs(vector.x), math::abs(vector.y), math::abs(vector.z));
@@ -161,6 +169,10 @@ Vector3 vec3::sign(const Vector3 &vector)
 Vector3 vec3::sign0(const Vector3 &vector)
 {
     return Vector3(math::sign0(vector.x), math::sign0(vector.y), math::sign0(vector.z));
+}
+Vector3 vec3::round(const Vector3& vector)
+{
+    return Vector3(std::round(vector.x), std::round(vector.y), std::round(vector.z));
 }
 Vector3 vec3::roundTo(const Vector3& vector, int32_t precision)
 {
@@ -212,6 +224,11 @@ std::ostream& operator<<(std::ostream& os, const Color& obj)
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Vector2& obj)
+{
+    os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << "]";
+    return os;
+}
+std::ostream& operator<<(std::ostream& os, const Vector2I& obj)
 {
     os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << "]";
     return os;

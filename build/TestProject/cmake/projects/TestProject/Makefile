@@ -116,20 +116,6 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-projects/TestProject/CMakeFiles/TestProject_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 projects/TestProject/CMakeFiles/TestProject_lib.dir/rule
-.PHONY : projects/TestProject/CMakeFiles/TestProject_lib.dir/rule
-
-# Convenience name for target.
-TestProject_lib: projects/TestProject/CMakeFiles/TestProject_lib.dir/rule
-.PHONY : TestProject_lib
-
-# fast build rule for target.
-TestProject_lib/fast:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject_lib.dir\build.make projects/TestProject/CMakeFiles/TestProject_lib.dir/build
-.PHONY : TestProject_lib/fast
-
-# Convenience name for target.
 projects/TestProject/CMakeFiles/TestProject.dir/rule:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 projects/TestProject/CMakeFiles/TestProject.dir/rule
 .PHONY : projects/TestProject/CMakeFiles/TestProject.dir/rule
@@ -172,7 +158,7 @@ project.obj: project.cpp.obj
 
 # target to build an object file
 project.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject_lib.dir\build.make projects/TestProject/CMakeFiles/TestProject_lib.dir/project.cpp.obj
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject.dir\build.make projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj
 .PHONY : project.cpp.obj
 
 project.i: project.cpp.i
@@ -180,7 +166,7 @@ project.i: project.cpp.i
 
 # target to preprocess a source file
 project.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject_lib.dir\build.make projects/TestProject/CMakeFiles/TestProject_lib.dir/project.cpp.i
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject.dir\build.make projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.i
 .PHONY : project.cpp.i
 
 project.s: project.cpp.s
@@ -188,7 +174,7 @@ project.s: project.cpp.s
 
 # target to generate assembly for a file
 project.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject_lib.dir\build.make projects/TestProject/CMakeFiles/TestProject_lib.dir/project.cpp.s
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject.dir\build.make projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.s
 .PHONY : project.cpp.s
 
 # Help Target
@@ -200,7 +186,6 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... TestProject
-	@echo ... TestProject_lib
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s

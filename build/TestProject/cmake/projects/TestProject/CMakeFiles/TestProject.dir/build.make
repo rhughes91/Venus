@@ -68,11 +68,26 @@ include projects/TestProject/CMakeFiles/TestProject.dir/progress.make
 # Include the compile flags for this target's objects.
 include projects/TestProject/CMakeFiles/TestProject.dir/flags.make
 
+projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj: projects/TestProject/CMakeFiles/TestProject.dir/flags.make
+projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj: projects/TestProject/CMakeFiles/TestProject.dir/includes_CXX.rsp
+projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj: C:/Projects/Venus/projects/TestProject/project.cpp
+projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj: projects/TestProject/CMakeFiles/TestProject.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj"
+	cd /d C:\Projects\Venus\build\TestProject\cmake\projects\TestProject && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj -MF CMakeFiles\TestProject.dir\project.cpp.obj.d -o CMakeFiles\TestProject.dir\project.cpp.obj -c C:\Projects\Venus\projects\TestProject\project.cpp
+
+projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/TestProject.dir/project.cpp.i"
+	cd /d C:\Projects\Venus\build\TestProject\cmake\projects\TestProject && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E C:\Projects\Venus\projects\TestProject\project.cpp > CMakeFiles\TestProject.dir\project.cpp.i
+
+projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/TestProject.dir/project.cpp.s"
+	cd /d C:\Projects\Venus\build\TestProject\cmake\projects\TestProject && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S C:\Projects\Venus\projects\TestProject\project.cpp -o CMakeFiles\TestProject.dir\project.cpp.s
+
 projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj: projects/TestProject/CMakeFiles/TestProject.dir/flags.make
 projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj: projects/TestProject/CMakeFiles/TestProject.dir/includes_CXX.rsp
 projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj: C:/Projects/Venus/projects/TestProject/main.cpp
 projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj: projects/TestProject/CMakeFiles/TestProject.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\projects\TestProject && C:\msys64\mingw64\bin\c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj -MF CMakeFiles\TestProject.dir\main.cpp.obj.d -o CMakeFiles\TestProject.dir\main.cpp.obj -c C:\Projects\Venus\projects\TestProject\main.cpp
 
 projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.i: cmake_force
@@ -85,23 +100,25 @@ projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.s: cmake_force
 
 # Object files for target TestProject
 TestProject_OBJECTS = \
+"CMakeFiles/TestProject.dir/project.cpp.obj" \
 "CMakeFiles/TestProject.dir/main.cpp.obj"
 
 # External object files for target TestProject
 TestProject_EXTERNAL_OBJECTS =
 
+C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/build.make
-C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/libTestProject_lib.a
+C:/Projects/Venus/build/TestProject/TestProject.exe: src/libglobal_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libvenus_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: vendor/libvendor_lib.a
-C:/Projects/Venus/build/TestProject/TestProject.exe: src/libecs_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libfile_lib.a
+C:/Projects/Venus/build/TestProject/TestProject.exe: src/libecs_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: C:/Projects/Venus/lib/libglfw3dll.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/linkLibs.rsp
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/objects1
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable C:\Projects\Venus\build\TestProject\TestProject.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable C:\Projects\Venus\build\TestProject\TestProject.exe"
 	cd /d C:\Projects\Venus\build\TestProject\cmake\projects\TestProject && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\TestProject.dir\link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

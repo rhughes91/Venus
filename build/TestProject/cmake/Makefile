@@ -116,17 +116,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named venus_lib
+# Target rules for targets named ecs_lib
 
 # Build rule for target.
-venus_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 venus_lib
-.PHONY : venus_lib
+ecs_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 ecs_lib
+.PHONY : ecs_lib
 
 # fast build rule for target.
-venus_lib/fast:
-	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
-.PHONY : venus_lib/fast
+ecs_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
+.PHONY : ecs_lib/fast
 
 #=============================================================================
 # Target rules for targets named file_lib
@@ -142,17 +142,43 @@ file_lib/fast:
 .PHONY : file_lib/fast
 
 #=============================================================================
-# Target rules for targets named ecs_lib
+# Target rules for targets named audio_lib
 
 # Build rule for target.
-ecs_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 ecs_lib
-.PHONY : ecs_lib
+audio_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 audio_lib
+.PHONY : audio_lib
 
 # fast build rule for target.
-ecs_lib/fast:
-	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
-.PHONY : ecs_lib/fast
+audio_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\audio_lib.dir\build.make src/CMakeFiles/audio_lib.dir/build
+.PHONY : audio_lib/fast
+
+#=============================================================================
+# Target rules for targets named venus_lib
+
+# Build rule for target.
+venus_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 venus_lib
+.PHONY : venus_lib
+
+# fast build rule for target.
+venus_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
+.PHONY : venus_lib/fast
+
+#=============================================================================
+# Target rules for targets named global_lib
+
+# Build rule for target.
+global_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 global_lib
+.PHONY : global_lib
+
+# fast build rule for target.
+global_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/build
+.PHONY : global_lib/fast
 
 #=============================================================================
 # Target rules for targets named vendor_lib
@@ -166,19 +192,6 @@ vendor_lib: cmake_check_build_system
 vendor_lib/fast:
 	$(MAKE) $(MAKESILENT) -f vendor\CMakeFiles\vendor_lib.dir\build.make vendor/CMakeFiles/vendor_lib.dir/build
 .PHONY : vendor_lib/fast
-
-#=============================================================================
-# Target rules for targets named TestProject_lib
-
-# Build rule for target.
-TestProject_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 TestProject_lib
-.PHONY : TestProject_lib
-
-# fast build rule for target.
-TestProject_lib/fast:
-	$(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject_lib.dir\build.make projects/TestProject/CMakeFiles/TestProject_lib.dir/build
-.PHONY : TestProject_lib/fast
 
 #=============================================================================
 # Target rules for targets named TestProject
@@ -202,9 +215,10 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... TestProject
-	@echo ... TestProject_lib
+	@echo ... audio_lib
 	@echo ... ecs_lib
 	@echo ... file_lib
+	@echo ... global_lib
 	@echo ... vendor_lib
 	@echo ... venus_lib
 .PHONY : help

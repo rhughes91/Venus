@@ -26,7 +26,7 @@ if(${FILE_NAME} STREQUAL ${PARENT_DIR_NAME})
     # target_link_options(${FILE_NAME} PRIVATE -mwindows)
 
     if(EMPTY_PROJ)
-        target_link_libraries(${FILE_NAME} PRIVATE venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
+        target_link_libraries(${FILE_NAME} PRIVATE ecs_lib venus_lib vendor_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++)
     else()
         target_link_libraries(${FILE_NAME} PRIVATE ${FILE_NAME}_lib venus_lib vendor_lib ecs_lib file_lib ${CMAKE_SOURCE_DIR}/lib/libglfw3dll.a -static-libgcc -static-libstdc++ -static)
     endif()
