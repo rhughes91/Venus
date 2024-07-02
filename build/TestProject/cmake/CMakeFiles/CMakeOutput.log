@@ -526,3 +526,42 @@ Parsed CXX implicit link information from above output:
   implicit fwks: []
 
 
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD succeeded with the following output:
+Change Dir: C:/Projects/Venus/build/TestProject/cmake/CMakeFiles/CMakeScratch/TryCompile-8855ij
+
+Run Build Command(s):C:/msys64/mingw64/bin/mingw32-make.exe -f Makefile cmTC_f4e27/fast && mingw32-make[1]: Entering directory 'C:/Projects/Venus/build/TestProject/cmake/CMakeFiles/CMakeScratch/TryCompile-8855ij'
+C:/msys64/mingw64/bin/mingw32-make.exe  -f CMakeFiles\cmTC_f4e27.dir\build.make CMakeFiles/cmTC_f4e27.dir/build
+mingw32-make[2]: Entering directory 'C:/Projects/Venus/build/TestProject/cmake/CMakeFiles/CMakeScratch/TryCompile-8855ij'
+Building C object CMakeFiles/cmTC_f4e27.dir/src.c.obj
+C:\msys64\mingw64\bin\cc.exe -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles\cmTC_f4e27.dir\src.c.obj -c C:\Projects\Venus\build\TestProject\cmake\CMakeFiles\CMakeScratch\TryCompile-8855ij\src.c
+Linking C executable cmTC_f4e27.exe
+"C:\Program Files\CMake\bin\cmake.exe" -E cmake_link_script CMakeFiles\cmTC_f4e27.dir\link.txt --verbose=1
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\cmTC_f4e27.dir/objects.a
+C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\cmTC_f4e27.dir/objects.a @CMakeFiles\cmTC_f4e27.dir\objects1
+C:\msys64\mingw64\bin\cc.exe -Wl,--whole-archive CMakeFiles\cmTC_f4e27.dir/objects.a -Wl,--no-whole-archive -o cmTC_f4e27.exe -Wl,--out-implib,libcmTC_f4e27.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\cmTC_f4e27.dir\linkLibs.rsp
+mingw32-make[2]: Leaving directory 'C:/Projects/Venus/build/TestProject/cmake/CMakeFiles/CMakeScratch/TryCompile-8855ij'
+mingw32-make[1]: Leaving directory 'C:/Projects/Venus/build/TestProject/cmake/CMakeFiles/CMakeScratch/TryCompile-8855ij'
+
+
+Source file was:
+#include <pthread.h>
+
+static void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+

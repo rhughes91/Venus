@@ -1,10 +1,240 @@
 #ifndef SETUP_H
 #define SETUP_H
 
-#include "shader.h"
+#include "audio.h"
+#include "component.h"
+#include "graphics.h"
+#include "machine.h"
 #include "structure.h"
+#include "ui.h"
 
-extern object::ecs g_manager;
+
+using AnimationState = object::state_machine<Animation2D>;
+using Animator2D = object::state_machine<AnimationState>;
+
+struct AnimationManager{};
+struct AnimationManager2D{};
+struct AudioManager{};
+struct BillboardManager{};
+struct ButtonManager{};
+struct CameraManager{};
+struct GraphicsManager{};
+struct LineManager{};
+struct MeshManager{};
+struct Mesh2DManager{};
+struct PhysicsManager{};
+struct PointLightManager{};
+struct SpotLightManager{};
+struct SpriteManager{};
+struct TextManager{};
+struct UIManager{};
+
+struct SimpleRenderer{};
+struct AdvancedRenderer{};
+struct ComplexRenderer
+{
+    bool update = true;
+    int model, view, projection, scale, color, offset, uvScale, flip;
+};
+struct UIRenderer{};
+
+struct AABB2DHandler{};
+struct AABBHandler{};
+
+
+struct MeshModule
+{
+    Transform transform;
+    Vector2 uvOffset = 0, uvScale = 1;
+    Color hue = color::WHITE;
+
+    MeshModule() {}
+    MeshModule(const Transform& transform__) : transform(transform__), uvOffset(0), uvScale(1) {}
+    MeshModule(const Transform& transform__, const Vector2& uvOffset__, const Vector2& uvScale__ = 1): transform(transform__), uvOffset(uvOffset__), uvScale(uvScale__) {}
+};
+
+struct MeshAddon
+{
+    std::vector<MeshModule> additions;
+
+    MeshAddon() {}
+    MeshAddon(const std::vector<MeshModule>& additions__) : additions(additions__) {}
+
+    void append(Model& model, const Transform& parentTransform);
+};
+
+
+// DirectionalLight (struct): holds data needed to render a directional light
+struct DirectionalLight
+{
+    Vector3 direction;
+    Color color;
+    float strength;
+
+    DirectionalLight() {}
+    DirectionalLight(const Vector3& direction__, const Color& color__, float strength__ = 1) : direction(direction__), color(color__), strength(strength__) {}
+};
+
+// Screen (struct): holds basic data about how data is rendered to the screen
+struct Screen
+{
+    bool fullscreen = false;
+    Color defaultColor = Color(1, 0, 0, 1);
+    uint32_t camera = -1;
+
+    bool resolutionUpdated = true;
+    Vector2 resolution;
+    Vector2I lastPosition;
+
+    Mesh quad;
+    FrameBuffer frameBuffer, subBuffer, depthBuffer;
+
+    DirectionalLight dirLight;
+    Shader screenShader;
+    float gamma;
+
+    void initialize(const DirectionalLight& dirLight__, const Shader& screenShader__, uint32_t width, uint32_t height);
+    void remove();
+    void refreshResolution(const Vector2& res);
+
+    void store();
+    void draw();
+    void clear(const Color& color);
+
+    int getMaximumSamples();
+};
+
+// Window (struct): determines the appearance of the application Window
+class Window
+{
+    public:
+        Screen screen;
+        Vector2I cursorPosition, lastPosition, lastResolution;
+        uint16_t width = 0;
+        uint16_t height = 0;
+
+        void *data, *audioDevice, *audioContext;
+        bool vsyncEnabled = false, isFullscreen = false;
+
+        Window() {};
+        Window(std::string name, uint32_t width, uint32_t height);
+
+        void setCamera(uint32_t cam)
+        {
+            screen.camera = cam;
+        }
+
+        bool closing();
+        bool decorated();
+        bool fullscreened();
+        bool maximized();
+        bool throwAudioError();
+        bool throwError();
+
+        void centerWindow();
+        void close();
+        void enableDecoration(bool enable);
+        bool enableVSync(bool enable);
+        void fullscreen(bool enable, bool vsync);
+        void hideCursor(bool enable);
+        void lockCursor(bool enable);
+        void maximize();
+        void minimize();
+        void poll();
+        void refresh();
+        void setCursor(const Vector2& position);
+        void setIcon(const char *path);
+        void setOpacity(float opacity);
+        void setPosition(const Vector2I& position);
+        void setSize(const Vector2I& size);
+        void setTitle(const char *title);
+        void terminate(void *audioDevice, void *audioContext);
+
+        float aspectRatioInv();
+        float aspectRatio();
+        float getOpacity();
+
+        Vector2I position();
+        Vector2 cursorUniformScreenPosition();
+        Vector2 cursorScreenPosition();
+        Vector2I center();
+        Vector2I monitorCenter();
+        Vector2I resolution();
+        
+    private:
+        void configureGLAD();
+};
+
+//
+struct ProjectManager
+{
+    ProjectManager() {}
+    ProjectManager(std::vector<Window>& windows);
+};
+
+
+// Time (struct): holds all the timing data that happens between frames :: controls when "fixedUpdate" is run
+struct Time
+{
+    bool frozen = false;
+    int32_t advanceKey = '\\';
+
+    double deltaTime = 0.0f;
+    double lastDeltaTime = 0.0f;
+    double lastFrame = 0.0f;
+    double timer = 0;
+    double runtime = 0;
+
+    std::array<double, 10> framerates;
+
+    Time();
+
+    // updates the "fixedUpdate" timer, interpolates deltaTime, and tracks the average framerate
+    void update();
+    void beginTimer();
+    void resetTimer(double interval)
+    {
+        timer = timer-interval;
+    }
+
+    double framerate()
+    {
+        double sum = 0;
+        for(int i=0; i<framerates.size(); i++)
+        {
+            sum += framerates[i];
+        }
+        return sum / framerates.size();
+    }
+
+    private:
+        int32_t framerateIndex = 0;
+};
+
+
+struct Application
+{
+    static inline InputManager keyboard, mouse;
+    static inline Vector2 cursorPosition;
+
+    uint32_t currentWindow = 0;
+    std::vector<Window> windows;
+
+    Time time;
+    object::ecs container;
+    ProjectManager manager;
+
+    Application();
+
+    static Application& data(void *);
+    static void beginEventLoop(Application& app);
+
+    Window& window()
+    {
+        return windows[currentWindow];
+    }
+};
+
 
 namespace object
 {
@@ -13,105 +243,11 @@ namespace object
         extern uint8_t LOAD, START, UPDATE, LATE_UPDATE, FIXED_UPDATE, RENDER, DESTROY;
     }
 
-    entity createEntity();
-    void removeEntity(entity);
-    entity numberOfEntities();
-    bool active(entity);
-    void setActive(entity, bool);
-
-    size_t numberOfComponents();
-
     void defaultInsertion(entity e, std::vector<entity>& entities, std::vector<size_t>& map);
-    void setFunctionDefinitions(const std::vector<uint8_t *>& references);
-    uint8_t createSystemFunction();
-    void run(uint8_t index);
-    void parseError();
-
-    template<typename T>
-    bool active(entity e)
-    {
-        return g_manager.active<T>(e);
-    }
-
-    template<typename T>
-    void setActive(entity e, bool active)
-    {
-        g_manager.setActive<T>(e, active);
-    }
-
-    template <typename T, std::enable_if_t<std::is_trivially_copyable<T>::value, int> = 0>
-    T& addComponent(entity e, const T& component = T())
-    {
-        return g_manager.addComponent<T>(e, component);
-    }
-
-    template <typename T, std::enable_if_t<!std::is_trivially_copyable<T>::value, int> = 0>
-    T addComponent(entity e, const T& component = T())
-    {
-        return g_manager.addComponent<T>(e, component);
-    }
-
-    template<typename T>
-    void shareComponent(entity e, entity share)
-    {
-        g_manager.shareComponent<T>(e, share);
-    }
-
-    template <typename T, std::enable_if_t<std::is_trivially_copyable<T>::value, int> = 0>
-    T& getComponent(entity e)
-    {
-        return g_manager.getComponent<T>(e);
-    }
-
-    template <typename T, std::enable_if_t<!std::is_trivially_copyable<T>::value, int> = 0>
-    T getComponent(entity e)
-    {
-        return g_manager.getComponent<T>(e);
-    }
-
-    template<typename T>
-    bool containsComponent(entity e)
-    {
-        return g_manager.containsComponent<T>(e);
-    }
-
-    template <typename T>
-    T removeComponent(entity e)
-    {
-        return g_manager.removeComponent<T>(e);
-    }
-
-    template<typename T, typename... Args>
-    object::ecs::system& createSystem(const T& instance = T(), int32_t priority = 0)
-    {
-        return g_manager.createSystem<T, Args...>(instance, priority);
-    }
-
-    template<typename T>
-    void setInsertion(void (*insert)(entity, std::vector<entity>&, std::vector<size_t>&))
-    {
-        g_manager.setInsertion<T>(insert);
-    }
-
-    template<typename T>
-    std::vector<size_t>& getMapping()
-    {
-        return g_manager.getMapping<T>();
-    }
-
-    template<typename T>
-    void setComponent(entity e, const T& update)
-    {
-        g_manager.setComponent<T>(e, update);
-    }
-
-    template<typename T>
-    std::vector<entity>& entities()
-    {
-        return g_manager.entities<T>();
-    }
-
+    void insertionSort(std::vector<entity>& entities, std::vector<size_t>& map, Application& app, object::ecs& container, bool (*criteria)(entity, entity, object::ecs&, void *));
+    void setFunctionDefinitions(object::ecs& container, const std::vector<uint8_t *>& references);
 }
+
 
 template <>
 struct Serialization<MeshAddon>
@@ -152,7 +288,8 @@ struct Serialization<Mesh>
             object::length(data.vertices) + 
             object::length(data.VAO) + 
             object::length(data.VBO) + 
-            object::length(data.dimensions);
+            object::length(data.dimensions) +
+            object::length(data.offset);
     }
 
     static size_t serialize(const Mesh& value, std::vector<uint8_t>& stream, size_t index)
@@ -163,6 +300,7 @@ struct Serialization<Mesh>
         count += object::serialize(value.VAO, stream, index + count);
         count += object::serialize(value.VBO, stream, index + count);
         count += object::serialize(value.dimensions, stream, index + count);
+        count += object::serialize(value.offset, stream, index + count);
 
         return count;
     }
@@ -183,6 +321,9 @@ struct Serialization<Mesh>
 
         result.dimensions = object::deserialize<Vector3>(stream, index + count);
         count += object::length(result.dimensions);
+
+        result.offset = object::deserialize<Vector3>(stream, index + count);
+        count += object::length(result.offset);
 
         return result;
     }
@@ -230,14 +371,7 @@ struct Serialization<Sprite>
     {        
         return 
             object::length(data.texture) + 
-            object::length(data.color) + 
-            object::length(data.shader) + 
-            object::length(data.offset) + 
-            object::length(data.scale) + 
-            object::length(data.updateSorting) + 
-            object::length(data.flip) + 
-            object::length(data.square) + 
-            object::length(data.sorting);
+            object::length(data.square);
     }
 
     static size_t serialize(const Sprite& value, std::vector<uint8_t>& stream, size_t index)
@@ -245,14 +379,7 @@ struct Serialization<Sprite>
         size_t count = 0;
 
         count += object::serialize(value.texture, stream, index + count);
-        count += object::serialize(value.color, stream, index + count);
-        count += object::serialize(value.shader, stream, index + count);
-        count += object::serialize(value.offset, stream, index + count);
-        count += object::serialize(value.scale, stream, index + count);
-        count += object::serialize(value.updateSorting, stream, index + count);
-        count += object::serialize(value.flip, stream, index + count);
         count += object::serialize(value.square, stream, index + count);
-        count += object::serialize<float>(value.sorting, stream, index + count);
 
         return count;
     }
@@ -265,191 +392,41 @@ struct Serialization<Sprite>
         result.texture = object::deserialize<Texture>(stream, index + count);
         count += object::length(result.texture);
 
-        result.color = object::deserialize<Color>(stream, index + count);
-        count += object::length(result.color);
-
-        result.shader = object::deserialize<Shader>(stream, index + count);
-        count += object::length(result.shader);
-
-        result.offset = object::deserialize<Vector2>(stream, index + count);
-        count += object::length(result.offset);
-
-        result.scale = object::deserialize<Vector2>(stream, index + count);
-        count += object::length(result.scale);
-
-        result.updateSorting = object::deserialize<bool>(stream, index + count);
-        count += object::length(result.updateSorting);
-
-        result.flip = object::deserialize<bool>(stream, index + count);
-        count += object::length(result.flip);
-
         result.square = object::deserialize<Mesh>(stream, index + count);
         count += object::length(result.square);
-
-        result.sorting = object::deserialize<float>(stream, index + count);
-        count += object::length(result.sorting);
 
         return result;
     }
 };
 
-
-struct AnimationManager{};
-struct AnimationManager2D{};
-struct BillboardManager{};
-struct ButtonManager{};
-struct CameraManager{};
-struct CollisionManager{};
-struct GraphicsManager{};
-struct LineManager{};
-struct MeshManager{};
-struct Mesh2DManager{};
-struct PhysicsManager{};
-struct PointLightManager{};
-struct SpotLightManager{};
-struct SpriteManager{};
-struct TextManager{};
-struct UIManager{};
-
-struct SimpleRenderer{};
-struct AdvancedRenderer{};
-
-struct AABB2DHandler{};
-struct AABBHandler{};
-
-struct ProjectManager
+template <>
+struct Serialization<Animation2D>
 {
-    ProjectManager();
+    static size_t length(const Animation2D& data)
+    {        
+        return 
+            object::length(data.frames);
+    }
+
+    static size_t serialize(const Animation2D& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.frames, stream, index + count);
+
+        return count;
+    }
+
+    static Animation2D deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        Animation2D result = Animation2D();
+        size_t count = 0;
+
+        result.frames = object::deserialize<std::vector<Texture>>(stream, index + count);
+        count += object::length(result.frames);
+
+        return result;
+    }
 };
-
-// DirectionalLight (struct): holds data needed to render a directional light
-struct DirectionalLight
-{
-    Vector3 direction;
-    Color color;
-    float strength;
-
-    DirectionalLight() {}
-    DirectionalLight(const Vector3& direction__, const Color& color__, float strength__ = 1) : direction(direction__), color(color__), strength(strength__) {}
-};
-
-// Screen (struct): holds basic data about how data is rendered to the screen
-struct Screen
-{
-    bool fullscreen = false;
-    Color defaultColor;
-    uint32_t camera;
-
-    bool resolutionUpdated;
-    Vector2 resolution;
-    Vector2I lastPosition;
-
-    Mesh quad;
-    FrameBuffer frameBuffer, subBuffer, depthBuffer;
-
-    DirectionalLight dirLight;
-    Shader shader;
-    float gamma;
-
-    void initialize(const DirectionalLight& dirLight__, const Shader& screenShader__, uint32_t width, uint32_t height);
-    void remove();
-    void refreshResolution(uint32_t width, uint32_t height);
-
-    void store();
-    void draw();
-    void clear(const Color& color);
-
-    int getMaximumSamples();
-};
-
-// Window (struct): determines the appearance of the application Window
-class Window
-{
-    public:
-        Screen screen;
-        Vector2I cursorPosition;
-        uint16_t width = 0;
-        uint16_t height = 0;
-
-        void *data, *audioDevice, *audioContext;
-        bool active, vsyncEnabled, fullscreen, capslock = false, numpad = false;
-
-        Window() {};
-        Window(std::string name, uint32_t width, uint32_t height);
-        
-    private:
-        void configureGLAD();
-};
-
-namespace window
-{
-    void *handle();
-
-    bool active();
-    bool capslockEnabled();
-    bool closing();
-    bool decorated();
-    bool fullscreened();
-    bool maximized();
-    bool numpadEnabled();
-    bool resolutionUpdated();
-    bool throwAudioError();
-    bool throwError();
-    bool vsyncEnabled();
-
-    void centerWindow();
-    void clearScreen(const Color& color);
-    void close();
-    void drawRender();
-    void enableCapslock(bool enable);
-    void enableDecoration(bool enable);
-    void enableNumpad(bool enable);
-    void enableVSync(bool enable);
-    void fullscreen(bool enable);
-    float gamma();
-    void hideCursor(bool enable);
-    void lockCursor(bool enable);
-    void maximize();
-    void minimize();
-    void poll();
-    void refresh();
-    void remove();
-    void setActiveWindow(uint32_t index);
-    void setCamera(uint32_t newCamera);
-    void setCursor(const Vector2& position);
-    void setDefaultBackgroundColor(const Color &color);
-    void setGamma(float value);
-    void setIcon(const char *path);
-    void setOpacity(float opacity);
-    void setPosition(const Vector2I& position);
-    void setSize(int width, int height);
-    void setTitle(const char *title);
-    void storeRender();
-    void terminate();
-    void updatedResolution(bool updated);
-
-    float aspectRatioInv();
-    float aspectRatio();
-    float getOpacity();
-    float height();
-    float width();
-
-    Vector2 cursorUniformScreenPosition();
-    Vector2 cursorScreenPosition();
-    Vector2I center();
-    Vector2I monitorCenter();
-    Vector2I resolution();
-
-    int32_t getMaximumSamples();
-    uint32_t camera();
-    DirectionalLight& lighting();
-    DirectionalLight& setLighting(const DirectionalLight& light);
-}
-
-// begins the primary game loop
-void beginEventLoop();
-
-// prints the currect OpenGL error buffer
-int32_t throwGLError(const std::string& error);
 
 #endif

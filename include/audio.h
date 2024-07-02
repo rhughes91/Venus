@@ -1,22 +1,50 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include <vector>
 #include <string>
+#include <unordered_map>
 
+//
 struct Audio
 {
-    uint32_t audio;
+    uint32_t source, buffer;
+
+    Audio(uint32_t buffer);
+    void play();
+    void destroy();
+
+    static void load(const std::string& fileName);
+    static uint32_t get(const std::string& fileName);
+    static void clear();
+
+    private:
+        inline static std::unordered_map<std::string, uint32_t> loadedAudios;
 };
 
-namespace audio
+struct WAV
 {
-    void playMP3(const std::string& fileName);
+    std::vector<uint8_t> data;
+    uint16_t format, bitsPerSample;
+    uint32_t sampleRate;
 
-    void load(const std::string& fileName);
+    WAV()
+    {
+        data = std::vector<uint8_t>();
+    }
+};
 
-    Audio get(const std::string& fileName);
+struct MP3
+{
 
-    void remove(); 
+};
+
+//
+namespace file
+{
+    WAV loadWAV(const std::string& fileName);
+
+    MP3 loadMP3(const std::string& fileName);
 }
 
 #endif

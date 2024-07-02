@@ -1191,6 +1191,7 @@ struct Quad
     Quad(const Vector2& one, const Vector2& two, const Vector2& three, const Vector2& four) : p1(one), p2(two), p3(three), p4(four) {}
 };
 
+
 namespace vec2
 {
     const Vector2 zero(0, 0);
@@ -1242,6 +1243,7 @@ namespace vec3
     bool inRange(const Vector3& vec1, const Vector3& vec2, float proximity);                   // returns whether 'vec1' is in proximity of 'vec2'
     float angle(const Vector3& vec1, const Vector3& vec2);                                     // returns the angle between 'vec1' and 'vec2'
     float signedAngle(const Vector3& vec1, const Vector3& vec2, const Vector3& up = vec3::up); // returns the angle between 'vec1' and 'vec2' with 'up' being considered the positive direction
+    float high(const Vector3& vector);
 }
 namespace mat4
 {
@@ -1253,6 +1255,7 @@ namespace mat4
     mat4x4 per(float fov, float aspect, float clipNear, float clipFar);                              // creates a perspective projection matrix
     mat4x4 lookAt(const Vector3 &position, const Vector3 &direction, const Vector3 &up);             // creates a view matrix representing a 'direcition' from a 'position' relative to 'up'
 }
+
 
 // defines hash functions for custom classes (Vector3)
 namespace std
@@ -1278,5 +1281,32 @@ std::ostream& operator<<(std::ostream& os, const Vector4& obj);
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj);
 std::ostream& operator<<(std::ostream& os, const mat4x4& obj);
 std::ostream& operator<<(std::ostream& os, const Quad& obj);
+
+
+
+
+struct Plane
+{
+    Vector3 point = Vector3();
+    Vector3 normal = Vector3(0, 1, 0);
+
+    bool in(const Vector3& position, float radius)
+    {
+        return !((position - point).dot(normal) <= -radius);
+    }
+};
+
+struct Frustum
+{
+    Plane nearPlane, farPlane, rightPlane, leftPlane, topPlane, bottomPlane;
+
+    bool contains(const Vector3& position, float radius)
+    {
+        radius *= 0.5f;
+        return nearPlane.in(position, radius) && farPlane.in(position, radius) && 
+               rightPlane.in(position, radius) && leftPlane.in(position, radius) && 
+               topPlane.in(position, radius) && bottomPlane.in(position, radius);
+    }
+};
 
 #endif

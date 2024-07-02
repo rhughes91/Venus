@@ -1,124 +1,104 @@
+#include "file_util.h"
+#include "input.h"
+#include "setup.h"
+
 #include "glad/glad.h"
 #define GLFW_DLL
 #include "GLFW/glfw3.h"
 #include "image/stb_image.h"
 
-#include "color.h"
-#include "component.h"
-#include "file_util.h"
-#include "input.h"
-#include "setup.h"
-#include "ui.h"
+#include "OpenAL/al.h"
+#include "OpenAL/alc.h"
 
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <type_traits>
 
 
-InputManager g_keyboard, g_mouse;
-extern uint32_t currentWindow;
-extern std::vector<Window> g_windows;
-
-extern object::ecs g_manager;
-extern ProjectManager g_handler;
-extern Time g_time;
-
-
-entity object::createEntity()
+std::string Physics2D::collisionsToString() const
 {
-    return g_manager.createEntity();
+    return "[UP : " + std::to_string(collisions[physics::UP]) + ", DOWN : " + std::to_string(collisions[physics::DOWN]) + ", LEFT : " + std::to_string(collisions[physics::LEFT]) + ", RIGHT : " + std::to_string(collisions[physics::RIGHT]);
 }
-void object::removeEntity(entity e)
-{
-    g_manager.removeEntity(e);
-}
-entity object::numberOfEntities()
-{
-    return g_manager.numberOfEntities();
-}
-bool object::active(entity e)
-{
-    return g_manager.getComponent<bool>(e);
-}
-void object::setActive(entity e, bool active)
-{
-    g_manager.setActive(e, active);
-}
-size_t object::numberOfComponents()
-{
-    return g_manager.numberOfComponents();
-}
-
-namespace object::fn
-{
-    uint8_t LOAD, START, UPDATE, LATE_UPDATE, FIXED_UPDATE, RENDER, DESTROY;
-}
-void object::defaultInsertion(entity e, std::vector<entity>& entities, std::vector<size_t>& map)
-{
-    map[e] = entities.size();
-    entities.push_back(e);
-}
-void object::setFunctionDefinitions(const std::vector<uint8_t*>& references)
-{
-    for(uint8_t *reference : references)
+void physics::collisionTrigger(entity e, entity collision, bool edge, int triggered, object::ecs& container)
+{    
+    Physics2D& physics = container.getComponent<Physics2D>(e);
+    if(!triggered)
     {
-        *reference = object::createSystemFunction();
+        physics.resetCollisions();
+    }
+
+    if(edge)
+        return;
+
+    Transform& transform = container.getComponent<Transform>(e);
+    BoxCollider& collider = container.getComponent<BoxCollider>(e);
+    Vector3 boxDim = transform.scale * collider.scale * 0.5f;
+
+    Transform& transform2 = container.getComponent<Transform>(collision);
+    BoxCollider& collider2 = container.getComponent<BoxCollider>(collision);
+    Vector3 boxDim2 = transform2.scale * collider2.scale * 0.5f;
+   
+    Vector3 delta = ((transform.position + collider.offset) - (transform.storedPosition + collider.offset)) + ((transform2.position + collider2.offset) - (transform2.storedPosition + collider2.offset));
+    float precision = 4;
+
+    bool above = math::roundTo(transform.storedPosition.y + collider.offset.y - boxDim.y, precision) >= math::roundTo(transform2.storedPosition.y + collider2.offset.y + boxDim2.y, precision), below = math::roundTo(transform.storedPosition.y + collider.offset.y + boxDim.y, precision) <= math::roundTo(transform2.storedPosition.y + collider2.offset.y - boxDim2.y, precision);
+    bool right = math::roundTo(transform.storedPosition.x + collider.offset.x - boxDim.x, precision) >= math::roundTo(transform2.storedPosition.x + collider2.offset.x + boxDim2.x, precision), left = math::roundTo(transform.storedPosition.x + collider.offset.x + boxDim.x, precision) <= math::roundTo(transform2.storedPosition.x + collider2.offset.x - boxDim2.x, precision);
+
+    bool vertical = above || below;
+    bool horizontal = right || left;
+
+    if(!horizontal && delta.y < 0)
+    {
+        physics.velocity.y = 0;
+        physics.collisions[physics::DOWN] = true;
+        transform.position.y = transform2.position.y - collider.offset.y + (boxDim2.y + boxDim.y) + collider2.offset.y;
+    }
+    else if(!horizontal && delta.y > 0)
+    {
+        physics.velocity.y = 0;
+        physics.collisions[physics::UP] = true;
+        transform.position.y = transform2.position.y - collider.offset.y - (boxDim2.y + boxDim.y) + collider2.offset.y;
+    }
+    else if(!vertical && delta.x < 0)
+    {
+        physics.velocity.x = 0;
+        physics.collisions[physics::LEFT] = true;
+        transform.position.x = transform2.position.x - collider.offset.x + (boxDim2.x + boxDim.x) + collider2.offset.x;
+    }
+    else if(!vertical && delta.x > 0)
+    {
+        physics.velocity.x = 0;
+        physics.collisions[physics::RIGHT] = true;
+        transform.position.x = transform2.position.x - collider.offset.x - (boxDim2.x + boxDim.x) + collider2.offset.x;
     }
 }
-uint8_t object::createSystemFunction()
+void physics::collisionMiss(entity e, object::ecs& container)
 {
-    return g_manager.createSystemFunction();
+    container.getComponent<Physics2D>(e).resetCollisions();
 }
 
-void object::run(uint8_t index)
+Camera::Camera(Color color__, Vector3 front__, Vector3 up__, float aspect__, float near__, float far__, float fov__) : backgroundColor(color__), front(front__), up(up__), nearDistance(near__), farDistance(far__), fov(fov__)
 {
-    g_manager.run(index);
-}
-void object::parseError()
-{
-    g_manager.parseError();
+    projection = mat4::per(math::radians(fov), aspect__, near__, far__);
 }
 
+Frustum Camera::getFrustum(const Vector3& position, float aspect)
+{
+    Frustum frustum;
+    float halfVSide = farDistance * std::tan(math::radians(fov) * 0.5f);
+    float halfHSide = halfVSide * aspect;
+    Vector3 frontMultFar = farDistance * front;
+    Vector3 right = front.cross(up);
 
-float event::delta()
-{
-    return g_time.deltaTime;
-}
-float event::framerate()
-{
-    return (g_time.framerates[0] + g_time.framerates[1] + g_time.framerates[2] + g_time.framerates[3] + g_time.framerates[4] + g_time.framerates[5] + g_time.framerates[6] + g_time.framerates[7] + g_time.framerates[8] + g_time.framerates[9])/10.f;
-}
-float event::time()
-{
-    return g_time.runtime;
-}
-void event::freezeTime(bool freeze)
-{
-    g_time.frozen = freeze;
-}
+    frustum.nearPlane = { position + nearDistance * front, front };
+    frustum.farPlane = { position + frontMultFar, -front };
+    frustum.rightPlane = { position, (frontMultFar - right * halfHSide).cross(up).normalized() };
+    frustum.leftPlane = { position, up.cross(frontMultFar + right * halfHSide).normalized() };
+    frustum.topPlane = { position, right.cross(frontMultFar - up * halfVSide).normalized() };
+    frustum.bottomPlane = { position, (frontMultFar + up * halfVSide).cross(right).normalized() };
 
-Camera::Camera(Color color__, Vector3 front__, Vector3 up__, float near__, float far__) : backgroundColor(color__), front(front__), up(up__), nearDistance(near__), farDistance(far__)
-{
-    projection = mat4::per(math::radians(45.0f), window::aspectRatioInv(), near__, far__);
-}
-
-bool Rect::contains(const Vector2& vec) const
-{
-    Vector2 pos = relativePosition();
-    Vector2 target = vec - Vector2((window::width() - window::height())/window::height() * pos.x, 0);
-    float angle = rotation.euler().x*2 - M_PI;
-
-    Vector2 adjusted = adjustedScale();
-    Vector2 ul = pos - adjusted * 0.5f, br = pos + adjusted * 0.5f;
-    return math::quadPointIntersect(Quad(vec2::rotatedAround(ul, pos, angle), vec2::rotatedAround(Vector2(br.x, ul.y), pos, angle), vec2::rotatedAround(br, pos, angle), vec2::rotatedAround(Vector2(ul.x, br.y), pos, angle)), target);
-}
-Vector2 Rect::adjustedScale() const
-{
-    return scaled() ? scale * 0.1f : (scale*5) / window::height();
-}
-Vector2 Rect::relativePosition() const
-{
-    return (position + relativeOrigin - adjustedScale() * relativeOrigin * Vector2(window::aspectRatio(), 1) * 0.5f);
+    return frustum;
 }
 
 Vector3 object::brightness(int32_t value)
@@ -140,19 +120,105 @@ Vector3 object::brightness(int32_t value)
     return 0;
 }
 
-// cannot interpret MUTE, DECR_VOLUME, INCR_VOLUME, CALCULATOR, GLOBAL_2, GLOBAL_3, and GLOBAL_4
-void InputManager::initialize(int end)
+
+namespace object::fn
 {
-    for(uint32_t i = 0; i <= end; i++)
+    uint8_t LOAD, START, UPDATE, LATE_UPDATE, FIXED_UPDATE, RENDER, DESTROY;
+}
+
+void object::defaultInsertion(entity e, std::vector<entity>& entities, std::vector<size_t>& map)
+{
+    map[e] = entities.size();
+    entities.push_back(e);
+}
+void object::insertionSort(std::vector<entity>& entities, std::vector<size_t>& map, Application& app, object::ecs& container, bool (*criteria)(entity, entity, object::ecs& container, void *data))
+{
+    for(int i=1; i<entities.size(); i++)
     {
-        inputs.insert({i, Key{i}});
+        entity key = entities[i];
+        int j = i-1;
+
+        while( j >= 0 && criteria(entities[j], key, container, &app))
+        {
+            map[entities[j+1]] = map[entities[j]];
+            entities[j+1] = entities[j];
+
+            j = j-1;
+        }
+        map[entities[j+1]] = map[key];
+        entities[j+1] = key;
     }
 }
-void InputManager::initialize(int start, int end)
+void object::setFunctionDefinitions(object::ecs& container, const std::vector<uint8_t*>& references)
 {
-    for(uint32_t i = start; i <= end; i++)
+    for(uint8_t *reference : references)
     {
-        inputs.insert({i, Key{i}});
+        *reference = container.createSystemFunction();
+    }
+}
+
+// void object::save(std::string fileName)
+// {
+//     std::vector<uint8_t> test = std::vector<uint8_t>(100000);
+//     std::cout << object::serialize(g_resources.manager, test, 0) << '\n';
+//     object::deserialize<object::ecs>(test, 0);
+// }
+
+void MeshAddon::append(Model& model, const Transform& parentTransform)
+{
+    std::vector<Vertex> newVertices = model.data.vertices;
+    Vector3 average = 0, max = 0, min = -std::numeric_limits<float>::lowest();
+    for(int i=0; i<additions.size(); i++)
+    {
+        Vector3 variable = additions[i].transform.position;
+        average = ((i+1) * average + variable) / (i+2);
+
+        additions[i].transform.position = (mat4x4)parentTransform.rotation.conjugate() * additions[i].transform.position;
+
+        additions[i].transform.position.x /= parentTransform.scale.x == 0 ? 1:parentTransform.scale.x;
+        additions[i].transform.position.y /= parentTransform.scale.y == 0 ? 1:parentTransform.scale.y;
+        additions[i].transform.position.z /= parentTransform.scale.z == 0 ? 1:parentTransform.scale.z;
+        max = vec3::max(max, additions[i].transform.position);
+        min = vec3::min(min, additions[i].transform.position);
+        
+        additions[i].transform.position = (mat4x4)parentTransform.rotation * additions[i].transform.position;
+
+        for(auto vertex : newVertices)
+        {
+            vertex.position = (mat4x4)additions[i].transform.rotation * (mat4x4)parentTransform.rotation * vertex.position;
+            vertex.position += additions[i].transform.position;
+            vertex.position = (mat4x4)parentTransform.rotation.conjugate() * vertex.position;
+            vertex.uv = vertex.uv * additions[i].uvScale + additions[i].uvOffset;
+            model.data.vertices.push_back(vertex);
+        }
+    }
+
+    model.data.offset += average;
+    model.data.dimensions += (max-min) * model.data.dimensions;
+
+    std::string addendumPath = "Mesh:"+std::to_string(model.data.VAO)+":"+std::to_string(model.data.VBO);
+    if(!Mesh::contains(addendumPath))
+    {
+        model.data.generate();
+        addendumPath = "Mesh:"+std::to_string(model.data.VAO)+":"+std::to_string(model.data.VBO);
+    }
+    Mesh::set(addendumPath, model.data);
+    model.data.refresh();
+}
+
+// cannot interpret MUTE, DECR_VOLUME, INCR_VOLUME, CALCULATOR, GLOBAL_2, GLOBAL_3, and GLOBAL_4
+void InputManager::initialize(int end, int toggleEnd)
+{
+    inputs = std::vector<Key>(end+1);
+    for(uint32_t i = 0; i <= end; i++)
+    {
+        inputs[i] = Key{i};
+    }
+
+    toggles = std::vector<bool>(toggleEnd);
+    for(uint32_t i = 0; i < toggleEnd; i++)
+    {
+        toggles[i] = false;
     }
 }
 void InputManager::parse(int32_t input, bool pressed)
@@ -184,598 +250,9 @@ void InputManager::refresh()
     heldKey = '\0';
 }
 
-void Timer::update(float max)
+void Timer::update(float delta, float max)
 {
-    timer += math::clamp(event::delta(), 0.f, max);
-}
-
-uint32_t Animation::step()
-{
-    if(frameCount != frameRate-1)
-    {
-        frameCount++;
-    }
-    else
-    {
-        frameCount = 0;
-        if(frames.size() == 0)
-            return 0;
-
-        if(loop)
-        {
-            frame = (frame + 1) % frames.size();
-        }
-        else
-        {
-            frame = std::min((float)frame+1, (float)frames.size()-1);
-        }
-    }
-    return frame;
-}
-void anim::reset(Animation& animation)
-{
-    animation.frame = 0;
-}
-bool anim::restart(Animation& current, Animation& last)
-{
-    current.frame = 0;
-    return true;
-}
-bool anim::keep(Animation& current, Animation& last)
-{
-    current.frame = (last.frame < current.frames.size() ? last.frame:0);
-    return true;
-}
-
-void anim::texture(const Animation& animation, void *render, uint32_t frame, size_t size)
-{
-    Sprite& sprite = *(Sprite *)render;
-    sprite.texture.texture = animation.frames[frame].texture;
-    sprite.offset = 0;
-    sprite.scale = 1;
-}
-void anim::uv(const Animation& animation, void *render, uint32_t frame, size_t size)
-{
-    Sprite& sprite = *(Sprite *)render;
-    sprite.texture.texture = animation.frames[0].texture;
-
-    float rawSquare = std::ceil((float)std::sqrt((double)size));
-    int rowMiss = (rawSquare*rawSquare-size)/rawSquare;
-
-    uint32_t x = frame%(int)rawSquare;
-    uint32_t y = frame/(int)rawSquare;
-
-    Vector2 scale = 1/Vector2(rawSquare, rawSquare-rowMiss);
-    sprite.scale = scale;
-    sprite.offset = Vector2(sprite.flip ? rawSquare-x-1:x, rawSquare-rowMiss-y-1) * scale;
-}
-
-std::string Physics2D::collisionsToString() const
-{
-    return "[UP : " + std::to_string(collisions[physics::UP]) + ", DOWN : " + std::to_string(collisions[physics::DOWN]) + ", LEFT : " + std::to_string(collisions[physics::LEFT]) + ", RIGHT : " + std::to_string(collisions[physics::RIGHT]);
-}
-void physics::collisionTrigger(entity e, entity collision, bool edge, int triggered)
-{    
-    Physics2D& physics = object::getComponent<Physics2D>(e);
-    if(!triggered)
-    {
-        physics.resetCollisions();
-    }
-
-    if(edge)
-        return;
-
-    Transform& transform = object::getComponent<Transform>(e);
-    BoxCollider& collider = object::getComponent<BoxCollider>(e);
-    Vector3 boxDim = transform.scale * collider.scale * 0.5f;
-
-    Transform& transform2 = object::getComponent<Transform>(collision);
-    BoxCollider& collider2 = object::getComponent<BoxCollider>(collision);
-    Vector3 boxDim2 = transform2.scale * collider2.scale * 0.5f;
-   
-    Vector3 delta = ((transform.position + collider.offset) - collider.storedPosition) + ((transform2.position + collider2.offset) - collider2.storedPosition);
-    float precision = 4;
-
-    bool above = math::roundTo(collider.storedPosition.y - boxDim.y, precision) >= math::roundTo(collider2.storedPosition.y + boxDim2.y, precision), below = math::roundTo(collider.storedPosition.y + boxDim.y, precision) <= math::roundTo(collider2.storedPosition.y - boxDim2.y, precision);
-    bool right = math::roundTo(collider.storedPosition.x - boxDim.x, precision) >= math::roundTo(collider2.storedPosition.x + boxDim2.x, precision), left = math::roundTo(collider.storedPosition.x + boxDim.x, precision) <= math::roundTo(collider2.storedPosition.x - boxDim2.x, precision);
-
-    bool vertical = above || below;
-    bool horizontal = right || left;
-
-    if(!horizontal && delta.y < 0)
-    {
-        physics.velocity.y = 0;
-        physics.collisions[physics::DOWN] = true;
-        transform.position.y = transform2.position.y - collider.offset.y + (boxDim2.y + boxDim.y) + collider2.offset.y;
-    }
-    else if(!horizontal && delta.y > 0)
-    {
-        physics.velocity.y = 0;
-        physics.collisions[physics::UP] = true;
-        transform.position.y = transform2.position.y - collider.offset.y - (boxDim2.y + boxDim.y) + collider2.offset.y;
-    }
-    else if(!vertical && delta.x < 0)
-    {
-        physics.velocity.x = 0;
-        physics.collisions[physics::LEFT] = true;
-        transform.position.x = transform2.position.x - collider.offset.x + (boxDim2.x + boxDim.x) + collider2.offset.x;
-    }
-    else if(!vertical && delta.x > 0)
-    {
-        physics.velocity.x = 0;
-        physics.collisions[physics::RIGHT] = true;
-        transform.position.x = transform2.position.x - collider.offset.x - (boxDim2.x + boxDim.x) + collider2.offset.x;
-    }
-}
-void physics::collisionMiss(entity e)
-{
-    object::getComponent<Physics2D>(e).resetCollisions();
-}
-
-struct CurveWinder
-{
-    std::vector<size_t> contour;
-    int32_t sum;
-};
-
-std::vector<Vector2> bezier3(const std::vector<Vector2>& controlPoints, float partition)
-{
-    std::vector<Vector2> result;
-    for(float i=0; i<1; i += partition)
-    {
-        result.push_back(std::pow(1-i, 2)*controlPoints[0] + 2*std::pow(1-i, 1)*i*controlPoints[1] + std::pow(i, 2)*controlPoints[2]);
-    }
-    return result;
-}
-
-Vector2I rescalePoint(const Vector2& point, const Vector2& offset, float scaling)
-{
-    return (Vector2I)((point + offset)*scaling);
-}
-void plotLine(std::vector<CurveWinder>& winders, const Vector2I& size, int maxSize, Vector2I start, const Vector2I& end, const Vector2I& difference, const Vector2 offset, float scaling, bool decide, const Color8& color)
-{
-    int pk = 2*difference.y - difference.x, windMod = 0;
-    Vector2I point;
-
-    for(int i=0; i<difference.x; i++)
-    {
-        bool vertical = pk >= 0;
-        start += Vector2I((start.x < end.x)*2 - 1, ((start.y < end.y)*2 - 1)*vertical);
-        pk += 2*difference.y - 2*difference.x*vertical;
-
-        if(decide)
-        {
-            point = start.yx();
-        }
-        else
-        {
-            point = start;
-        }
-        std::vector<size_t>& winder = winders[winders.size()-1].contour;
-        size_t result = (point.y+size.y/2) * maxSize + point.x + size.x/2;
-
-        if(!winder.size() || winder[winder.size()-1] != result)
-        {
-            winder.push_back(result);
-        }
-    }
-}
-void drawSegment(std::vector<CurveWinder>& winders, const Vector2I& size, int maxSize, const Vector2I& position, const Vector2I& lastPosition, const Vector2& offset, float scaling, const Color8& color)
-{
-    Vector2I p0 = rescalePoint(lastPosition, offset, scaling);
-    Vector2I p1 = rescalePoint(position, offset, scaling);
-    Vector2I difference = (Vector2I)vec2::abs(p0 - p1);
-
-    if(p0 != p1)
-    {
-        if(difference.x > difference.y)
-        {
-            plotLine(winders, size, maxSize, p0, p1, difference, offset, scaling, 0, color);
-        }
-        else
-        {
-            plotLine(winders, size, maxSize, p0.yx(), p1.yx(), difference.yx(), offset, scaling, 1, color);
-        }
-
-        std::vector<size_t>& winder = winders[winders.size()-1].contour;
-        size_t result = ((p1.y % size.y)+size.y/2) * maxSize + (p1.x % size.x) + size.x/2;
-
-        if(!winder.size() || winder[winder.size()-1] != result)
-        {
-            winder.push_back(result);
-        }
-        winders[winders.size()-1].sum += (p1.x - p0.x)*(p1.y + p0.y);
-    }
-}
-
-void renderBezier(std::vector<CurveWinder>& winders, const Vector2I& size, int maxSize, const std::vector<Vector2>& bezierPoints, const Vector2& offset, float scaling, Vector2I& lastPosition, const Color8& color, float partition)
-{
-    std::vector<Vector2> points = {bezierPoints[0]}, result;
-    for(int i=1; i<bezierPoints.size()-2; i++)
-    {
-        points.push_back(bezierPoints[i]);
-        points.push_back((bezierPoints[i] + bezierPoints[i+1])*0.5f);
-    }
-    points.push_back(bezierPoints[bezierPoints.size()-2]);
-    points.push_back(bezierPoints[bezierPoints.size()-1]);
-
-    for(int j=0; j<points.size()-2; j+=2)
-    {
-        std::vector<Vector2> bezier = bezier3({points[j], points[j+1], points[j+2]}, partition);
-        result.insert(std::end(result), std::begin(bezier), std::end(bezier));
-    }
-    // result = points;
-
-    Vector2I position;
-    for(int j=1; j<result.size()-1; j++)
-    {
-        position = (Vector2I)result[j];
-        drawSegment(winders, size, maxSize, position, lastPosition, offset, scaling, color);
-        lastPosition = position;
-    }
-}
-uint32_t renderCharacterSet(Font font, int start, int scale)
-{
-    int size = std::sqrt(scale*1000);
-    Vector2I index = Vector2I(0, 7);
-    std::vector<Color8> render = std::vector<Color8>((size) * (size) * 8 * 8, Color8(0, 0));
-        
-    for(int c=start; c<start+64; c++)
-    {
-        std::vector<CurveWinder> winders = std::vector<CurveWinder>(1);
-        CharacterTTF letter = font.characters[c];
-        int ppi = 96, ppem = (size*0.4f) * ppi / 72, pointSize = letter.points.size();
-        
-        if(pointSize && c > ' ')
-        {
-            float scaling = (float)ppem / font.unitsPerEm;
-            Vector2 offset = Vector2(-letter.lsb - letter.scale.x*0.5f, -letter.scale.y*0.5f + 300);
-            Color8 color = Color8(255);
-
-            Vector2I lastPosition = letter.points[0].position;
-            Vector2I scale = Vector2I(size*(2*index.x+1), size*(2*index.y+1));
-
-            int contourIndex = 0, contourEnd = letter.contourEnds.size() ? letter.contourEnds[contourIndex] : -1;
-            int loop = 0;
-
-            for(int i=0; i<pointSize; i++)
-            {                
-                Vector2I position = letter.points[i%pointSize].position;
-                if(i == contourEnd+1)
-                {
-                    drawSegment(winders, scale, size * 8, letter.points[loop].position, lastPosition, offset, scaling, color);
-                    contourEnd = letter.contourEnds.size() > (contourIndex += 1) ? letter.contourEnds[contourIndex] : -1;
-                    loop = i%pointSize;
-                    winders.resize(winders.size()+1);
-                }
-                else
-                {
-                    drawSegment(winders, scale, size * 8, position, lastPosition, offset, scaling, color);
-                }
-                lastPosition = position;
-
-                if(!letter.points[(i+1) % pointSize].onCurve)
-                {
-                    size_t length = 0;
-
-                    std::vector<Vector2> points;
-                    points.push_back(letter.points[i].position);
-                    while(!letter.points[(++i) % pointSize].onCurve)
-                    {
-                        Vector2I point = letter.points[i % pointSize].position;
-                        length += (points[points.size()-1] - point).length();
-                        points.push_back(point);
-                    }
-                    points.push_back(letter.points[(i == contourEnd+1) ? loop : i%pointSize].position);
-                    length += (points[points.size()-1] - points[0]).length();
-                    i--;
-
-                    renderBezier(winders, scale, size*8, points, offset, scaling, lastPosition, color, 10.0f/size);
-                }
-            }
-            drawSegment(winders, scale, size*8, letter.points[loop].position, lastPosition, offset, scaling, color);
-        }
-
-        std::vector<size_t> contour;
-        int contourSize;
-        for(int w=0; w<winders.size(); w++)
-        {
-            contour = winders[w].contour;
-            contourSize = contour.size();
-
-            bool toggle = true, buffer = false;
-            int direction = 0, padding = 0;
-
-            for(int idx = 0; contourSize && idx < contourSize+std::abs(padding); idx++)
-            {
-                int loop = ((idx%contourSize)) % 255 + 1;
-                size_t placement = contour[idx%contourSize], back = contour[(idx+contourSize-1)%contourSize], forward = contour[(idx+1)%contourSize];
-                bool vertical = ((placement - back) == size*8 || (back - placement) == size*8);
-
-                if(padding <= 0)
-                    padding = std::max(padding-1, -contourSize);
-
-                if(vertical && !render[placement].g)
-                {
-                    padding = -padding;
-                    toggle = false;
-                }
-                else
-                {
-                    toggle = true;
-                    direction = back%(size*8) - placement%(size*8);
-                }
-
-                int tempDirection = placement%(size*8) - forward%(size*8);
-                if(direction != 0 && tempDirection != 0 && direction != tempDirection)
-                {
-                    direction = 0;
-                    toggle = !toggle;
-                }
-
-                render[placement] = Color8(255, toggle*loop, 255);
-            }
-        }
-        
-        for(int x = size*index.x; x < size*(index.x+1); x++)
-        {
-            bool toggle = false;
-            for(int y = size*index.y; y < size*(index.y+1); y++)
-            {
-                size_t placement = size*8*y+x;
-                if(render[placement].g > 0)
-                {
-                    toggle = !toggle;
-                }
-                if(toggle || render[placement].r)
-                {
-                    render[placement] = Color8(255);
-                }
-            }
-        }
-
-        index.x = (index.x+1)%8;
-        if(!index.x)
-            index.y--;
-    }
-
-    return texture::loadTo(render, size * 8, size * 8, texture::RGBA, texture::PNG, texture::POINT).texture;
-}
-
-Text::Text(const Font& font__, const std::string& text__, float scale__, const Alignment& alignment__, const Color& color__, const Shader& shader__, void(*run__)(entity, const Text&, const Camera&, const Transform&)) : font(font__), text(text__), color(color__), scale(scale__), alignment(alignment__), shader(shader__), run(run__)
-{
-    spacing = -0.025f;
-    linePadding = 0.05f;
-    newLineSetting = text::WORD;
-
-    reinit();
-}
-void Text::initialize(const Rect& bounds)
-{
-    struct LineNode
-    {
-        int start, end;
-        Vector2 position;
-    };
-    std::vector<LineNode> nodes;
-
-    Vector2 position = 0, boundsScale = bounds.adjustedScale();
-    std::vector<float> text0, text1;
-    std::vector<Vector3> vectors0, vectors1;
-
-    int start = 0, wordEnd;
-    float scaling = (float)1 / font.unitsPerEm;
-    float lineSpace = 0, modifier = (scale*5) / window::height(), tabWidth = 4*(font.characters[' '].lsb + font.characters[' '].rsb) * scaling, addon = 0, wordAddon;
-    for(int i=0; i<text.size(); i++)
-    {
-        CharacterTTF letter = letterData(text[i]);
-        addon = (letter.scale.x * 0.5f + letter.lsb + letter.rsb) * scaling + spacing;
-        wordAddon += addon;
-        switch(text[i])
-        {
-            case '\n':
-                position.x = (boundsScale.x - lineSpace*modifier) / modifier * 0.5f * alignment.horizontal;
-                nodes.push_back({start, wordEnd = i, position});
-                start = i;
-                position.y -= font.maxScale.y * 0.5f * scaling;
-                wordAddon = lineSpace = 0;
-            continue;
-            case '\t':
-                addon = tabWidth;
-            case ' ':
-                wordAddon = 0;
-                wordEnd = i;
-            break;
-        }
-        lineSpace += addon;
-        if(lineSpace*modifier >= boundsScale.x)
-        {
-            float finalAddon = (newLineSetting == text::WORD && wordAddon != lineSpace) ? wordAddon : addon;
-            int finalEnd = (newLineSetting == text::WORD && wordAddon != lineSpace) ? wordEnd : i;
-
-            position.x = (boundsScale.x - (lineSpace-finalAddon)*modifier) / modifier * 0.5f * alignment.horizontal;
-            nodes.push_back({start, finalEnd, position});
-            start = finalEnd;
-            position.y -= font.maxScale.y * 0.5f * scaling;
-            wordAddon = lineSpace = finalAddon;
-        }
-    }
-    
-    position.x = (boundsScale.x - lineSpace*modifier) / modifier * 0.5f * alignment.horizontal;
-    nodes.push_back({start, (int)text.length(), position});
-
-    float height = position.y;
-    for(auto& node : nodes)
-    {
-        node.position.y -= ((boundsScale.y + height*modifier) / modifier * 0.5f - font.maxScale.y * scaling * 0.25f) * (2-alignment.vertical);
-        for(int j=node.start; j<node.end; j++)
-        {
-            if(j != node.start || (text[j] != ' ' && text[j] != '\t'))
-                getUVs(text[j], scaling, node.position, text0, text1, vectors0, vectors1);
-        }
-    }
-
-    result0 = Mesh(vectors0, text0, Vector3(1, 1, 0));
-    result1 = Mesh(vectors1, text1, Vector3(1, 1, 0));
-
-    result0.generate();
-    if(result0.vertices.size())
-        result0.refresh();
-    
-    result1.generate();
-    if(result1.vertices.size())
-        result1.refresh();
-}
-void Text::refresh(const Rect& bounds)
-{
-    struct LineNode
-    {
-        int start, end;
-        Vector2 position;
-    };
-    std::vector<LineNode> nodes;
-
-    Vector2 position = 0, rawScale = bounds.adjustedScale(), boundsScale = rawScale * window::aspectRatioInv();
-    std::vector<float> text0, text1;
-    std::vector<Vector3> vectors0, vectors1;
-
-    int start = 0, wordEnd;
-    float scaling = (float)1 / font.unitsPerEm;
-    float lineSpace = 0, modifier = (scale*5) / window::height(), tabWidth = 4*(font.characters[' '].lsb + font.characters[' '].rsb) * scaling, addon = 0, wordAddon;
-
-    float aspectOffset = (rawScale.x - lineSpace*modifier) / modifier * 0.5f * (1-window::aspectRatioInv());
-    for(int i=0; i<text.size(); i++)
-    {
-        CharacterTTF letter = letterData(text[i]);
-        addon = (letter.scale.x * 0.5f + letter.lsb + letter.rsb) * scaling + spacing;
-        wordAddon += addon;
-        switch(text[i])
-        {
-            case '\n':
-                position.x = (boundsScale.x - lineSpace*modifier) / modifier * 0.5f * alignment.horizontal + aspectOffset;
-                nodes.push_back({start, wordEnd = i, position});
-                start = i;
-                position.y -= font.maxScale.y * 0.5f * scaling;
-                wordAddon = lineSpace = 0;
-            continue;
-            case '\t':
-                addon = tabWidth;
-            case ' ':
-                wordAddon = 0;
-                wordEnd = i;
-            break;
-        }
-        lineSpace += addon;
-        if(lineSpace*modifier >= boundsScale.x)
-        {
-            float finalAddon = (newLineSetting == text::WORD && wordAddon != lineSpace) ? wordAddon : addon;
-            int finalEnd = (newLineSetting == text::WORD && wordAddon != lineSpace) ? wordEnd : i;
-
-            position.x = (boundsScale.x - (lineSpace-finalAddon)*modifier) / modifier * 0.5f * alignment.horizontal + aspectOffset;
-            nodes.push_back({start, finalEnd, position});
-            start = finalEnd;
-            position.y -= font.maxScale.y * 0.5f * scaling;
-            wordAddon = lineSpace = finalAddon;
-        }
-    }
-    
-    position.x = (boundsScale.x - lineSpace*modifier) / modifier * 0.5f * alignment.horizontal + aspectOffset;
-    nodes.push_back({start, (int)text.length(), position});
-
-    float height = position.y;
-    float aspectYOffset = ((boundsScale.y + height*modifier) / modifier * 0.5f - font.maxScale.y * scaling * 0.25f) * (1-window::aspectRatio());
-    for(auto& node : nodes)
-    {
-        node.position.y -= ((boundsScale.y + height*modifier) / modifier * 0.5f - font.maxScale.y * scaling * 0.25f) * (2-alignment.vertical) + aspectYOffset;
-        for(int j=node.start; j<node.end; j++)
-        {
-            if(j != node.start || (text[j] != ' ' && text[j] != '\t'))
-                getUVs(text[j], scaling, node.position, text0, text1, vectors0, vectors1);
-        }
-    }
-
-    result0.reinit(vectors0, text0, Vector3(1, 1, 0));
-    result1.reinit(vectors1, text1, Vector3(1, 1, 0));
-
-    if(result0.vertices.size())
-    {
-        result0.refresh();
-    }
-    if(result1.vertices.size())
-    {
-        result1.refresh();
-    }
-}
-void Text::reinit()
-{
-    // glDeleteTextures(1, &texture0);
-    // glDeleteTextures(1, &texture1);
-
-    texture0 = renderCharacterSet(font, 0, scale);
-    texture1 = renderCharacterSet(font, 64, scale);
-}
-CharacterTTF Text::letterData(char index)
-{
-    switch(index)
-    {
-        default: return font.characters[index];
-    }
-}
-void Text::getUVs(char index, float scaling, Vector2& position, std::vector<float>& result0, std::vector<float>& result1, std::vector<Vector3>& positions0, std::vector<Vector3>& positions1)
-{
-    float tabWidth = 4*(font.characters[' '].lsb + font.characters[' '].rsb) * scaling;
-    CharacterTTF data = letterData(index);
-    switch(index)
-    {
-        case '\t':
-            position.x += tabWidth;
-        break;
-    }
-
-    bool first = !(index / 64);
-    int trueIndex = (index % 64);
-
-    Vector2 scaled = {(trueIndex % 8)/8.0f, 1 - (trueIndex / 8 + 1)/8.0f};
-    std::vector<float> addon =
-    {
-        scaled.x + 0.125f, scaled.y,
-        scaled.x, scaled.y + 0.125f,
-        scaled.x, scaled.y,
-
-        scaled.x + 0.125f, scaled.y + 0.125f,
-        scaled.x, scaled.y + 0.125f,
-        scaled.x + 0.125f, scaled.y,
-    };
-
-    position.x += data.lsb * scaling;
-    Vector2 size = data.scale;
-    Vector2 offset = (Vector2(-size.x*0.5f, size.y*0.5f - font.maxScale.y)) * scaling * 0.5f + Vector2(0, linePadding);
-    std::vector<Vector3> vectors =
-    {
-        Vector3(position.x+0.5f - offset.x, position.y-0.5f + offset.y, 0),
-        Vector3(position.x-0.5f - offset.x, position.y+0.5f + offset.y, 0),
-        Vector3(position.x-0.5f - offset.x, position.y-0.5f + offset.y, 0),
-        
-        Vector3(position.x+0.5f - offset.x, position.y+0.5f + offset.y, 0),
-        Vector3(position.x-0.5f - offset.x, position.y+0.5f + offset.y, 0),
-        Vector3(position.x+0.5f - offset.x, position.y-0.5f + offset.y, 0),
-    };
-    position.x += (size.x * 0.5f + data.rsb) * scaling + spacing;
-    
-    if(first)
-    {
-        result0.insert(result0.end(), addon.begin(), addon.end());
-        positions0.insert(positions0.end(), vectors.begin(), vectors.end());
-    }
-    else
-    {
-        result1.insert(result1.end(), addon.begin(), addon.end());
-        positions1.insert(positions1.end(), vectors.begin(), vectors.end());
-    }
-}
-void Text::renderMesh(const Rect& bounds, std::vector<float>& result0, std::vector<float>& result1, std::vector<Vector3>& positions0, std::vector<Vector3>& positions1)
-{
-
+    timer += math::clamp(delta, 0.f, max);
 }
 
 void Screen::clear(const Color& color)
@@ -784,7 +261,8 @@ void Screen::clear(const Color& color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screenShader__, uint32_t width, uint32_t height)
-{
+{    
+    camera = -1;
     dirLight = dirLight__;
     gamma = 2.2f;
 
@@ -799,9 +277,9 @@ void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screen
     
     frameBuffer.addRenderBuffer("renderBuffer", width, height, std::min(4, maxSamples));
 
-    shader = screenShader__;
-    shader.use();
-    shader.setInt("screenTexture", 0);
+    screenShader = screenShader__;
+    screenShader.use();
+    screenShader.setInt("screenTexture", 0);
 
     int complete;
     if((complete = frameBuffer.complete()) != GL_FRAMEBUFFER_COMPLETE)
@@ -809,24 +287,23 @@ void Screen::initialize(const DirectionalLight& dirLight__, const Shader& screen
 
     if((complete = subBuffer.complete()) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR :: " << complete << " :: Screen subbuffer is not complete." << std::endl;
-
 }
 void Screen::remove()
 {
     frameBuffer.remove();
     subBuffer.remove();
     depthBuffer.remove();
-    shader.remove();
+    screenShader.remove();
 }
-void Screen::refreshResolution(uint32_t width, uint32_t height)
+void Screen::refreshResolution(const Vector2& res)
 {
-    frameBuffer.refresh(g_windows[currentWindow].width, g_windows[currentWindow].height, defaultColor.a == 1);
-    subBuffer.refresh(g_windows[currentWindow].width, g_windows[currentWindow].height, defaultColor.a == 1);
-    resolution = {window::width(), window::height()};
+    frameBuffer.refresh(res.x, res.y, defaultColor.a == 1);
+    subBuffer.refresh(res.x, res.y, defaultColor.a == 1);
+    resolution = res;
 }
 void Screen::store()
 {
-    glViewport(0, 0, g_windows[currentWindow].width, g_windows[currentWindow].height);
+    glViewport(0, 0, resolution.x, resolution.y);
     frameBuffer.bind(GL_FRAMEBUFFER);
     glEnable(GL_DEPTH_TEST);
 }
@@ -834,15 +311,15 @@ void Screen::draw()
 {
     frameBuffer.bind(GL_READ_FRAMEBUFFER);
     subBuffer.bind(GL_DRAW_FRAMEBUFFER);
-    glBlitFramebuffer(0, 0, g_windows[currentWindow].width, g_windows[currentWindow].height, 0, 0, g_windows[currentWindow].width, g_windows[currentWindow].height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
+    glBlitFramebuffer(0, 0, resolution.x, resolution.y, 0, 0, resolution.x, resolution.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    
     frameBuffer.unbind(GL_FRAMEBUFFER);
     glDisable(GL_DEPTH_TEST);
     glClearColor(defaultColor.r, defaultColor.g, defaultColor.b, defaultColor.a);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    shader.use();
-    shader.setFloat("gamma", gamma);
+    screenShader.use();
+    screenShader.setFloat("gamma", gamma);
     quad.draw(subBuffer.getTexture("texture").data);
 
     frameBuffer.unbind(GL_READ_FRAMEBUFFER);
@@ -855,75 +332,31 @@ int Screen::getMaximumSamples()
     return maxSamples;
 }
 
-void Mesh::draw(const uint32_t texture) const
-{
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // glActiveTexture(GL_TEXTURE2);
-    // glBindTexture(GL_TEXTURE_2D, g_windows[currentWindow].screen.depthBuffer.getTexture("texture").data);
-    
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-}
-
-void shader::simple(Shader& shader, const Transform& transform, const Camera& camera, const Transform& cameraTransform, const SimpleShader& mat)
-{    
-    shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
-    shader.setMat4("view", camera.view.matrix, true);
-    shader.setMat4("projection", camera.projection.matrix, true);
-    shader.setVec3("scale", transform.scale);
-    shader.setVec4("objColor", mat.color);
-    shader.setVec2("offset", mat.offset);
-    shader.setVec2("uvScale", mat.scale);
-    shader.setBool("flip", mat.flip);
-}
-void shader::ui(entity e, const Sprite& sprite, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
-{
-    Rect& transform = object::getComponent<Rect>(e);
-    Shader shader = sprite.shader;
-    shader.use();
-    
-    shader.setFloat("aspect", transform.useAspect() ? window::aspectRatio():1);
-    shader.setVec2("position", transform.relativePosition());
-    shader.setVec2("scale", transform.adjustedScale());
-    shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
-    shader.setVec4("objColor", sprite.color);
-}
-void shader::ui(entity e, const Text& text, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
-{
-    Rect& transform = object::getComponent<Rect>(e);
-    Shader shader = text.shader;
-    shader.use();
-    
-    float scaleModifier = (text.getScale()*5) / window::height();
-    shader.setFloat("aspect", window::aspectRatio());
-    shader.setVec2("position", transform.relativePosition() + transform.adjustedScale() * Vector2(-window::aspectRatio(), 1) * 0.5f);
-    shader.setVec2("scale", scaleModifier);
-    shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
-    shader.setVec4("objColor", text.getColor());
-}
-void shader::advanced(Shader& shader, const Transform& transform, const Camera& camera, const Transform& cameraTransform, const AdvancedShader& mat)
-{
-    DirectionalLight& light = window::lighting();
-    
-    shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
-    shader.setMat4("view", camera.view.matrix, true);
-    shader.setMat4("projection", camera.projection.matrix, true);
-    shader.setVec3("scale", transform.scale);
-    
-    shader.setVec3("dirLight.direction", light.direction);
-    shader.setVec4("dirLight.color", light.color);
-    shader.setFloat("dirLight.strength", light.strength);
-
-    shader.setVec3("viewPos", cameraTransform.position);
-    shader.setVec4("objColor", mat.color);
-
-    shader.setFloat("material.shininess", mat.shine);
-    shader.setFloat("material.ambientStrength", mat.ambient);
-    shader.setFloat("material.diffuseStrength", mat.diffuse);
-    shader.setFloat("material.specularStrength", mat.specular);
-}
+// void shader::ui(entity e, const Sprite& sprite, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
+// {
+//     Rect& transform = container.getComponent<Rect>(e);
+//     Shader shader = sprite.shader;
+//     shader.use();
+//    
+//     shader.setFloat("aspect", transform.useAspect() ? win.aspectRatio():1);
+//     shader.setVec2("position", transform.relativePosition());
+//     shader.setVec2("scale", transform.adjustedScale());
+//     shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
+//     shader.setVec4("objColor", sprite.color);
+// }
+// void shader::ui(entity e, const Text& text, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
+// {
+//     Rect& transform = container.getComponent<Rect>(e);
+//     Shader shader = text.shader;
+//     shader.use();
+//    
+//     float scaleModifier = (text.getScale()*5) / Window::height();
+//     shader.setFloat("aspect", win.aspectRatio());
+//     shader.setVec2("position", transform.relativePosition() + transform.adjustedScale() * Vector2(-win.aspectRatio(), 1) * 0.5f);
+//     shader.setVec2("scale", scaleModifier);
+//     shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
+//     shader.setVec4("objColor", text.getColor());
+// }
 
 uint32_t glInputToKeyCode(uint32_t input)
 {
@@ -1076,12 +509,13 @@ void error_callback(int error, const char* msg)
 }
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    window::enableCapslock((bool)(mods & GLFW_MOD_CAPS_LOCK));
-    window::enableNumpad((bool)(mods & GLFW_MOD_NUM_LOCK));
+    Application::keyboard.toggles[key::CAPS_LOCK - key::TOGGLE_START] = ((bool)(mods & GLFW_MOD_CAPS_LOCK));
+    Application::keyboard.toggles[key::NUM_LOCK - key::TOGGLE_START] = ((bool)(mods & GLFW_MOD_NUM_LOCK));
+    Application::keyboard.toggles[key::SCROLL_LOCK - key::TOGGLE_START] = (key == GLFW_KEY_SCROLL_LOCK);
 
     if(action != GLFW_RELEASE)
     {
-        g_keyboard.heldKey = glInputToKeyCode(key);
+        Application::keyboard.heldKey = glInputToKeyCode(key);
     }
 
     if(action == GLFW_REPEAT)
@@ -1091,19 +525,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     for(GLenum k = 32; k<=GLFW_KEY_LAST; k++)
     {
-        g_keyboard.parse(glInputToKeyCode(k), glfwGetKey(window, k));
+        Application::keyboard.parse(glInputToKeyCode(k), glfwGetKey(window, k));
     }
 
     if(action == GLFW_RELEASE)
     {
-        g_keyboard.parse(glInputToKeyCode(key), false);
+        Application::keyboard.parse(glInputToKeyCode(key), false);
     }
 
     if(action == GLFW_PRESS)
     {
-        if(key == GLFW_KEY_F && (mods & GLFW_MOD_CONTROL) && !g_windows[currentWindow].screen.fullscreen)
+        if(key == GLFW_KEY_F && (mods & GLFW_MOD_CONTROL) && glfwGetWindowMonitor(window) == NULL)
         {
-            if(window::maximized())
+            if(glfwGetWindowAttrib(window, GLFW_MAXIMIZED))
             {
                 glfwRestoreWindow(window);
             }
@@ -1111,10 +545,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             {
                 glfwMaximizeWindow(window);
             }
-        }
-        else if(key == GLFW_KEY_F11)
-        {
-            window::fullscreen(!g_windows[currentWindow].screen.fullscreen);
         }
     }
 }
@@ -1125,27 +555,20 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
     for(GLenum k = 0; k <= GLFW_MOUSE_BUTTON_LAST; k++)
     {
-        g_mouse.parse(glInputToButtonCode(k), glfwGetMouseButton(window, k));
+        Application::mouse.parse(glInputToButtonCode(k), glfwGetMouseButton(window, k));
     }
 
     if(action == GLFW_RELEASE)
     {
-        g_mouse.parse(glInputToButtonCode(button), false);
+        Application::mouse.parse(glInputToButtonCode(button), false);
     }
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    g_windows[currentWindow].cursorPosition = {(int)xpos, (int)ypos};
+    Application::cursorPosition = {(float)xpos, (float)ypos};
 }
 void framebuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 {
-    if(width && height)
-    {
-        g_windows[currentWindow].width = width;
-        g_windows[currentWindow].height = height;
-        g_windows[currentWindow].screen.refreshResolution(width, height);
-    }
-
     glViewport(0, 0, width, height);
 }
 
@@ -1172,117 +595,66 @@ void Time::beginTimer()
     lastFrame = currentFrame;
 }
 
-Window::Window(std::string name, uint32_t width__, uint32_t height__)
+bool key::pressed(uint32_t id)
 {
-    width = width__;
-    height = height__;
-    screen.defaultColor = color::RED;
-
-    data = glfwCreateWindow(800, 600, "default", NULL, NULL);
-    if(data == NULL)
-    {
-        std::cout << "ERROR :: Failed to create GLFW window" << std::endl;
-        return;
-    }
-
-    glfwMakeContextCurrent((GLFWwindow *)data);
-
-    glfwShowWindow((GLFWwindow *)data);
-    glfwSetWindowPos((GLFWwindow *)data, 0, 25);
-    glfwSetFramebufferSizeCallback((GLFWwindow *)data, framebuffer_size_callback);
-    glfwSetKeyCallback((GLFWwindow *)data, key_callback);
-    glfwSetCursorPosCallback((GLFWwindow *)data, mouse_callback);
-    glfwSetMouseButtonCallback((GLFWwindow *)data, mouse_button_callback);
-    glfwSetInputMode((GLFWwindow *)data, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
-
-    configureGLAD();
-    glViewport(0, 0, width, height);
-    
-    double xPos, yPos;
-    glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
-    cursorPosition = {(int)xPos, (int)yPos};
-
-    stbi_set_flip_vertically_on_load(true);
-    screen.initialize(DirectionalLight(vec3::forward, color::WHITE), Shader("screen_vertex", "screen_frag"), width, height);
-
-    
-}
-void Window::configureGLAD()
-{
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "ERROR :: Failed to initialize GLAD" << std::endl;
-        glfwTerminate();
-        data = NULL;
-        return;
-    }
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_STENCIL_TEST);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_MULTISAMPLE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    active = true;
-}
-
-bool key::pressed(int32_t id)
-{
-    return g_keyboard.inputs[id].pressed;
+    return Application::keyboard.inputs[id].pressed;
 }
 bool key::pressed(key::KeyCode id)
 {
-    return g_keyboard.inputs[id].pressed;
+    return Application::keyboard.inputs[id].pressed;
 }
 bool key::pressed(key::KeyArray ids)
 {
     for(const KeyCode &id : ids)
     {
-        if(g_keyboard.inputs[id].pressed)
+        if(Application::keyboard.inputs[id].pressed)
             return true;
     }
     return false;
 }
-bool key::held(int32_t id)
+bool key::held(uint32_t id)
 {
-    return g_keyboard.inputs[id].held;
+    return Application::keyboard.inputs[id].held;
 }
 bool key::held(key::KeyCode id)
 {
-    return g_keyboard.inputs[id].held;
+    return Application::keyboard.inputs[id].held;
 }
 bool key::held(key::KeyArray ids)
 {
     for(const KeyCode &id : ids)
     {
-        if(g_keyboard.inputs[id].held)
+        if(Application::keyboard.inputs[id].held)
         {
             return true;
         }
     }
     return false;
 }
-bool key::released(int32_t id)
+bool key::released(uint32_t id)
 {
-    return g_keyboard.inputs[id].released;
+    return Application::keyboard.inputs[id].released;
 }
 bool key::released(key::KeyCode id)
 {
-    return g_keyboard.inputs[id].released;
+    return Application::keyboard.inputs[id].released;
 }
 bool key::released(key::KeyArray ids)
 {
     for(const KeyCode &id : ids)
     {
-        if(g_keyboard.inputs[id].released)
+        if(Application::keyboard.inputs[id].released)
             return true;
     }
     return false;
 }
+bool key::toggled(key::KeyCode id)
+{
+    return Application::keyboard.toggles[id - key::TOGGLE_START];
+}
 char key::typed()
 {
-    KeyCode key = (KeyCode)g_keyboard.heldKey;
+    KeyCode key = (KeyCode)Application::keyboard.heldKey;
     if(key::held({key::LEFT_CTRL, key::RIGHT_CTRL}) || !ascii_default(key))
     {
         return '\0';
@@ -1293,10 +665,10 @@ char key::typed()
     {
         if(key >= 'a' && key <='z')
         {
-            return window::capslockEnabled() ? key : std::toupper(key);
+            return !key::toggled(key::CAPS_LOCK) ? key : std::toupper(key);
         }
         
-        if(!window::capslockEnabled())
+        if(!key::toggled(key::CAPS_LOCK))
         {
             switch(key)
             {
@@ -1325,7 +697,7 @@ char key::typed()
         }
     }
     
-    if(window::numpadEnabled())
+    if(key::toggled(key::NUM_LOCK))
     {
         switch(key)
         {
@@ -1342,7 +714,7 @@ char key::typed()
             case key::K_DECIMAL: return '.';
         }
     }
-    else if(window::capslockEnabled())
+    else if(key::toggled(key::CAPS_LOCK))
     {
         return std::toupper(key);
     }
@@ -1368,54 +740,40 @@ bool key::ascii_default(KeyCode key)
 
 bool mouse::pressed(mouse::ButtonCode id)
 {
-    return g_mouse.inputs[id].pressed;
+    return Application::mouse.inputs[id].pressed;
 }
 bool mouse::held(mouse::ButtonCode id)
 {
-    return g_mouse.inputs[id].held;
+    return Application::mouse.inputs[id].held;
 }
 bool mouse::released(mouse::ButtonCode id)
 {
-    return g_mouse.inputs[id].held;
+    return Application::mouse.inputs[id].held;
 }
 
-void *window::handle()
+bool Window::closing()
 {
-    return g_windows[currentWindow].data;
+    return glfwWindowShouldClose((GLFWwindow *)data);
 }
-bool window::active()
+bool Window::decorated()
 {
-    return g_windows[currentWindow].active;
+    return glfwGetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED);
 }
-bool window::capslockEnabled()
+bool Window::enableVSync(bool enable)
 {
-    return g_windows[currentWindow].capslock;
+    vsyncEnabled = enable;
+    glfwSwapInterval(enable);
+    return enable;
 }
-bool window::closing()
+bool Window::fullscreened()
 {
-    return glfwWindowShouldClose((GLFWwindow *)g_windows[currentWindow].data);
+    return glfwGetWindowMonitor((GLFWwindow *)data) != NULL;
 }
-bool window::decorated()
+bool Window::maximized()
 {
-    return glfwGetWindowAttrib((GLFWwindow *)g_windows[currentWindow].data, GLFW_DECORATED);
+    return glfwGetWindowAttrib((GLFWwindow *)data, GLFW_MAXIMIZED);
 }
-bool window::fullscreened()
-{
-    return g_windows[currentWindow].screen.fullscreen;
-}
-bool window::maximized()
-{
-    return glfwGetWindowAttrib((GLFWwindow *)g_windows[currentWindow].data, GLFW_MAXIMIZED);
-}
-bool window::numpadEnabled()
-{
-    return g_windows[currentWindow].numpad;
-}
-bool window::resolutionUpdated()
-{
-    return g_windows[currentWindow].screen.resolutionUpdated;
-}
-bool window::throwError()
+bool Window::throwError()
 {
     uint32_t error = glGetError();
     std::string errorMessage;
@@ -1449,237 +807,331 @@ bool window::throwError()
     std::cout << errorMessage << '\n';
     return error;
 }
-bool window::throwAudioError()
+bool Window::throwAudioError()
 {
-    return 0;
-}
-bool window::vsyncEnabled()
-{
-    return g_windows[currentWindow].vsyncEnabled;
-}
-void window::centerWindow()
-{
-    setPosition(monitorCenter() - Vector2I(0.5*g_windows[currentWindow].width, 0.5*g_windows[currentWindow].height));
-}
-void window::clearScreen(const Color& color)
-{
-    g_windows[currentWindow].screen.clear(color);
-}
-void window::close()
-{
-    glfwSetWindowShouldClose((GLFWwindow *)g_windows[currentWindow].data, true);
-}
-void window::enableCapslock(bool enable)
-{
-    g_windows[currentWindow].capslock = enable;
-}
-void window::enableDecoration(bool enable)
-{
-    glfwSetWindowAttrib((GLFWwindow *)g_windows[currentWindow].data, GLFW_DECORATED, enable);
-}
-void window::enableNumpad(bool enable)
-{
-    g_windows[currentWindow].numpad = enable;
-}
-void window::enableVSync(bool enable)
-{
-    glfwSwapInterval(g_windows[currentWindow].vsyncEnabled = enable);
-}
-void window::fullscreen(bool enable)
-{
-    if(enable && !g_windows[currentWindow].screen.fullscreen)
+    uint32_t error = alGetError();
+    std::string errorMessage;
+    switch(error)
     {
-        g_windows[currentWindow].screen.fullscreen = true;
-        glfwGetWindowPos((GLFWwindow *)g_windows[currentWindow].data, &g_windows[currentWindow].screen.lastPosition.x, &g_windows[currentWindow].screen.lastPosition.y);
-
+        case 0:
+            errorMessage = "SUCCESS (AL)";
+        break;
+        case AL_INVALID_NAME:
+            errorMessage = "AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function";
+        break;
+        case AL_INVALID_ENUM:
+            errorMessage = "AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function";
+        break;
+        case AL_INVALID_VALUE:
+            errorMessage = "AL_INVALID_VALUE: an invalid value was passed to an OpenAL function";
+        break;
+        case AL_INVALID_OPERATION:
+            errorMessage = "AL_INVALID_OPERATION: the requested operation is not valid";
+        break;
+        case AL_OUT_OF_MEMORY:
+            errorMessage = "AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory";
+        break;
+        default:
+            errorMessage = "UNKNOWN AL ERROR: " + error;
+    }
+    error = alcGetError(NULL);
+    switch(error)
+    {
+        case 0:
+            errorMessage +=  "\nSUCCESS (ALC)";
+        break;
+        case ALC_INVALID_VALUE:
+            errorMessage +=  "\nALC_INVALID_VALUE: an invalid value was passed to an OpenAL function";
+        break;
+        case ALC_INVALID_DEVICE:
+            errorMessage +=  "\nALC_INVALID_DEVICE: a bad device was passed to an OpenAL function";
+        break;
+        case ALC_INVALID_CONTEXT:
+            errorMessage +=  "\nALC_INVALID_CONTEXT: a bad context was passed to an OpenAL function";
+        break;
+        case ALC_INVALID_ENUM:
+            errorMessage +=  "\nALC_INVALID_ENUM: an unknown enum value was passed to an OpenAL function";
+        break;
+        case ALC_OUT_OF_MEMORY:
+            errorMessage +=  "\nALC_OUT_OF_MEMORY: an unknown enum value was passed to an OpenAL function";
+        break;
+    }
+    std::cout << errorMessage << '\n';
+    return error;
+}
+void Window::centerWindow()
+{
+    Vector2I res = resolution();
+    setPosition(monitorCenter() - Vector2I(0.5*res.x, 0.5*res.y));
+}
+void Window::close()
+{
+    glfwSetWindowShouldClose((GLFWwindow *)data, true);
+}
+void Window::enableDecoration(bool enable)
+{
+    glfwSetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED, enable);
+}
+void Window::fullscreen(bool enable, bool vsync)
+{
+    if(enable && !fullscreened())
+    {
+        lastPosition = position();
+        lastResolution = resolution();
+        
         GLFWmonitor *monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor((GLFWwindow *)g_windows[currentWindow].data, monitor, 0, 0, mode->width, mode->height, g_windows[currentWindow].vsyncEnabled ? mode->refreshRate : GLFW_DONT_CARE);
+    
+        glfwSetWindowMonitor((GLFWwindow *)data, monitor, 0, 0, mode->width, mode->height, vsync ? mode->refreshRate : GLFW_DONT_CARE);
+        enableVSync(vsync);
     }
-    else if(!enable && g_windows[currentWindow].screen.fullscreen)
+    else if(!enable && fullscreened())
     {
-        g_windows[currentWindow].screen.fullscreen = false;
-        glfwSetWindowMonitor((GLFWwindow *)g_windows[currentWindow].data, nullptr, 0, 0, g_windows[currentWindow].screen.resolution.x, g_windows[currentWindow].screen.resolution.y, GLFW_DONT_CARE);
-        glfwSetWindowPos((GLFWwindow *)g_windows[currentWindow].data, g_windows[currentWindow].screen.lastPosition.x, g_windows[currentWindow].screen.lastPosition.y);
+        glfwSetWindowMonitor((GLFWwindow *)data, nullptr, 0, 0, lastResolution.x, lastResolution.y, GLFW_DONT_CARE);
+        glfwSetWindowPos((GLFWwindow *)data, lastPosition.x, lastPosition.y);
     }
 }
-float window::gamma()
+void Window::hideCursor(bool enable)
 {
-    return g_windows[currentWindow].screen.gamma;
+    glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
 }
-void window::hideCursor(bool enable)
+void Window::lockCursor(bool enable)
 {
-    glfwSetInputMode((GLFWwindow *)g_windows[currentWindow].data, GLFW_CURSOR, enable ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
+    glfwSetInputMode((GLFWwindow *)data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
-void window::lockCursor(bool enable)
+void Window::maximize()
 {
-    glfwSetInputMode((GLFWwindow *)g_windows[currentWindow].data, GLFW_CURSOR, enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-}
-void window::maximize()
-{
-    if(g_windows[currentWindow].screen.fullscreen)
+    if(Window::fullscreened())
     {
-        glfwSetWindowMonitor((GLFWwindow *)g_windows[currentWindow].data, nullptr, 0, 0, g_windows[currentWindow].screen.resolution.x, g_windows[currentWindow].screen.resolution.y, GLFW_DONT_CARE);
-        glfwSetWindowPos((GLFWwindow *)g_windows[currentWindow].data, g_windows[currentWindow].screen.lastPosition.x, g_windows[currentWindow].screen.lastPosition.y);
-        g_windows[currentWindow].screen.fullscreen = false;
+        Vector2I res = Window::resolution();
+        Vector2I pos = Window::position();
+        glfwSetWindowMonitor((GLFWwindow *)data, nullptr, 0, 0, res.x, res.y, GLFW_DONT_CARE);
+        glfwSetWindowPos((GLFWwindow *)data, pos.x, pos.y);
     }
 
-    glfwMaximizeWindow((GLFWwindow *)g_windows[currentWindow].data);
+    glfwMaximizeWindow((GLFWwindow *)data);
 }
-void window::minimize()
+void Window::minimize()
 {
-    if(g_windows[currentWindow].screen.fullscreen)
+    if(Window::fullscreened())
     {
-        glfwSetWindowMonitor((GLFWwindow *)g_windows[currentWindow].data, nullptr, 0, 0, g_windows[currentWindow].screen.resolution.x, g_windows[currentWindow].screen.resolution.y, GLFW_DONT_CARE);
-        glfwSetWindowPos((GLFWwindow *)g_windows[currentWindow].data, g_windows[currentWindow].screen.lastPosition.x, g_windows[currentWindow].screen.lastPosition.y);
-        g_windows[currentWindow].screen.fullscreen = false;
+        Vector2I res = Window::resolution();
+        Vector2I pos = Window::position();
+        glfwSetWindowMonitor((GLFWwindow *)data, nullptr, 0, 0, res.x, res.y, GLFW_DONT_CARE);
+        glfwSetWindowPos((GLFWwindow *)data, pos.x, pos.y);
     }
 
-    glfwRestoreWindow((GLFWwindow *)g_windows[currentWindow].data);
+    glfwRestoreWindow((GLFWwindow *)data);
 }
-void window::poll()
+void Window::poll()
 {
     glfwPollEvents();
 }
-void window::refresh()
+void Window::refresh()
 {
-    glfwSwapBuffers((GLFWwindow *)g_windows[currentWindow].data);
+    glfwSwapBuffers((GLFWwindow *)data);
 }
-void window::remove()
+void Window::setCursor(const Vector2& position)
 {
-    g_windows[currentWindow].screen.remove();
+    glfwSetCursorPos((GLFWwindow *)data, position.x, position.y);
 }
-void window::setActiveWindow(uint32_t index)
-{
-    currentWindow = index;
-}
-void window::setCamera(uint32_t newCamera)
-{
-    g_windows[currentWindow].screen.camera = newCamera;
-}
-void window::setCursor(const Vector2& position)
-{
-    glfwSetCursorPos((GLFWwindow *)g_windows[currentWindow].data, position.x, position.y);
-}
-void window::setDefaultBackgroundColor(const Color &color)
-{
-    g_windows[currentWindow].screen.defaultColor = color;
-    g_windows[currentWindow].screen.refreshResolution(g_windows[currentWindow].width, g_windows[currentWindow].height);
-}
-void window::setGamma(float value)
-{
-    g_windows[currentWindow].screen.gamma = value;
-}
-void window::setIcon(const char *path)
+void Window::setIcon(const char *path)
 {
     GLFWimage images[1];
 
     stbi_set_flip_vertically_on_load(false);
-    images[0].pixels = stbi_load((source::root() + std::string("resources/images/") + path).c_str(), &images[0].width, &images[0].height, 0, 4);
-    glfwSetWindowIcon((GLFWwindow *)g_windows[currentWindow].data, 1, images); 
+    images[0].pixels = stbi_load((Source::root() + std::string("resources/images/") + path).c_str(), &images[0].width, &images[0].height, 0, 4);
+    glfwSetWindowIcon((GLFWwindow *)data, 1, images); 
     stbi_image_free(images[0].pixels);
     stbi_set_flip_vertically_on_load(true);
 }
-void window::setOpacity(float opacity)
+void Window::setOpacity(float opacity)
 {
-    glfwSetWindowOpacity((GLFWwindow *)g_windows[currentWindow].data, opacity);
+    glfwSetWindowOpacity((GLFWwindow *)data, opacity);
 }
-void window::setPosition(const Vector2I& position)
+void Window::setPosition(const Vector2I& position)
 {
-    glfwSetWindowPos((GLFWwindow *)g_windows[currentWindow].data, position.x, position.y);
+    glfwSetWindowPos((GLFWwindow *)data, position.x, position.y);
 }
-void window::setSize(int width, int height)
+void Window::setSize(const Vector2I& size)
 {
-    glfwSetWindowSize((GLFWwindow *)g_windows[currentWindow].data, width, height);
+    glfwSetWindowSize((GLFWwindow *)data, size.x, size.y);
 }
-void window::setTitle(const char *title)
+void Window::setTitle(const char *title)
 {
-    glfwSetWindowTitle((GLFWwindow *)g_windows[currentWindow].data, title);
+    glfwSetWindowTitle((GLFWwindow *)data, title);
 }
-void window::storeRender()
-{
-    g_windows[currentWindow].screen.store();
-}
-void window::drawRender()
-{
-    g_windows[currentWindow].screen.draw();
-}
-void window::terminate()
+void Window::terminate(void *audioDevice, void *audioContext)
 {
     glfwTerminate();
+    alcCloseDevice((ALCdevice *)audioDevice);
+    alcDestroyContext((ALCcontext *)audioContext);
 }
-void window::updatedResolution(bool updated)
+
+float Window::aspectRatioInv()
 {
-    g_windows[currentWindow].screen.resolutionUpdated = updated;
+    Vector2I res = Window::resolution();
+    return (float)res.x/(float)res.y;
 }
-float window::aspectRatioInv()
+float Window::aspectRatio()
 {
-    return (float)g_windows[currentWindow].width/(float)g_windows[currentWindow].height;
+    Vector2I res = Window::resolution();
+    return (float)res.y/(float)res.x;
 }
-float window::aspectRatio()
+float Window::getOpacity()
 {
-    return (float)g_windows[currentWindow].height/(float)g_windows[currentWindow].width;
+    return glfwGetWindowOpacity((GLFWwindow *)data);
 }
-float window::getOpacity()
+
+Vector2 Window::cursorUniformScreenPosition()
 {
-    return glfwGetWindowOpacity((GLFWwindow *)g_windows[currentWindow].data);
+    Vector2 cursorPosition = Application::cursorPosition;
+    Vector2 pos = Window::position();
+    return Vector2((cursorPosition.x/(float)pos.x)*2 - 1, -(cursorPosition.y/pos.y)*2 + 1);
 }
-float window::height()
-{
-    return g_windows[currentWindow].height;
-}
-float window::width()
-{
-    return g_windows[currentWindow].width;
-}
-Vector2 window::cursorUniformScreenPosition()
-{
-    return {((float)g_windows[currentWindow].cursorPosition.x/(float)g_windows[currentWindow].width)*2 - 1, -((float)g_windows[currentWindow].cursorPosition.y/(float)g_windows[currentWindow].height)*2 + 1};
-}
-Vector2 window::cursorScreenPosition()
+Vector2 Window::cursorScreenPosition()
 {
     return cursorUniformScreenPosition() * Vector2{aspectRatioInv(), 1};
 }
-Vector2I window::center()
+Vector2I Window::position()
 {
-    return Vector2I(monitorCenter() - Vector2I(0.5*g_windows[currentWindow].width, 0.5*g_windows[currentWindow].height));
+    Vector2I result;
+    glfwGetWindowPos((GLFWwindow *)data, &result.x, &result.y);
+    return result;
 }
-Vector2I window::resolution()
+Vector2I Window::center()
 {
-    return Vector2I(g_windows[currentWindow].width, g_windows[currentWindow].height);
+    Vector2I pos = Window::position();
+    return Vector2I(monitorCenter() - Vector2I(0.5*pos.x, 0.5*pos.y));
 }
-Vector2I window::monitorCenter()
+Vector2I Window::resolution()
+{
+    int width, height;
+    glfwGetWindowSize((GLFWwindow *)data, &width, &height);
+    return Vector2I(width, height);
+}
+Vector2I Window::monitorCenter()
 {
     Vector2I result;
     glfwGetMonitorPhysicalSize(glfwGetPrimaryMonitor(), &result.x, &result.y);
     return result * 2;
 }
-int32_t window::getMaximumSamples()
+
+
+Window::Window(std::string name, uint32_t width__, uint32_t height__)
 {
-    return g_windows[currentWindow].screen.getMaximumSamples();
+    width = width__;
+    height = height__;
+    screen.defaultColor = color::RED;
+
+    data = glfwCreateWindow(800, 600, "default", NULL, NULL);
+    if(data == NULL)
+    {
+        std::cout << "ERROR :: Failed to create GLFW window." << std::endl;
+        return;
+    }
+
+    glfwMakeContextCurrent((GLFWwindow *)data);
+
+    glfwShowWindow((GLFWwindow *)data);
+    glfwSetWindowPos((GLFWwindow *)data, 0, 25);
+    glfwSetFramebufferSizeCallback((GLFWwindow *)data, framebuffer_size_callback);
+    glfwSetKeyCallback((GLFWwindow *)data, key_callback);
+    glfwSetCursorPosCallback((GLFWwindow *)data, mouse_callback);
+    glfwSetMouseButtonCallback((GLFWwindow *)data, mouse_button_callback);
+    glfwSetInputMode((GLFWwindow *)data, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
+
+    configureGLAD();
+    glViewport(0, 0, width, height);
+    
+    double xPos, yPos;
+    glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
+    cursorPosition = {(int)xPos, (int)yPos};
+
+    stbi_set_flip_vertically_on_load(true);
+    screen.initialize(DirectionalLight(vec3::forward, color::WHITE), Shader("screen_vertex", "screen_frag"), width, height);
+
+    audioDevice = alcOpenDevice(NULL);
+    if(audioDevice == NULL)
+    {
+        std::cout << "ERROR :: Failed to initialize audio device(s)." << std::endl;
+        return;
+    }
+
+    audioContext = alcCreateContext((ALCdevice *)audioDevice, NULL);
+    if(!alcMakeContextCurrent((ALCcontext *)audioContext))
+    {
+        std::cout << "ERROR :: Failed to initialize audio context." << std::endl;
+        return;
+    }
 }
-uint32_t window::camera()
+void Window::configureGLAD()
 {
-    return g_windows[currentWindow].screen.camera;
-}
-DirectionalLight& window::lighting()
-{
-    return g_windows[currentWindow].screen.dirLight;
-}
-DirectionalLight& window::setLighting(const DirectionalLight& light)
-{
-    return(g_windows[currentWindow].screen.dirLight = light);
+    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "ERROR :: Failed to initialize GLAD" << std::endl;
+        glfwTerminate();
+        data = NULL;
+        return;
+    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_MULTISAMPLE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
-void initializeECS()
+void initializeECS(object::ecs& manager)
 {  
-    auto& pointlights = object::createSystem<PointLightManager, PointLight, Transform>({}, 3);
+    object::setFunctionDefinitions(manager, {&object::fn::LOAD, &object::fn::START, &object::fn::UPDATE, &object::fn::LATE_UPDATE, &object::fn::FIXED_UPDATE, &object::fn::RENDER, &object::fn::DESTROY});
+
+    auto& audio = manager.createSystem<AudioManager, Audio, Transform>({}, 0);
+    audio.setFunction(object::fn::LOAD, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        for(entity e : container.entities<AudioManager>())
+        {
+            Audio& audio = container.getComponent<Audio>(e);
+            Transform& transform = container.getComponent<Transform>(e);
+
+            alSourcef(audio.source, AL_PITCH, 1);
+            alSourcef(audio.source, AL_GAIN, 1);
+            alSource3f(audio.source, AL_POSITION, transform.position.x, transform.position.y, transform.position.z);
+            alSource3f(audio.source, AL_VELOCITY, 0, 0, 0);
+            alSourcei(audio.source, AL_LOOPING, AL_FALSE);
+        }
+    });
+    audio.setFunction(object::fn::UPDATE, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        for(entity e : container.entities<AudioManager>())
+        {
+            Audio& audio = container.getComponent<Audio>(e);
+            Transform& transform = container.getComponent<Transform>(e);
+
+            alSource3f(audio.source, AL_POSITION, transform.position.x, transform.position.y, transform.position.z);
+        }
+    });
+    audio.setFunction(object::fn::DESTROY, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        for(entity e : container.entities<AudioManager>())
+        {
+            container.getComponent<Audio>(e).destroy();
+        }
+    });
+
+    auto& pointlights = manager.createSystem<PointLightManager, PointLight, Transform>({}, 3);
     pointlights.setFunction(object::fn::UPDATE, []
-    (object::ecs &container, object::ecs::system &system)
+    (object::ecs &container, object::ecs::system &system, void *data)
     {
         std::vector<entity>& entities = container.entities<PointLightManager>();
 
-        Shader& shader = shader::get("object_shader");
+        Shader& shader = Shader::get("object_shader");
         shader.use();
         shader.setInt("totalPointLights", entities.size());
 
@@ -1701,12 +1153,12 @@ void initializeECS()
         }
     });
 
-    auto& spotlights = object::createSystem<SpotLightManager, SpotLight, Transform>({}, 3);
+    auto& spotlights = manager.createSystem<SpotLightManager, SpotLight, Transform>({}, 3);
     spotlights.setFunction(object::fn::UPDATE, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         const std::vector<entity>& entities = container.entities<SpotLightManager>();
-        Shader& shader = shader::get("object_shader");
+        Shader& shader = Shader::get("object_shader");
         shader.use();
         shader.setInt("totalSpotLights", entities.size());
 
@@ -1732,9 +1184,9 @@ void initializeECS()
         }
     });
 
-    auto& physics = object::createSystem<PhysicsManager, Physics2D, Transform>({}, 6);
+    auto& physics = manager.createSystem<PhysicsManager, Physics2D, Transform>({}, 6);
     physics.setFunction(object::fn::START, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<PhysicsManager>())
         {
@@ -1744,14 +1196,14 @@ void initializeECS()
         }
     });
     physics.setFunction(object::fn::UPDATE, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<PhysicsManager>())
         {
             Vector3& position = container.getComponent<Transform>(e).position;
             Physics2D& physics = container.getComponent<Physics2D>(e);
 
-            physics.time.update(physics.maxDeltaTime);
+            physics.time.update((Application::data(data).time).deltaTime, physics.maxDeltaTime);
             float time = physics.time.interval;
 
             while(physics.time.timer > physics.time.interval)
@@ -1799,41 +1251,24 @@ void initializeECS()
         }
     });
 
-    auto& collisions = object::createSystem<CollisionManager, BoxCollider, Transform>({}, 15);
-    object::setInsertion<CollisionManager>([]
-    (entity e, std::vector<entity>& entities, std::vector<size_t>& maps)
-    {
-        object::defaultInsertion(e, entities, maps);
-    
-        BoxCollider& collider = object::getComponent<BoxCollider>(e);
-        collider.storedPosition = object::getComponent<Transform>(e).position + collider.offset;
-    });
-    collisions.setFunction(object::fn::RENDER, []
-    (object::ecs & container, object::ecs::system &system)
-    {
-        for(entity e : container.entities<CollisionManager>())
-        {
-            BoxCollider& collider = container.getComponent<BoxCollider>(e);
-            Transform& transform = container.getComponent<Transform>(e);
-            collider.storedPosition = transform.position + collider.offset;
-        }
-    });
-
-    auto& aabb = object::createSystem<AABBHandler, AABB, BoxCollider, Physics2D, Transform>({}, 9);
+    auto& aabb = manager.createSystem<AABBHandler, AABB, BoxCollider, Physics2D, Transform>({}, 9);
     aabb.setFunction(object::fn::UPDATE, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<AABBHandler>())
         {
+            if(!container.containsComponent<Physics2D>(e))
+                continue;
+
             BoxCollider& collider = container.getComponent<BoxCollider>(e);
             Transform& transform = container.getComponent<Transform>(e);
             bool triggered = false;
             if(collider.mobile)
             {
                 Vector3 position = transform.position + collider.offset;
-                Vector3 boxDim = (transform.scale * collider.scale + vec3::abs(position - collider.storedPosition)) * 0.5f;
+                Vector3 boxDim = (transform.scale * collider.scale + vec3::abs(position - transform.storedPosition - collider.offset)) * 0.5f;
     
-                for(entity compare : container.entities<CollisionManager>())
+                for(entity compare : container.entities<AABBHandler>())
                 {
                     if(compare == e)
                         continue;
@@ -1850,35 +1285,37 @@ void initializeECS()
                     if(positive.x >= negative2.x && negative.x <= positive2.x && positive.y >= negative2.y && negative.y <= positive2.y && positive.z >= negative2.z && negative.z <= positive2.z)
                     {                     
                         bool edge = (positive.x == negative2.x || negative.x == positive2.x || positive.y == negative2.y || negative.y == positive2.y);
-                        physics::collisionTrigger(e, compare, edge, triggered);
+                        physics::collisionTrigger(e, compare, edge, triggered, container);
                         // collider2.trigger(compare, e, edge, triggered);
                         collider.enter = collider2.enter = triggered = true;
                     }
                 }
                 if(!triggered)
                 {
-                    physics::collisionMiss(e);
+                    physics::collisionMiss(e, container);
                     collider.enter = false;
                 }
             }
-            collider.storedPosition = transform.position + collider.offset;
         }
     });
 
-    auto& aabb2D = object::createSystem<AABB2DHandler, AABB2D, BoxCollider, Physics2D, Transform>({}, 9);
+    auto& aabb2D = manager.createSystem<AABB2DHandler, AABB2D, BoxCollider, Transform>({}, 9);
     aabb2D.setFunction(object::fn::UPDATE, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<AABB2DHandler>())
         {
+            if(!container.containsComponent<Physics2D>(e))
+                continue;
+
             BoxCollider& collider = container.getComponent<BoxCollider>(e);
             Transform& transform = container.getComponent<Transform>(e);
 
             bool triggered = false;
             Vector3 position = transform.position + collider.offset;
-            Vector3 boxDim = (transform.scale * collider.scale + vec3::abs(position - collider.storedPosition)) * 0.5f;
+            Vector3 boxDim = (transform.scale * collider.scale + vec3::abs(position - transform.storedPosition - collider.offset)) * 0.5f;
     
-            for(entity compare : container.entities<CollisionManager>())
+            for(entity compare : container.entities<AABB2DHandler>())
             {
                 if(compare == e)
                     continue;
@@ -1895,40 +1332,22 @@ void initializeECS()
                 if(positive.x >= negative2.x && negative.x <= positive2.x && positive.y >= negative2.y && negative.y <= positive2.y)
                 {          
                     bool edge = (positive.x == negative2.x || negative.x == positive2.x || positive.y == negative2.y || negative.y == positive2.y);
-                    physics::collisionTrigger(e, compare, edge, triggered);
+                    physics::collisionTrigger(e, compare, edge, triggered, container);
                     // collider2.trigger(compare, e, edge, triggered);
                     collider.enter = collider2.enter = triggered = true;
                 }
             }
             if(!triggered)
             {
-                physics::collisionMiss(e);
+                physics::collisionMiss(e, container);
                 collider.enter = false;
             }
         }
     });
 
-    auto& cameras = object::createSystem<CameraManager, Camera, Transform>({}, 18);
-    void (*cameraFunction)(object::ecs &, object::ecs::system &) = []
-    (object::ecs & container, object::ecs::system &system)
-    {
-        for(entity e : container.entities<CameraManager>())
-        {
-            Camera& camera = container.getComponent<Camera>(e);
-            camera.view = mat4::lookAt(container.getComponent<Transform>(e).position, -camera.front, vec3::up);
-
-            if(window::resolutionUpdated())
-            {
-                camera.projection = mat4::inter(math::radians(45.0f), 2.5f, window::aspectRatioInv(), camera.nearDistance, camera.farDistance, 1);
-            }
-        }
-    };
-    cameras.setFunction(object::fn::LOAD, cameraFunction);
-    cameras.setFunction(object::fn::LATE_UPDATE, cameraFunction);
-
-    auto& billboards = object::createSystem<BillboardManager, Billboard, Transform>({}, 21);
+    auto& billboards = manager.createSystem<BillboardManager, Billboard, Transform>({}, 21);
     billboards.setFunction(object::fn::LATE_UPDATE, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<BillboardManager>())
         {
@@ -1938,124 +1357,359 @@ void initializeECS()
         }
     });
 
-    // auto& animations = object::createSystem<AnimationManager, Animator, Model>({}, 24);
-    // animations.setFunction(object::fn::FIXED_UPDATE, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     for(Entity entity : container.entities<AnimationManager>())
-    //     {
-    //         Animator& animator = container.getComponent<Animator>(entity);
-    //         Animation& animation = animator.transition().transition();
-    //         container.getComponent<Model>(entity).texture.texture = animation.frames[animation.step()].texture;
-    //     }
-    // });
+    auto& animations = manager.createSystem<AnimationManager, Animator2D, Model>({}, 24);
+    animations.setFunction(object::fn::FIXED_UPDATE, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        for(entity e : container.entities<AnimationManager>())
+        {
+            // Animator2D& animator = container.getComponent<Animator2D>(e);
+            // Animation& animation = animator.transition().transition();
+            // container.getComponent<Model>(e).texture.texture = animation.frames[animation.step()].texture;
+        }
+    });
 
-    auto& meshes = object::createSystem<MeshManager, MeshAddon, Transform, Model>({}, 27);
+    auto& meshes = manager.createSystem<MeshManager, MeshAddon, Transform, Model>({}, 27);
     meshes.setFunction(object::fn::START, []
-    (object::ecs & container, object::ecs::system &system)
+    (object::ecs & container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<MeshManager>())
         {
             Model model = container.getComponent<Model>(e);
             MeshAddon addon = container.getComponent<MeshAddon>(e);
-            model.append(container.getComponent<Transform>(e), addon.additions);
-            object::setComponent<Model>(e, model);
+
+            addon.append(model, container.getComponent<Transform>(e));
+
+            container.setComponent<Model>(e, model);
         }
     });
 
-    // auto& uis = object::createSystem<UIManager, Rect, Sprite>({}, 30);
-    // uis.setFunction(object::fn::START, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     for(Entity entity : container.entities<UIManager>())
-    //     {
-    //         container.getComponent<Sprite>(entity).refresh();
-    //     }
-    // });
-    // uis.setFunction(object::fn::RENDER, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     Camera& camera = container.getComponent<Camera>(window::camera());
-    //     Transform& cameraTransform = container.getComponent<Transform>(window::camera());
-    //     uint32_t shaderID = -1;
-    //
-    //     glDisable(GL_DEPTH_TEST);
-    //     for(Entity entity : container.entities<UIManager>())
-    //     {
-    //         shaderID = container.getComponent<Sprite>(entity).render(entity, shaderID, camera, cameraTransform);
-    //     }
-    //     glEnable(GL_DEPTH_TEST);
-    // });
+    auto& uiRendering = manager.createSystem<UIRenderer, Rect, Sprite, SimpleShader>({}, 30);
+    uiRendering.setFunction(object::fn::RENDER, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        Vector2I res = win.resolution();
+        uint32_t cam = win.screen.camera;
+        if(cam == -1)
+            return;
 
-    auto& graphics = object::createSystem<GraphicsManager, Transform, Model>({}, 33);
-    // object::setInsertion<GraphicsManager>([]
-    // (Entity entity, std::vector<Entity>& entities, std::vector<size_t>& map)
-    // {
-    //     if(std::find(entities.begin(), entities.end(), entity) == entities.end())
-    //     {
-    //         entities.push_back(entity);
-    //         std::sort(entities.begin(), entities.end(), []
-    //         (Entity one, Entity two)
-    //         {
-    //             Vector3 cameraPosition = object::getComponent<Transform>(window::camera()).position;
-    //
-    //             Model modelOne = object::getComponent<Model>(one);
-    //             Model modelTwo = object::getComponent<Model>(two);
-    //            
-    //             return (modelOne.getSorting() < modelTwo.getSorting());
-    //         });
-    //
-    //         map = std::vector<size_t>(map.size(), -1);
-    //         for(int i=0; i<entities.size(); i++)
-    //         {
-    //             map[entities[i]] = i;
-    //         }
-    //     }
-    // });
+        Camera& camera = container.getComponent<Camera>(cam);
+        Shader& shader = Shader::get("ui_shader");
+        shader.use();
+
+        glDisable(GL_DEPTH_TEST);
+        for(entity e : container.entities<UIRenderer>())
+        {
+            Sprite sprite = container.getComponent<Sprite>(e);
+            Rect& rect = container.getComponent<Rect>(e);
+            SimpleShader& mat = container.getComponent<SimpleShader>(e);
+
+            shader.setFloat("aspect", rect.useAspect() ? win.aspectRatio():1);
+            shader.setVec2("position", rect.relativePosition(res));
+            shader.setVec2("scale", rect.adjustedScale(res));
+            shader.setMat4("model", (mat4x4(1) * (mat4x4)rect.rotation).matrix, false);
+            shader.setVec4("objColor", mat.color);
+
+            sprite.render();
+        }
+        glEnable(GL_DEPTH_TEST);
+    });
+
+    auto& simpleRendering = manager.createSystem<SimpleRenderer, Transform, Model, SimpleShader>({}, 32);
+    simpleRendering.setFunction(object::fn::RENDER, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        uint32_t cam = win.screen.camera;
+        if(cam == -1)
+            return;
+
+        Camera& camera = container.getComponent<Camera>(cam);
+        Transform& cameraTransform = container.getComponent<Transform>(cam);
+        Frustum frustum = camera.getFrustum(cameraTransform.position, win.aspectRatioInv());
+
+        Shader& shader = Shader::get("simple_shader");
+        shader.use();
+
+        for(entity e : container.entities<SimpleRenderer>())
+        {
+            Model model = container.getComponent<Model>(e);
+            Transform& transform = container.getComponent<Transform>(e);
+            if(!frustum.contains(transform.position + model.data.offset, model.data.dimensions.length() * vec3::high(transform.scale)))
+                continue;
+                
+            SimpleShader& mat = container.getComponent<SimpleShader>(e);
+
+            shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+            shader.setMat4("view", camera.view.matrix, true);
+            shader.setMat4("projection", camera.projection.matrix, true);
+            shader.setVec3("scale", transform.scale);
+            shader.setVec4("objColor", mat.color);
+            shader.setVec2("offset", mat.offset);
+            shader.setVec2("uvScale", mat.scale);
+            shader.setBool("flip", mat.flip);
+
+            model.render();
+        }
+    });
+
+    auto& advancedRendering = manager.createSystem<AdvancedRenderer, Transform, Model, AdvancedShader>({}, 32);
+    advancedRendering.setFunction(object::fn::RENDER, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        uint32_t cam = win.screen.camera;
+        if(cam == -1)
+            return;
+        
+        Camera& camera = container.getComponent<Camera>(cam);
+        Transform& cameraTransform = container.getComponent<Transform>(cam);
+        Frustum frustum = camera.getFrustum(cameraTransform.position, win.aspectRatioInv());
+
+        Shader& shader = Shader::get("object_shader");
+        shader.use();
+
+        for(entity e : container.entities<AdvancedRenderer>())
+        {
+            Model model = container.getComponent<Model>(e);
+            Transform& transform = container.getComponent<Transform>(e);
+            if(!frustum.contains(transform.position + model.data.offset, model.data.dimensions.length() * vec3::high(transform.scale)))
+            {
+                continue;
+            }
+
+            DirectionalLight& light = win.screen.dirLight;
+            AdvancedShader& mat = container.getComponent<AdvancedShader>(e);
+    
+            shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+            shader.setMat4("view", camera.view.matrix, true);
+            shader.setMat4("projection", camera.projection.matrix, true);
+            shader.setVec3("scale", transform.scale);
+            
+            shader.setVec3("dirLight.direction", light.direction);
+            shader.setVec4("dirLight.color", light.color);
+            shader.setFloat("dirLight.strength", light.strength);
+
+            shader.setVec3("viewPos", cameraTransform.position);
+            shader.setVec4("objColor", mat.color);
+
+            shader.setFloat("material.shininess", mat.shine);
+            shader.setFloat("material.ambientStrength", mat.ambient);
+            shader.setFloat("material.diffuseStrength", mat.diffuse);
+            shader.setFloat("material.specularStrength", mat.specular);
+            model.render();
+        }
+    });
+
+    auto& complexRendering = manager.createSystem<ComplexRenderer, Transform, Model, ComplexShader>({}, 33);
+    complexRendering.setFunction(object::fn::LOAD, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        ComplexRenderer& renderer = system.getInstance<ComplexRenderer>();
+        std::vector<int *> values = {&renderer.model, &renderer.view, &renderer.projection, &renderer.scale, &renderer.color, &renderer.offset, &renderer.uvScale, &renderer.flip};
+        Shader::get("simple_shader").setUniforms({"model", "view", "projection", "scale", "objColor", "offset", "uvScale", "flip"}, values);
+    });
+    complexRendering.setFunction(object::fn::LATE_UPDATE, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        uint32_t& cam = (Application::data(data).window()).screen.camera;
+        ComplexRenderer& rendering = system.getInstance<ComplexRenderer>();
+        for(entity e : container.entities<ComplexRenderer>())
+        {
+            Transform& transform = container.getComponent<Transform>(e);
+            if(cam != -1 && math::abs((transform.position - transform.storedPosition).dot(container.getComponent<Camera>(cam).front)) > 0.0001f)
+            {
+                rendering.update = true;
+                break;
+            }
+        }
+    });
+    complexRendering.setFunction(object::fn::RENDER, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        glDepthMask(GL_FALSE);
+
+        Window& win = Application::data(data).window();
+        uint32_t& cam = win.screen.camera;
+        if(cam == -1)
+            return;
+
+        Camera& camera = container.getComponent<Camera>(cam);
+        Transform& cameraTransform = container.getComponent<Transform>(cam);
+        Frustum frustum = camera.getFrustum(cameraTransform.position, win.aspectRatioInv());
+        
+        ComplexRenderer& rendering = system.getInstance<ComplexRenderer>();
+        std::vector<entity>& entities = container.entities<ComplexRenderer>();
+        if(rendering.update || vec3::abs(cameraTransform.rotation - cameraTransform.lastRotation).length2() > 0.0001f)
+        {
+            object::insertionSort(entities, container.getMapping<ComplexRenderer>(), (*(Application *)data), container, [](entity one, entity two, object::ecs& container, void *data)
+            {
+                entity cam = (Application::data(data).window()).screen.camera;
+                Camera& camera = container.getComponent<Camera>(cam);
+
+                return camera.front.dot(container.getComponent<Transform>(one).position) < camera.front.dot(container.getComponent<Transform>(two).position);
+            });
+            rendering.update = false;
+        }
+
+        Shader& shdr = Shader::get("simple_shader");
+
+        shdr.use();
+
+
+        for(entity e : entities)
+        {
+            Model model = container.getComponent<Model>(e);
+            Transform& transform = container.getComponent<Transform>(e);
+            if(!frustum.contains(transform.position + model.data.offset, model.data.dimensions.length() * vec3::high(transform.scale)))
+            {
+                continue;
+            }
+
+            ComplexShader& mat = container.getComponent<ComplexShader>(e);
+
+            if(container.containsComponent<Fade>(e))
+            {
+                Shader& temp = Shader::get("fade_shader");
+                temp.use();
+
+                Fade& fade = container.getComponent<Fade>(e);
+
+                temp.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+                temp.setMat4("view", camera.view.matrix, true);
+                temp.setMat4("projection", camera.projection.matrix, true);
+                temp.setVec3("scale", transform.scale);
+                temp.setVec4("objColor", mat.color);
+                temp.setVec2("offset", mat.offset);
+                temp.setVec2("uvScale", mat.scale);
+                temp.setBool("flip", mat.flip);
+                temp.setFloat("rate", fade.rate);
+                temp.setFloat("distance", fade.distance);
+
+                model.render();
+
+                shdr.use();
+            }
+            else
+            {
+                shdr.setMat4(rendering.model, (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+                shdr.setMat4(rendering.view, camera.view.matrix, true);
+                shdr.setMat4(rendering.projection, camera.projection.matrix, true);
+                shdr.setVec3(rendering.scale, transform.scale);
+                shdr.setVec4(rendering.color, mat.color);
+                shdr.setVec2(rendering.offset, mat.offset);
+                shdr.setVec2(rendering.uvScale, mat.scale);
+                shdr.setBool(rendering.flip, mat.flip);
+
+                model.render();
+            }
+        }
+        glDepthMask(GL_TRUE);
+    });
+
+    auto& cameras = manager.createSystem<CameraManager, Camera, Transform>({}, 36);
+    cameras.setFunction(object::fn::LOAD, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        for(entity e : container.entities<CameraManager>())
+        {
+            Camera& camera = container.getComponent<Camera>(e);
+            camera.view = mat4::lookAt(container.getComponent<Transform>(e).position, -camera.front, vec3::up);
+
+            if(win.screen.resolutionUpdated)
+            {
+                camera.projection = mat4::inter(math::radians(45.0f), 2.5f, win.aspectRatioInv(), camera.nearDistance, camera.farDistance, 1);
+            }
+        }
+    });
+    cameras.setFunction(object::fn::START, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        uint32_t& cam = win.screen.camera;
+        if(cam != -1)
+        {
+            Camera camera = container.getComponent<Camera>(cam);
+            Vector3 position = container.getComponent<Transform>(cam).position;
+
+            ALfloat listenerOri[] = {camera.front.x, camera.front.y, camera.front.z, camera.up.x, camera.up.y, camera.up.z};
+
+            alListener3f(AL_POSITION, position.x, position.y, position.z);
+            alListener3f(AL_VELOCITY, 0, 0, 0);
+            alListenerfv(AL_ORIENTATION, listenerOri);
+        }
+    });
+    cameras.setFunction(object::fn::LATE_UPDATE, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        for(entity e : container.entities<CameraManager>())
+        {
+            Camera& camera = container.getComponent<Camera>(e);
+
+            Vector3 right = camera.front.cross(vec3::up).normalized();
+            camera.up = right.cross(camera.front).normalized();
+            camera.view = mat4::lookAt(container.getComponent<Transform>(e).position, -camera.front, vec3::up);
+
+            if(win.screen.resolutionUpdated)
+            {
+                camera.projection = mat4::inter(math::radians(camera.fov), 2.5f, win.aspectRatioInv(), camera.nearDistance, camera.farDistance, 1);
+            }
+        }
+    });
+    cameras.setFunction(object::fn::RENDER, []
+    (object::ecs& container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        uint32_t& cam = win.screen.camera;
+        if(cam != -1)
+        {
+            Camera& camera = container.getComponent<Camera>(cam);
+            Transform& transform = container.getComponent<Transform>(cam);
+
+            Vector3& position = transform.position;
+
+            ALfloat listenerOri[] = {camera.front.x, camera.front.y, camera.front.z, camera.up.x, camera.up.y, camera.up.z};
+
+            alListener3f(AL_POSITION, position.x, position.y, position.z);
+            alListenerfv(AL_ORIENTATION, listenerOri);
+
+            transform.lastRotation = transform.rotation;
+        }
+    });
+
+    auto& graphics = manager.createSystem<GraphicsManager, Transform, Model>({}, 36);
     graphics.setFunction(object::fn::START, []
-    (object::ecs &container, object::ecs::system &system)
+    (object::ecs &container, object::ecs::system &system, void *data)
     {
         for(entity e : container.entities<GraphicsManager>())
         {
             container.getComponent<Model>(e).refresh();
         }
     });
-
-    auto& simpleRendering = object::createSystem<SimpleRenderer, Transform, Model, SimpleShader>({}, 33);
-    simpleRendering.setFunction(object::fn::RENDER, []
-    (object::ecs &container, object::ecs::system &system)
+    graphics.setFunction(object::fn::RENDER, []
+    (object::ecs &container, object::ecs::system &system, void *data)
     {
-        Camera& camera = container.getComponent<Camera>(window::camera());
-        Transform& cameraTransform = container.getComponent<Transform>(window::camera());
-
-        Shader& shader = shader::get("simple_shader");
-        shader.use();
-
-        for(entity e : container.entities<SimpleRenderer>())
+        for(entity e : container.entities<GraphicsManager>())
         {
-            shader::simple(shader, object::getComponent<Transform>(e), camera, cameraTransform, object::getComponent<SimpleShader>(e));
-            container.getComponent<Model>(e).render();
+            Transform& transform = container.getComponent<Transform>(e);
+            transform.storedPosition = transform.position;
         }
     });
 
-    auto& advancedRendering = object::createSystem<AdvancedRenderer, Transform, Model, AdvancedShader>({}, 33);
-    advancedRendering.setFunction(object::fn::RENDER, []
-    (object::ecs &container, object::ecs::system &system)
+    auto& uis = manager.createSystem<UIManager, Rect, Sprite>({}, 36);
+    uis.setFunction(object::fn::START, []
+    (object::ecs &container, object::ecs::system &system, void *data)
     {
-        Camera& camera = container.getComponent<Camera>(window::camera());
-        Transform& cameraTransform = container.getComponent<Transform>(window::camera());
-
-        Shader& shader = shader::get("object_shader");
-        shader.use();
-
-        for(entity e : container.entities<AdvancedRenderer>())
+        for(entity e : container.entities<UIManager>())
         {
-            shader::advanced(shader, object::getComponent<Transform>(e), camera, cameraTransform, container.getComponent<AdvancedShader>(e));
-            container.getComponent<Model>(e).render();
+            container.getComponent<Sprite>(e).refresh();
         }
     });
 
-    // auto& buttons = object::createSystem<ButtonManager, Button, Rect>({}, 36);
+    // auto& buttons = manager.createSystem<ButtonManager, Button, Rect>({}, 36);
     // buttons.setFunction(object::fn::UPDATE, []
     // (object::ecs & container, object::ecs::system &system)
     // {
@@ -2063,7 +1717,7 @@ void initializeECS()
     //     {
     //         Rect& rect = container.getComponent<Rect>(entity);
     //         Button& button = container.getComponent<Button>(entity);
-    //         if(mouse::pressed(mouse::LEFT) && rect.contains(window::cursorScreenPosition()))
+    //         if(mouse::pressed(mouse::LEFT) && rect.contains(Window::cursorScreenPosition()))
     //         {
     //             button.trigger(entity);
     //         }
@@ -2088,7 +1742,7 @@ void initializeECS()
     //     }
     // });
 
-    // auto& texts = object::createSystem<TextManager, Text, Rect>({}, 36);
+    // auto& texts = manager.createSystem<TextManager, Text, Rect>({}, 36);
     // texts.setFunction(object::fn::START, []
     // (object::ecs & container, object::ecs::system &system)
     // {
@@ -2100,14 +1754,14 @@ void initializeECS()
     // texts.setFunction(object::fn::RENDER, []
     // (object::ecs & container, object::ecs::system &system)
     // {
-    //     Camera& camera = container.getComponent<Camera>(window::camera());
-    //     Transform& cameraTransform = container.getComponent<Transform>(window::camera());
+    //     Camera& camera = container.getComponent<Camera>(Window::camera());
+    //     Transform& cameraTransform = container.getComponent<Transform>(Window::camera());
     //
     //     glDisable(GL_DEPTH_TEST);
     //     for(Entity entity : container.entities<TextManager>())
     //     {
     //         Text& text = container.getComponent<Text>(entity);
-    //         if(text.update || window::resolutionUpdated())
+    //         if(text.update || Window::resolutionUpdated())
     //         {
     //             text.refresh(container.getComponent<Rect>(entity));
     //             text.update = false;
@@ -2127,9 +1781,11 @@ void initializeECS()
     // });
 }
 
-ProjectManager::ProjectManager()
+ProjectManager::ProjectManager(std::vector<Window>& windows)
 {
-    if(g_windows.size() > 0)
+    Source::initialize();
+
+    if(windows.size() > 0)
         return;
          
     if(!glfwInit())
@@ -2145,40 +1801,49 @@ ProjectManager::ProjectManager()
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwSetErrorCallback(error_callback);
 
-    g_windows.push_back(Window("default", 800, 600));
+    windows.push_back(Window("default", 800, 600));
+    Window& window = windows.back();
 
-    texture::load("default", {Color8(255, 255, 255, 255)}, 1, 1, texture::RGBA, texture::PNG);
-    mesh::load("square", shape::square());
-    mesh::load("cube", shape::cube());
-    mesh::load("sphere", shape::sphere(1));
+    Texture::load("default", {Color8(255, 255, 255, 255)}, 1, 1, Texture::RGBA, Texture::PNG);
+    Mesh::load("square", shape::square());
+    Mesh::load("cube", shape::cube());
+    Mesh::load("sphere", shape::sphere(1));
 
-    file::loadFilesInDirectory(source::root() + source::font(), ttf::load);
+    file::loadFilesInDirectory(Source::root() + Source::font(), ttf::load);
 
-    std::vector<std::string> shaderConfig = file::loadFileToStringVector(source::config() + "shader.config");
+    std::vector<std::string> shaderConfig = file::loadFileToStringVector(Source::config() + "shader.config");
     for(const auto& line : shaderConfig)
     {
         int index = line.find(':');
         if(index != std::string::npos)
         {
             int comma = line.find(',');
-            shader::load(line.substr(0, index), Shader(line.substr(index+2, comma - index-2), line.substr(comma+2)));
+            Shader::load(line.substr(0, index), Shader(line.substr(index+2, comma - index-2), line.substr(comma+2)));
         }
     }
 
-    shader::get("object_shader").use();
-    shader::get("object_shader").setInt("material.diffuse", 0);
+    Shader::get("object_shader").use();
+    Shader::get("object_shader").setInt("material.diffuse", 0);
     
-    shader::get("simple_shader").use();
-    shader::get("simple_shader").setInt("material.texture", 0);
+    Shader::get("simple_shader").use();
+    Shader::get("simple_shader").setInt("material.texture", 0);
     
-    shader::get("ui_shader").use();
-    shader::get("ui_shader").setInt("text", 0);
+    Shader::get("ui_shader").use();
+    Shader::get("ui_shader").setInt("text", 0);
     
-    (g_windows[currentWindow].screen.quad = mesh::get("square")).refresh();
+    (window.screen.quad = Mesh::get("square")).refresh();
 
-    g_keyboard.initialize(key::LAST);
-    g_mouse.initialize(mouse::LAST);
+    Application::keyboard.initialize(GLFW_KEY_LAST, 3);
+    Application::mouse.initialize(GLFW_MOUSE_BUTTON_LAST);
+}
 
-    object::setFunctionDefinitions({&object::fn::LOAD, &object::fn::START, &object::fn::UPDATE, &object::fn::LATE_UPDATE, &object::fn::FIXED_UPDATE, &object::fn::RENDER, &object::fn::DESTROY});
-    initializeECS();
+Application::Application()
+{
+    manager = ProjectManager(windows);
+    initializeECS(container);
+}
+
+Application& Application::data(void *data)
+{
+    return *((Application *)data);
 }

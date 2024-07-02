@@ -1,11 +1,10 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <vector>
-#include <unordered_map>
+#include "shader.h"
 
-#include "vector.h"
-#include "color.h"
+#include <string>
+#include <unordered_map>
 
 // TextureBuffer (struct): wrapper for graphical texture data
 struct TextureBuffer
@@ -38,6 +37,68 @@ struct FrameBuffer
     std::vector<uint8_t> getTextureData(const std::string& name);
 };
 
+//
+struct SimpleShader
+{
+    Color color = color::WHITE;
+    Vector2 offset, scale = 1;
+
+    bool flip = false;
+
+    SimpleShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1) : color(objColor), offset(uvOffset), scale(uvScale), flip(false) {}
+};
+
+//
+struct AdvancedShader : SimpleShader
+{
+    float ambient, diffuse, specular = 0;
+    int32_t shine = 0;
+
+    AdvancedShader(const Color& objColor = color::WHITE, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
+    AdvancedShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor, uvOffset, uvScale), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
+};
+
+//
+struct ComplexShader : SimpleShader
+{
+    ComplexShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1) : SimpleShader(objColor, uvOffset, uvScale) {}
+};
+
+//
+struct Fade
+{
+    float rate, distance;
+
+    Fade(float newRate = 0, float newDistance = 0) : rate(newRate), distance(newDistance) {}
+};
+
+// Model (struct): holds an entity's Texture and Mesh data which allows it to be rendered
+struct Model
+{
+    Mesh data;
+    Texture texture;
+
+    Model() {}
+    Model(const Texture& texture__, Mesh data__ = Mesh::get("square")) : data(data__), texture(texture__) {}
+
+    void refresh()
+    {
+        data.refresh();
+    }
+    
+    void render()
+    {
+        data.draw(texture.texture);
+    }
+
+    bool in(const Frustum& frustum)
+    {
+        return false;
+    }
+};
+
+
+// buffer (namespace)
 namespace buffer
 {
     uint32_t defaultType();
@@ -46,61 +107,8 @@ namespace buffer
 
     void enableDepthTest();
     void disableDepthTest();
-    void blit(FrameBuffer& one, FrameBuffer& two);
+    void blit(FrameBuffer& one, FrameBuffer& two, const Vector2& dim);
 };
 
-struct Texture
-{
-    uint32_t texture;
-    Vector2I resolution;
-
-    Texture() {}
-    Texture(uint32_t texture__, const Vector2I& resolution__) : texture(texture__), resolution(resolution__) {}
-};
-
-// texture (namespace): global methods for loading and accessing image data from image files
-namespace texture
-{
-    enum Channel
-    {
-        RED, RGB, RGBA
-    };
-    uint32_t channelToModifier(Channel channel);
-
-    enum Type
-    {
-        PNG, JPEG
-    };
-    inline std::string typeToString(Type type)
-    {
-        switch(type)
-        {
-            case PNG: return "png";
-            case JPEG: return "jpeg";
-        }
-        return "";
-    }
-    uint32_t typeToModifier(Type type);
-
-    enum Filter
-    {
-        POINT, LINEAR
-    };
-    uint32_t filterToModifier(Filter filter);
-
-    void load(const std::string& path, Type type);
-    void load(const std::string& path, const std::vector<std::string>& subPaths, Type type);
-    void load(const std::string& name, const std::vector<char>& data, float width, float height, Channel channel, Type type);
-    void load(const std::string& name, const std::vector<Color8>& data, float width, float height, Channel channel, Type type, Filter filter = LINEAR);
-    
-    Texture loadTo(const std::vector<Color8>& data, float width, float height, Channel channel, Type type, Filter filter = LINEAR);
-    
-    Texture get(const std::string& path);
-    std::vector<Texture> get(const std::string& path, const std::vector<std::string>& subPaths, Type type);
-
-    void remove();
-
-    void writeRaw(const std::string& name, int32_t width, int32_t height, int32_t channels, uint8_t *data);
-};
 
 #endif

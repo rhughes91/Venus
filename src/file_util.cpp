@@ -1,24 +1,23 @@
 #define NOMINMAX
 
-#include <algorithm>
 #include <bitset>
 #include <filesystem>
 #include <fstream>
-#include <ios>
 #include <iostream>
-#include <limits>
 #include <windows.h>
 
+#include "audio.h"
+#include "graphics.h"
+#include "ui.h"
+
 #include "file_util.h"
-#include "setup.h"
-#include "shader.h"
 
 std::string file::loadFileToString(const std::string &fileName)
 {
     std::string content = "", line;
     std::ifstream myFile;
 
-    myFile.open(source::root()+fileName);
+    myFile.open(Source::root()+fileName);
     if(myFile.is_open())
     {
         while (std::getline(myFile, line))
@@ -29,7 +28,7 @@ std::string file::loadFileToString(const std::string &fileName)
     }
     else
     {
-        std::cout << "ERROR :: " << source::root()+fileName << " could not be opened." << std::endl;
+        std::cout << "ERROR :: " << Source::root()+fileName << " could not be opened." << std::endl;
     }
     return content;
 }
@@ -40,7 +39,7 @@ std::vector<std::string> file::loadFileToStringVector(const std::string &fileNam
     std::string line;
     std::ifstream myFile;
 
-    myFile.open(source::root()+fileName);
+    myFile.open(Source::root()+fileName);
     if(myFile.is_open())
     {
         while (std::getline(myFile, line))
@@ -67,10 +66,12 @@ Mesh file::loadObjFile(const std::string &fileName)
     Vector3 dimensions;
     Vector3 bufferVert, bufferNormal;
     Vector2 bufferUV;
+
+    Vector3 average = 0;
     
     std::string line;
     std::ifstream myFile;
-    myFile.open(source::root() + source::model() + fileName);
+    myFile.open(Source::root() + Source::model() + fileName);
     if(myFile.is_open())
     {
         float minX, maxX, minY, maxY, minZ, maxZ;
@@ -108,6 +109,7 @@ Mesh file::loadObjFile(const std::string &fileName)
                     maxZ = std::max(maxZ, bufferVert.z);
                 }
 
+                average = (inVertices.size() * average + bufferVert) / (inVertices.size()+1);
                 inVertices.push_back(bufferVert);
             }
             else if(line.rfind("f", 0) == 0)
@@ -126,7 +128,7 @@ Mesh file::loadObjFile(const std::string &fileName)
     {
         std::cout << "ERROR :: " << fileName << " could not be opened." << std::endl;
     }
-    return {vertices, dimensions};
+    return Mesh(vertices, dimensions, average);
 }
 
 void file::loadFilesInDirectory(const std::string &fileName, void(*load)(const std::string&))
@@ -137,24 +139,22 @@ void file::loadFilesInDirectory(const std::string &fileName, void(*load)(const s
     }
 }
 
-Source g_source;
-std::unordered_map<std::string, Font> g_loadedFonts;
 
 void ttf::load(const std::string &fileName)
 {
     int index = fileName.find_last_of('/')+1;
-    g_loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
+    Font::loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
 }
 Font& ttf::get(const std::string &fileName)
 {
-    if(!g_loadedFonts.count(fileName))
+    if(!Font::loadedFonts.count(fileName))
         std::cout << "ERROR :: TTF file " << fileName << " could not be found." << std::endl;
-    return g_loadedFonts[fileName];
+    return Font::loadedFonts[fileName];
 }
 
-Source::Source()
+void Source::initialize()
 {
-    source = getCurrentDirectoryName();
+    projSource = getCurrentDirectoryName();
     std::vector<std::string> pathConfig = file::loadFileToStringVector("path.config");
     for(const auto& line : pathConfig)
     {
@@ -165,7 +165,7 @@ Source::Source()
             
             if(setting == "source")
             {
-                source += line.substr(index+2);
+                projSource += line.substr(index+2);
             }
             else if(setting == "audio")
             {
@@ -200,62 +200,18 @@ std::string Source::getCurrentDirectoryName()
     GetModuleFileName(NULL, buffer, 256);
 
     std::string source = std::string(buffer);
-    std::replace(source.begin(), source.end(), '\\', '/');
+    int size = source.size();
+    for(int i=0; i<size; i++)
+    {
+        if(source[i] == '\\')
+        {
+            source[i] = '/';
+        }
+    }
+
     return source.substr(0, source.find_last_of("/")) + "/";
 }
 
-std::string source::root()
-{
-    return g_source.getSource();;
-}
-std::string source::audio()
-{
-    return g_source.getAudioSource();
-}
-void source::setAudio(const std::string& source)
-{
-    g_source.setAudioSource(source);
-}
-std::string source::config()
-{
-    return g_source.getConfigSource();
-}
-void source::setConfig(const std::string& source)
-{
-    g_source.setConfigSource(source);
-}
-std::string source::texture()
-{
-    return g_source.getTextureSource();
-}
-void source::setTexture(const std::string& source)
-{
-    g_source.setTextureSource(source);
-}
-std::string source::font()
-{
-    return g_source.getFontSource();
-}
-void source::setFont(const std::string& source)
-{
-    g_source.setFontSource(source);
-}
-std::string source::model()
-{
-    return g_source.getModelSource();
-}
-void source::setModel(const std::string& source)
-{
-    g_source.setModelSource(source);
-}
-std::string source::shader()
-{
-    return g_source.getShaderSource();
-}
-void source::setShader(const std::string& source)
-{
-    g_source.setShaderSource(source);
-}
 
 struct BinaryFile
 {
@@ -289,16 +245,20 @@ struct BinaryFile
         file.get(c);
         return c;
     }
+    uint8_t toUInt8_LE()
+    {
+        return toUInt8();
+    }
     uint16_t toUInt16()
     {
         return ((toUInt8() << 8) | toUInt8());
     }
-    uint16_t toUInt16(uint8_t *num)
+    uint16_t toUInt16_LE()
     {
-        uint64_t result;
-        result = (result << 8) | num[0];
-        result = (result << 8) | num[1];
-        return result;
+        uint8_t one = toUInt8();
+        uint8_t two = toUInt8();
+
+        return ((two << 8) | one);
     }
     int16_t toInt16()
     {
@@ -323,14 +283,13 @@ struct BinaryFile
     {
         return toInt32();
     }
-    uint16_t toUInt32(uint8_t *num)
+    uint32_t toUInt32_LE()
     {
-        uint64_t result;
-        result = (result << 8) | num[0];
-        result = (result << 8) | num[1];
-        result = (result << 8) | num[2];
-        result = (result << 8) | num[3];
-        return result;
+        uint8_t one = toUInt8();
+        uint8_t two = toUInt8();
+        uint8_t three = toUInt8();
+        uint8_t four = toUInt8();
+        return (four << 24) | (three << 16) | (two << 8) | one;
     }
     uint64_t toUInt64()
     {
@@ -343,6 +302,28 @@ struct BinaryFile
         result = (result << 8) | toUInt8();
         result = (result << 8) | toUInt8();
         result = (result << 8) | toUInt8();
+        return result;
+    }
+    uint64_t toUInt64_LE()
+    {
+        uint8_t one = toUInt8();
+        uint8_t two = toUInt8();
+        uint8_t three = toUInt8();
+        uint8_t four = toUInt8();
+        uint8_t five = toUInt8();
+        uint8_t six = toUInt8();
+        uint8_t seven = toUInt8();
+        uint8_t eight = toUInt8();
+
+        uint64_t result;
+        result = (result << 8) | eight;
+        result = (result << 8) | seven;
+        result = (result << 8) | six;
+        result = (result << 8) | five;
+        result = (result << 8) | four;
+        result = (result << 8) | three;
+        result = (result << 8) | two;
+        result = (result << 8) | one;
         return result;
     }
     std::string toString(int length)
@@ -898,7 +879,7 @@ Font file::loadTTF(const std::string &fileName)
             default:
                 font.maxScale = vec2::zero;
                 font.unitsPerEm = ttf.head.unitsPerEm;
-                font.characters = std::unordered_map<char, CharacterTTF>();
+                font.characters = std::array<CharacterTTF, '~'+1>();
                 for(int i=0; i<='~'; i++)
                 {
                     uint16_t index = ttf.cmap.glyphIndexMap[i];
@@ -1060,27 +1041,75 @@ std::vector<char> file::loadPNG(const std::string &fileName)
     return result;
 }
 
-void file::loadWAV(const std::string& fileName)
+struct WAVHeader
 {
+    std::string ckID, WAVEID;
+    uint32_t cksize;
+};
+struct FMT
+{
+    std::string ckID;
+    uint32_t cksize, nSamplesPerSec, nAvgBytesPerSec;
+    uint16_t wFormatTag, nChannels, nBlockAlign, wBitsPerSample;
+};
+WAV file::loadWAV(const std::string& fileName)
+{
+    WAV result;
 
+    BinaryFile file = BinaryFile(fileName);
+    if(file.open())
+    {
+        WAVHeader wav;
+        wav.ckID = file.toString(4);
+        wav.cksize = file.toUInt32_LE();
+        wav.WAVEID = file.toString(4);
+        
+        FMT fmt;
+        fmt.ckID = file.toString(4);
+        fmt.cksize = file.toUInt32_LE();
+        fmt.wFormatTag = file.toUInt16_LE();
+        result.format = fmt.nChannels = file.toUInt16_LE();
+        result.sampleRate = fmt.nSamplesPerSec = file.toUInt32_LE();
+        fmt.nAvgBytesPerSec = file.toUInt32_LE();
+        fmt.nBlockAlign = file.toUInt16_LE();
+        result.bitsPerSample = fmt.wBitsPerSample = file.toUInt16_LE();
+
+        switch(fmt.wFormatTag)
+        {
+            case 1:
+                std::string dataHeader = file.toString(4);
+                uint32_t size = file.toUInt32_LE();
+
+                for(uint32_t i = 0; i<size; i++)
+                {
+                    result.data.push_back(file.toUInt8());
+                }
+            break;
+        }
+        file.close();
+    }
+
+    return result;
 }
 
-// bool file::save(const std::string &fileName, const std::vector<char>& data)
-// {
-//     std::ofstream output((g_source.getSource() + g_source.getConfigSource() + fileName).c_str(), std::fstream::app | std::ios::out | std::ios::binary);
-//     if(output)
-//     {
-//         for(char c : data)
-//         {
-//             output << c;
-//         }
-//         output << '\n';
-//     }
-//     else
-//     {
-//         std::cout << (g_source.getSource() + g_source.getConfigSource() + fileName) << '\n';
-//         return false;
-//     }
-//     output.close();
-//     return true;
-// }
+MP3 file::loadMP3(const std::string& fileName)
+{
+    MP3 result;
+
+    BinaryFile file = BinaryFile(fileName);
+    if(file.open())
+    {
+        uint8_t byte = file.toUInt8();
+        if(byte == 255)
+        {
+            
+        }
+        else
+        {
+            
+        }
+        file.close();
+    }
+
+    return result;
+}

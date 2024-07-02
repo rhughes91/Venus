@@ -1,14 +1,7 @@
-#include "glad/glad.h"
-#include "image/stb_image.h"
-
-#include <iostream>
-
 #include "file_util.h"
 #include "graphics.h"
-#include "setup.h"
-#include "structure.h"
 
-extern Time g_time;
+#include "glad/glad.h"
 
 uint32_t buffer::defaultType()
 {
@@ -30,11 +23,11 @@ void buffer::disableDepthTest()
 {
     glDisable(GL_DEPTH_TEST);
 }
-void buffer::blit(FrameBuffer& one, FrameBuffer& two)
+void buffer::blit(FrameBuffer& one, FrameBuffer& two, const Vector2& dim)
 {
     one.bind(buffer::readType());
     two.bind(buffer::drawType());
-    glBlitFramebuffer(0, 0, window::width(), window::height(), 0, 0, window::width(), window::height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    glBlitFramebuffer(0, 0, dim.x, dim.y, 0, 0, dim.x, dim.y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     one.unbind(buffer::readType());
     two.unbind(buffer::drawType());
 }
@@ -159,201 +152,3 @@ std::vector<uint8_t> FrameBuffer::getTextureData(const std::string& name)
     return result;
 }
 
-extern std::unordered_map<std::string, Texture> g_loadedTextures;
-
-uint32_t texture::channelToModifier(texture::Channel channel)
-{
-    switch(channel)
-    {
-        case texture::RED: return GL_RED;
-        case texture::RGB: return GL_RGB;
-        case texture::RGBA: return GL_RGBA;
-    }
-    return GL_RGB;
-}
-uint32_t texture::typeToModifier(texture::Type type)
-{
-    switch(type)
-    {
-        case PNG: return GL_SRGB_ALPHA;
-        case JPEG: return GL_SRGB;
-    }
-    return GL_SRGB;
-}
-uint32_t texture::filterToModifier(texture::Filter filter)
-{
-    switch(filter)
-    {
-        case POINT: return GL_NEAREST;
-        case LINEAR: return GL_LINEAR;
-    }
-    return -1;
-}
-
-void texture::load(const std::string &path, texture::Type type)
-{
-    int32_t screenChannel = texture::typeToModifier(type);
-    std::string screenChannelString = texture::typeToString(type);
-
-    int32_t width, height, channels;
-    unsigned char *data = stbi_load((source::root() + source::texture() + path + "." + screenChannelString).c_str(), &width, &height, &channels, 0);
-
-    uint32_t channel;
-    switch (channels)
-    {
-        case 1:
-            channel = GL_RED;
-        break;
-        case 3:
-            channel = GL_RGB;
-        break;
-        case 4:
-            channel = GL_RGBA;
-        break;
-    }
-    uint32_t texture;
-
-    glGenTextures(1, &texture);
-
-    if (data)
-    {
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, channel, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        // set the texture wrapping/filtering options (on the currently bound texture object)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-    else
-    {
-        std::cout << "Failed to load texture: " << path << std::endl;
-    }
-    stbi_image_free(data);
-    g_loadedTextures[path + "." + screenChannelString] = Texture(texture, Vector2I(width, height));
-}
-void texture::load(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
-{
-    for (std::string subPath : subPaths)
-    {
-        texture::load(path + subPath, type);
-    }
-}
-void texture::load(const std::string& name, const std::vector<char>& data, float width, float height, texture::Channel channel, texture::Type type)
-{
-    uint32_t imageChannel = texture::channelToModifier(channel);
-    uint32_t screenChannel = texture::typeToModifier(type);
-
-    uint32_t texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, imageChannel, GL_UNSIGNED_BYTE, &data[0]);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    g_loadedTextures[name] = Texture(texture, Vector2I(width, height));
-}
-void texture::load(const std::string& name, const std::vector<Color8>& data, float width, float height, texture::Channel channel, texture::Type type, texture::Filter filter)
-{
-    uint32_t imageChannel = texture::channelToModifier(channel);
-    uint32_t screenChannel = texture::typeToModifier(type);
-    uint32_t filterChannel = texture::filterToModifier(filter);
-    uint32_t minFilter = -1;
-    switch(filterChannel)
-    {
-        case GL_NEAREST: 
-            minFilter = GL_NEAREST_MIPMAP_LINEAR;
-        break;
-        case GL_LINEAR:
-            minFilter = GL_LINEAR_MIPMAP_LINEAR;
-        break;
-    }
-
-    uint32_t texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, imageChannel, GL_UNSIGNED_BYTE, &data[0]);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterChannel);
-
-    g_loadedTextures[name] = Texture(texture, Vector2I(width, height));
-}
-
-Texture texture::loadTo(const std::vector<Color8>& data, float width, float height, texture::Channel channel, texture::Type type, texture::Filter filter)
-{
-    uint32_t imageChannel = texture::channelToModifier(channel);
-    uint32_t screenChannel = texture::typeToModifier(type);
-    uint32_t filterChannel = texture::filterToModifier(filter);
-    uint32_t minFilter = -1;
-    switch(filterChannel)
-    {
-        case GL_NEAREST: 
-            minFilter = GL_NEAREST_MIPMAP_LINEAR;
-        break;
-        case GL_LINEAR:
-            minFilter = GL_LINEAR_MIPMAP_LINEAR;
-        break;
-    }
-
-    uint32_t texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, screenChannel, width, height, 0, imageChannel, GL_UNSIGNED_BYTE, &data[0]);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterChannel);
-
-    return Texture(texture, Vector2I(width, height));
-}
-
-Texture texture::get(const std::string &path)
-{
-    if(!g_loadedTextures.count(path))
-    {
-        std::cout << "ERROR :: Texture at \'" << path << "\' could not be found." << std::endl;
-        return g_loadedTextures.at("default");
-    }
-    return g_loadedTextures.at(path);
-}
-std::vector<Texture> texture::get(const std::string &path, const std::vector<std::string> &subPaths, texture::Type type)
-{
-    std::vector<Texture> textures;
-    for (std::string subPath : subPaths)
-    {
-        std::string pathName = path + subPath + "." + texture::typeToString(type);
-        if(!g_loadedTextures.count(pathName))
-        {
-            std::cout << "ERROR :: Texture at \'" << pathName << "\' could not be found." << std::endl;
-            return std::vector<Texture>();
-        }
-        textures.push_back(g_loadedTextures[pathName]);
-    }
-    return textures;
-}
-void texture::remove()
-{
-    for (auto &pair : g_loadedTextures)
-    {
-        glDeleteTextures(1, &pair.second.texture);
-    }
-}

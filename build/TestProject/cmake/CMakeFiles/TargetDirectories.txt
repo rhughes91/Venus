@@ -3,10 +3,12 @@ C:/Projects/Venus/build/TestProject/cmake/CMakeFiles/rebuild_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/include/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/include/CMakeFiles/rebuild_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/ecs_lib.dir
+C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/math_lib.dir
 C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/file_lib.dir
 C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/audio_lib.dir
-C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/venus_lib.dir
+C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/graphics_lib.dir
 C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/global_lib.dir
+C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/venus_lib.dir
 C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/edit_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/src/CMakeFiles/rebuild_cache.dir
 C:/Projects/Venus/build/TestProject/cmake/vendor/CMakeFiles/vendor_lib.dir

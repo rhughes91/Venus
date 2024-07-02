@@ -212,6 +212,10 @@ float vec3::signedAngle(const Vector3& vec1, const Vector3& vec2, const Vector3&
 {
     return vec3::angle(vec1, vec2) * math::sign(vec1.cross(vec2).dot(vec3::up));
 }
+float vec3::high(const Vector3& vector)
+{
+    return std::max(vector.x, std::max(vector.y, vector.z));
+}
 
 std::string to_string(const Vector3& vector)
 {
@@ -220,32 +224,32 @@ std::string to_string(const Vector3& vector)
 
 std::ostream& operator<<(std::ostream& os, const Color& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.r << ", " << obj.g << ", " << obj.b << ", " << obj.a << "]";
+    os << std::setprecision(5) << std::fixed << "(" << obj.r << ", " << obj.g << ", " << obj.b << ", " << obj.a << ")";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Vector2& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << "]";
+    os << std::setprecision(5) << std::fixed << "(" << obj.x << ", " << obj.y << ")";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Vector2I& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << "]";
+    os << std::setprecision(5) << std::fixed << "(" << obj.x << ", " << obj.y << ")";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Vector3& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << ", " << obj.z << "]";
+    os << std::setprecision(5) << std::fixed << "(" << obj.x << ", " << obj.y << ", " << obj.z << ")";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Vector4& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.x << ", " << obj.y << ", " << obj.z << ", " << obj.w << "]";
+    os << std::setprecision(5) << std::fixed << "(" << obj.x << ", " << obj.y << ", " << obj.z << ", " << obj.w << ")";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const Quaternion& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" << obj.q0 << ", " << obj.q1 << ", " << obj.q2 << ", " << obj.q3 << "]";
+    os << std::setprecision(5) << std::fixed << "(" << obj.q0 << ", " << obj.q1 << ", " << obj.q2 << ", " << obj.q3 << ")";
     return os;
 }
 std::ostream& operator<<(std::ostream& os, const mat4x4& obj)
@@ -255,7 +259,7 @@ std::ostream& operator<<(std::ostream& os, const mat4x4& obj)
 }
 std::ostream& operator<<(std::ostream& os, const Quad& obj)
 {
-    os << std::setprecision(5) << std::fixed << "[" <<obj.p1 << ", " << obj.p2 << ", " << obj.p3 << ", " << obj.p4 << "]";
+    os << std::setprecision(5) << std::fixed << "(" <<obj.p1 << ", " << obj.p2 << ", " << obj.p3 << ", " << obj.p4 << ")";
     return os;
 }
 

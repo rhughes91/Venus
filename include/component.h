@@ -1,79 +1,12 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
 
+#include <array>
 #include <set>
 
-#include "graphics.h"
-#include "machine.h"
+#include "color.h"
 #include "vector.h"
-
-// Key (struct): stores whether the stored key data (corresponding to GLFW key values) is being pressed, held, or released
-struct Key
-{
-    uint32_t data;
-    bool pressed, held, released;
-
-    operator std::string()
-    {
-        return "Pressed: "+std::to_string(pressed) + ", Held: "+std::to_string(held) + ", Released: "+std::to_string(released);
-    }
-    bool operator <(const Key& key) const
-    {
-        return data < key.data;
-    }
-};
-
-// InputManager (struct): stores keys and regulates whether they are being pressed, held, or released
-struct InputManager
-{
-    uint8_t heldKey = 0;
-
-    std::unordered_map<uint32_t, Key> inputs;
-    std::set<Key> heldKeys;
-
-    void initialize(int end);                // initialized key values from 0 to 'end'
-    void initialize(int start, int end);     // initialized key values from 'start' to 'end'
-    void parse(int32_t input, bool pressed); // determines whether the input is being pressed, held, or released
-    void refresh();                          // clears pressed and released keys after one frame, and erases held keys if they are released
-};
-
-// Time (struct): holds all the timing data that happens between frames :: controls when "fixedUpdate" is run
-struct Time
-{
-    bool frozen;
-    int32_t advanceKey = '\\';
-
-    double deltaTime = 0.0f;
-    double lastDeltaTime = 0.0f;
-    double lastFrame = 0.0f;
-    double timer = 0;
-    double runtime = 0;
-
-    std::array<double, 10> framerates;
-
-    Time();
-
-    // updates the "fixedUpdate" timer, interpolates deltaTime, and tracks the average framerate
-    void update();
-    void beginTimer();
-    void resetTimer(double interval)
-    {
-        timer = timer-interval;
-    }
-
-    private:
-        int32_t framerateIndex = 0;
-};
-
-namespace event
-{
-    float delta();
-    float framerate();
-    float time();
-
-    void freezeTime(bool freeze);
-}
-
+#include "structure.h"
 
 // UTILITY COMPONENTS
 
@@ -90,7 +23,7 @@ struct Timer
         float currentFrame = interval;
         lastFrame = currentFrame;
     }
-    void update(float max = std::numeric_limits<float>::infinity());
+    void update(float delta, float max = std::numeric_limits<float>::infinity());
     void reset()
     {
         timer = timer-interval;
@@ -167,31 +100,36 @@ struct SpotLight
 
 // RENDERING COMPONENTS
 
+// Transform (struct): holds data about an entity's position, rotation, and scale
+struct Transform
+{
+    Vector3 position, storedPosition;
+    Vector3 scale;
+    Quaternion rotation, lastRotation;
+
+    Transform() {}
+    Transform(const Vector3& position__) : Transform(position__, vec3::one, Quaternion()) {}
+    Transform(const Vector3& position__, const Vector3& scale__) : Transform(position__, scale__, Quaternion()) {}
+    Transform(const Vector3& position__, const Quaternion& rotation__) : Transform(position__, vec3::one, rotation__) {}
+    Transform(const Vector3& position__, const Vector3& scale__, const Quaternion& rotation__) : position(position__), storedPosition(position__), scale(scale__), rotation(rotation__), lastRotation(rotation__) {}
+};
+
 // Camera (struct): allows for the scene to be rendered from a certain perspective
 struct Camera
 {
     Color backgroundColor;
     Vector3 front, up;
     mat4x4 view, projection;
-    float nearDistance, farDistance;
+    float nearDistance, farDistance, fov;
 
     Camera() {}
-    Camera(Color color__, Vector3 front__, Vector3 up__, float near__ = 0.01f, float far__ = 200.f);
+    Camera(Color color__, Vector3 front__, Vector3 up__, float aspect__, float near__ = 0.01f, float far__ = 200.f, float fov___ = 45);
+
+    Frustum getFrustum(const Vector3& position, float aspect);
 };
 
-// Transform (struct): holds data about an entity's position, rotation, and scale
-struct Transform
-{
-    Vector3 position;
-    Vector3 scale;
-    Quaternion rotation;
 
-    Transform() {}
-    Transform(const Vector3& position__) : Transform(position__, vec3::one, Quaternion()) {}
-    Transform(const Vector3& position__, const Vector3& scale__) : Transform(position__, scale__, Quaternion()) {}
-    Transform(const Vector3& position__, const Quaternion& rotation__) : Transform(position__, vec3::one, rotation__) {}
-    Transform(const Vector3& position__, const Vector3& scale__, const Quaternion& rotation__) : position(position__), scale(scale__), rotation(rotation__) {}
-};
+// PHYSICS COMPONENTS
 
 // Physics2D (struct): handles basic 2D physics operations at 60 FPS :: all functions should be called in the "update" function for responsiveness and consistency
 struct Physics2D
@@ -260,87 +198,18 @@ struct Physics2D
     }
 };
 
-
-struct Animation;
-
-namespace anim
-{
-    void texture(const Animation& animation, void *render, uint32_t frame, size_t size);
-    void uv(const Animation& animation, void *render, uint32_t frame, size_t size);
-};
-
-// Animation (struct): holds the data and logic needed to switch between images at a certain 'frameRate'
-struct Animation
-{
-    std::vector<Texture> frames;
-    int frame = 0;
-    int frameRate = 1;
-    bool loop = true;
-
-    Animation() {}
-    Animation(const std::vector<Texture>& frames__, void (*animationAction__)(const Animation&, void *, uint32_t, size_t) = anim::texture, bool loop__ = true)
-    {
-        frames = frames__;
-        animationAction = animationAction__;
-        loop = loop__;
-    }
-
-    Animation(const std::vector<Texture>& frames__, int32_t frameRate__, void (*animationAction__)(const Animation&, void *, uint32_t, size_t) = anim::texture, bool loop__ = true)
-    {
-        frames = frames__;
-        frameRate = frameRate__;
-        animationAction = animationAction__;
-        loop = loop__;
-    }
-
-    void setAnimate(void (*animationAction__)(const Animation& animation, void *render, uint32_t frame, size_t size), bool loop__ = true)
-    {
-        animationAction = animationAction__;
-        loop = loop__;
-    }
-
-    // loops 'frame' between 0 and the size of 'frames' and returns the image data at that index
-    uint32_t step();
-    void animate(void *render, uint32_t frame, size_t size)
-    {
-        animationAction(*this, render, frame, size);
-    }
-
-    private:
-        int32_t frameCount = 0;
-        void (*animationAction)(const Animation& animation, void *render, uint32_t frame, size_t size);
-};
-
-// anim (namespace): holds basic StateMachine transition functions for Animations
-namespace anim
-{
-    // resets 'animation' to frame zero on update
-    void reset(Animation& animation);
-
-    // resets 'animation' to frame zero on update
-    bool restart(Animation& current, Animation& last);
-
-    // attempts to maintain frame index from 'last' animation on transition :: otherwise, frame index is set to zero
-    bool keep(Animation& current, Animation& last);
-};
-
-// acts as layered StateMachine :: layer one is AnimationState, layer two is Animation
-using AnimationState = StateMachine<Animation>;
-using Animator = StateMachine<AnimationState>;
-
-// PHYSICS COMPONENTS
-
 // BoxCollider (struct): calls 'trigger' function whenever another BoxCollider intersects with this one :: otherwise, miss function is called
 struct BoxCollider
 {
     bool mobile = false;
-    Vector3 scale, offset, storedPosition;
+    Vector3 scale, offset;
 
     bool enter, exit;
 
     BoxCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0) : scale(scale__), offset(offset__) {}
 };
 
+// 
 struct SquareCollider
 {
     bool mobile = false;
@@ -351,12 +220,14 @@ struct SquareCollider
     SquareCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0) : scale(scale__), offset(offset__) {}
 };
 
+// 
 struct AABB2D
 {
 
 };
 
-struct AABB
+// 
+struct AABB : AABB2D
 {
 
 };
@@ -368,14 +239,16 @@ struct Billboard
     Vector3 limit = Vector3(1, 1, 1);
 };
 
+
 // physics (namespace): allows for collision handling with a BoxCollider
 namespace physics
 {
     enum Direction {UP, RIGHT, DOWN, LEFT};
-    void collisionTrigger(uint32_t entity, uint32_t collision, bool edge, int triggered);
-    void collisionMiss(uint32_t entity);
+    void collisionTrigger(uint32_t entity, uint32_t collision, bool edge, int triggered, object::ecs& container);
+    void collisionMiss(uint32_t entity, object::ecs& container);
 }
 
+//
 namespace object
 {
     Vector3 brightness(int32_t value);

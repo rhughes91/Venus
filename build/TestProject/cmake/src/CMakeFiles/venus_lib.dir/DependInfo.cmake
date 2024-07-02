@@ -9,10 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "C:/Projects/Venus/src/event.cpp" "src/CMakeFiles/venus_lib.dir/event.cpp.obj" "gcc" "src/CMakeFiles/venus_lib.dir/event.cpp.obj.d"
-  "C:/Projects/Venus/src/graphics.cpp" "src/CMakeFiles/venus_lib.dir/graphics.cpp.obj" "gcc" "src/CMakeFiles/venus_lib.dir/graphics.cpp.obj.d"
   "C:/Projects/Venus/src/setup.cpp" "src/CMakeFiles/venus_lib.dir/setup.cpp.obj" "gcc" "src/CMakeFiles/venus_lib.dir/setup.cpp.obj.d"
-  "C:/Projects/Venus/src/shader.cpp" "src/CMakeFiles/venus_lib.dir/shader.cpp.obj" "gcc" "src/CMakeFiles/venus_lib.dir/shader.cpp.obj.d"
-  "C:/Projects/Venus/src/vector.cpp" "src/CMakeFiles/venus_lib.dir/vector.cpp.obj" "gcc" "src/CMakeFiles/venus_lib.dir/vector.cpp.obj.d"
   )
 
 # Targets to which this target links.

@@ -63,13 +63,14 @@ void project::initialize()
     struct Movement // This is an example of a generic script. The fields stored here act as static fields across each of the key functions. Component script fields can also be accessed statically, but this is not usually intended behavior.
     {
         float speed = 0.1f;
-        entity camera;
     };
     auto& movement = object::createSystem<Movement>();
     {
         movement.setFunction(object::fn::START, []
         (object::ecs& container, object::ecs::system& script)
         {
+            Movement& data = script.getInstance<Movement>();
+
             entity camera = object::createEntity();
             object::addComponent<Transform>(camera, Transform{Vector3(0, 0, -20)});
             object::addComponent<CameraLook>(camera); // Notice that one of the requirements for this component (Camera) was added after CameraLook was added. Components never need to be added in a specific order.
@@ -114,12 +115,23 @@ void project::initialize()
             {
                 transform.position.y -= data.speed;
             }
+
+            if(key::held(key::MINUS))
+            {
+                cam.fov -= 0.1f;
+                std::cout << cam.fov << '\n';
+            }
+            if(key::held(key::EQUAL))
+            {
+                 cam.fov += 0.1f;
+            }
         });
     }
 
     struct Event
     {
         entity spot, point;
+        entity floor;
     };
     auto& event = object::createSystem<Event>();
     {
@@ -128,17 +140,27 @@ void project::initialize()
         {
             Event& data = script.getInstance<Event>();
 
+            data.floor = object::createEntity();
+            object::addComponent<Transform>(data.floor, Transform(Vector3(0, -2, -30), 20, Quaternion(math::radians(90), vec3::left)));
+            object::addComponent<Model>(data.floor, Model(texture::get("crate.png"), Mesh::get("square")));
+            object::addComponent<AdvancedShader>(data.floor, {color::WHITE, 0.2f, 0.5f, 0.1f, 64});
+            object::addComponent<MeshAddon>(data.floor, // MeshAddon attaches copies of the original mesh with different Transforms so that they are rendered in the same draw call. If this component is added to an Object, changes to this Object's Transform will likely cause unwanted behavior.
+            MeshAddon
+            ({
+                {{Vector3(0, 0, 20)}}, {{Vector3(0, 0, 40)}}, {{Vector3(0, 0, 60)}}, {{Vector3(20, 0, 0)}}, {{Vector3(20, 0, 20)}}, {{Vector3(20, 0, 40)}}, {{Vector3(20, 0, 60)}}, {{Vector3(-20, 0, 0)}}, {{Vector3(-20, 0, 20)}}, {{Vector3(-20, 0, 40)}}, {{Vector3(-20, 0, 60)}}
+            }));
+
             entity spotlight = object::createEntity();
             data.spot = spotlight;
             object::addComponent<Transform>(spotlight, {Vector3(0, 2, 0), 0.25f});
-            object::addComponent<Model>(spotlight, Model(texture::get("default"), mesh::get("cube")));
+            object::addComponent<Model>(spotlight, Model(texture::get("default"), Mesh::get("cube")));
             object::addComponent<SimpleShader>(spotlight, color::WHITE);
             object::addComponent<SpotLight>(spotlight, SpotLight(vec3::down, color::WHITE, 1.0f, object::brightness(5), std::cos(math::radians(30.0f)), std::cos(math::radians(20.0f))));
 
             entity pointlight = object::createEntity();
             data.point = pointlight;
             object::addComponent<Transform>(pointlight, {Vector3(0, -0.1f, 2), 0.1f});
-            object::addComponent<Model>(pointlight, Model(texture::get("default"), mesh::get("sphere")));
+            object::addComponent<Model>(pointlight, Model(texture::get("default"), Mesh::get("sphere")));
             object::addComponent<SimpleShader>(pointlight, color::PRIMROSEPETAL);
             object::addComponent<PointLight>(pointlight, PointLight(color::PRIMROSEPETAL, 1.0f, object::brightness(3)));
         });
@@ -153,6 +175,9 @@ void project::initialize()
             object::getComponent<SimpleShader>(data.spot).color = 
                 Color(std::sin(frequency*index + 0) * 127 + 128, std::sin(frequency*index + 2) * 127 + 128, std::sin(frequency*index + 4) * 127 + 128); // This simply changes the spotlight's color into a rainbow.
             object::getComponent<Transform>(data.point).position = Vector3(std::sin(2*event::time()) * 2, -0.1f, std::cos(2*event::time())) * 2;
+
+            if(key::pressed(key::P))
+                object::getComponent<Audio>(0).play();
         });
         event.setFunction(object::fn::DESTROY, []
         (object::ecs& container, object::ecs::system& script)

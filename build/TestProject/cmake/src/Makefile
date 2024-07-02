@@ -130,6 +130,20 @@ ecs_lib/fast:
 .PHONY : ecs_lib/fast
 
 # Convenience name for target.
+src/CMakeFiles/math_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/math_lib.dir/rule
+.PHONY : src/CMakeFiles/math_lib.dir/rule
+
+# Convenience name for target.
+math_lib: src/CMakeFiles/math_lib.dir/rule
+.PHONY : math_lib
+
+# fast build rule for target.
+math_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\math_lib.dir\build.make src/CMakeFiles/math_lib.dir/build
+.PHONY : math_lib/fast
+
+# Convenience name for target.
 src/CMakeFiles/file_lib.dir/rule:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/file_lib.dir/rule
 .PHONY : src/CMakeFiles/file_lib.dir/rule
@@ -158,18 +172,18 @@ audio_lib/fast:
 .PHONY : audio_lib/fast
 
 # Convenience name for target.
-src/CMakeFiles/venus_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/venus_lib.dir/rule
-.PHONY : src/CMakeFiles/venus_lib.dir/rule
+src/CMakeFiles/graphics_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/graphics_lib.dir/rule
+.PHONY : src/CMakeFiles/graphics_lib.dir/rule
 
 # Convenience name for target.
-venus_lib: src/CMakeFiles/venus_lib.dir/rule
-.PHONY : venus_lib
+graphics_lib: src/CMakeFiles/graphics_lib.dir/rule
+.PHONY : graphics_lib
 
 # fast build rule for target.
-venus_lib/fast:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
-.PHONY : venus_lib/fast
+graphics_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/build
+.PHONY : graphics_lib/fast
 
 # Convenience name for target.
 src/CMakeFiles/global_lib.dir/rule:
@@ -184,6 +198,20 @@ global_lib: src/CMakeFiles/global_lib.dir/rule
 global_lib/fast:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/build
 .PHONY : global_lib/fast
+
+# Convenience name for target.
+src/CMakeFiles/venus_lib.dir/rule:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/venus_lib.dir/rule
+.PHONY : src/CMakeFiles/venus_lib.dir/rule
+
+# Convenience name for target.
+venus_lib: src/CMakeFiles/venus_lib.dir/rule
+.PHONY : venus_lib
+
+# fast build rule for target.
+venus_lib/fast:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
+.PHONY : venus_lib/fast
 
 audio.obj: audio.cpp.obj
 .PHONY : audio.obj
@@ -286,7 +314,7 @@ graphics.obj: graphics.cpp.obj
 
 # target to build an object file
 graphics.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/graphics.cpp.obj
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/graphics.cpp.obj
 .PHONY : graphics.cpp.obj
 
 graphics.i: graphics.cpp.i
@@ -294,7 +322,7 @@ graphics.i: graphics.cpp.i
 
 # target to preprocess a source file
 graphics.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/graphics.cpp.i
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/graphics.cpp.i
 .PHONY : graphics.cpp.i
 
 graphics.s: graphics.cpp.s
@@ -302,7 +330,7 @@ graphics.s: graphics.cpp.s
 
 # target to generate assembly for a file
 graphics.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/graphics.cpp.s
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/graphics.cpp.s
 .PHONY : graphics.cpp.s
 
 setup.obj: setup.cpp.obj
@@ -334,7 +362,7 @@ shader.obj: shader.cpp.obj
 
 # target to build an object file
 shader.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/shader.cpp.obj
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/shader.cpp.obj
 .PHONY : shader.cpp.obj
 
 shader.i: shader.cpp.i
@@ -342,7 +370,7 @@ shader.i: shader.cpp.i
 
 # target to preprocess a source file
 shader.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/shader.cpp.i
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/shader.cpp.i
 .PHONY : shader.cpp.i
 
 shader.s: shader.cpp.s
@@ -350,7 +378,7 @@ shader.s: shader.cpp.s
 
 # target to generate assembly for a file
 shader.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/shader.cpp.s
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/shader.cpp.s
 .PHONY : shader.cpp.s
 
 structure.obj: structure.cpp.obj
@@ -377,12 +405,36 @@ structure.cpp.s:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.s
 .PHONY : structure.cpp.s
 
+ui.obj: ui.cpp.obj
+.PHONY : ui.obj
+
+# target to build an object file
+ui.cpp.obj:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/ui.cpp.obj
+.PHONY : ui.cpp.obj
+
+ui.i: ui.cpp.i
+.PHONY : ui.i
+
+# target to preprocess a source file
+ui.cpp.i:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/ui.cpp.i
+.PHONY : ui.cpp.i
+
+ui.s: ui.cpp.s
+.PHONY : ui.s
+
+# target to generate assembly for a file
+ui.cpp.s:
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/ui.cpp.s
+.PHONY : ui.cpp.s
+
 vector.obj: vector.cpp.obj
 .PHONY : vector.obj
 
 # target to build an object file
 vector.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/vector.cpp.obj
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\math_lib.dir\build.make src/CMakeFiles/math_lib.dir/vector.cpp.obj
 .PHONY : vector.cpp.obj
 
 vector.i: vector.cpp.i
@@ -390,7 +442,7 @@ vector.i: vector.cpp.i
 
 # target to preprocess a source file
 vector.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/vector.cpp.i
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\math_lib.dir\build.make src/CMakeFiles/math_lib.dir/vector.cpp.i
 .PHONY : vector.cpp.i
 
 vector.s: vector.cpp.s
@@ -398,7 +450,7 @@ vector.s: vector.cpp.s
 
 # target to generate assembly for a file
 vector.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/vector.cpp.s
+	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\math_lib.dir\build.make src/CMakeFiles/math_lib.dir/vector.cpp.s
 .PHONY : vector.cpp.s
 
 # Help Target
@@ -413,6 +465,8 @@ help:
 	@echo ... ecs_lib
 	@echo ... file_lib
 	@echo ... global_lib
+	@echo ... graphics_lib
+	@echo ... math_lib
 	@echo ... venus_lib
 	@echo ... audio.obj
 	@echo ... audio.i
@@ -438,6 +492,9 @@ help:
 	@echo ... structure.obj
 	@echo ... structure.i
 	@echo ... structure.s
+	@echo ... ui.obj
+	@echo ... ui.i
+	@echo ... ui.s
 	@echo ... vector.obj
 	@echo ... vector.i
 	@echo ... vector.s

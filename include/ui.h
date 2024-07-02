@@ -1,19 +1,32 @@
 #ifndef UI_H
 #define UI_H
 
-#include "file_util.h"
-#include "graphics.h"
-#include "vector.h"
-
-#include <cctype>
+#include "shader.h"
+#include <array>
 
 struct Text;
 
-namespace shader
+//
+struct CharacterTTF
 {
-    void ui(entity e, const Text& text, const Camera& camera, const Transform& cameraTransform);
-}
+    Vector2I min;
+    Vector2I scale;
+    int32_t lsb, rsb;
+    std::vector<uint16_t> contourEnds;
+    std::vector<Point> points;
+};
 
+//
+struct Font
+{
+    Vector2 maxScale = 0;
+    std::array<CharacterTTF, '~'+1> characters;
+    uint16_t unitsPerEm;
+
+    inline static std::unordered_map<std::string, Font> loadedFonts;
+};
+
+//
 namespace align
 {
     enum horizontal
@@ -37,6 +50,40 @@ struct Alignment
     Alignment(align::horizontal hAlignment__, align::vertical vAlignment__) : vertical(vAlignment__), horizontal(hAlignment__) {}
 };
 
+//
+struct Sprite
+{
+    Texture texture;
+
+    Sprite(){}
+    Sprite(const Texture& texture__) : texture(texture__)
+    {
+        square = Mesh::get("square");
+    }
+    
+    void refresh()
+    {
+        square.refresh();
+    }
+    void render()
+    {
+        square.draw(texture.texture);
+    }
+
+    Mesh square;
+    float sorting = 0;
+};
+
+
+//
+namespace text
+{
+    enum NewLineSetting
+    {
+        LETTER, WORD
+    };
+}
+
 // Rect (struct): screen-space equivalent of Transform :: holds position, rotation, scale, and alignment of an entity
 struct Rect
 {
@@ -46,21 +93,8 @@ struct Rect
     Quaternion rotation;
 
     Rect() {}
-    Rect(Alignment alignment__, Vector2 scale__ = vec2::one, Vector2 position__ = vec2::zero, Quaternion rotation__ = Quaternion()) : alignment(alignment__), position(position__), scale(scale__), rotation(rotation__)
-    {
-        refresh();
-    }
+    Rect(Alignment alignment__, Vector2 scale__ = vec2::one, Vector2 position__ = vec2::zero, Quaternion rotation__ = Quaternion()) : alignment(alignment__), position(position__), scale(scale__), rotation(rotation__) {}
 
-    void setAlignment(const Alignment& alignment__)
-    {
-        alignment = alignment__;
-        refresh();
-    }
-    void setScale(const Vector2& scale__)
-    {
-        scale = scale__;
-        refresh();
-    }
     void setRenderScaling(bool scaled__)
     {
         renderScaling = scaled__;
@@ -71,7 +105,7 @@ struct Rect
     }
 
     // checks whether the provided position 'vec' is within the bounds of the Rect
-    bool contains(const Vector2& vec) const;
+    bool contains(const Vector2& vec, const Vector2& dim) const;
     bool scaled() const
     {
         return renderScaling;
@@ -81,49 +115,33 @@ struct Rect
         return aspectScaling;
     }
 
-    Vector2 adjustedScale() const;
+    Vector2 adjustedScale(const Vector2& dim) const;
 
     // determines this Rect's 'position' relative to its 'alignment'
-    Vector2 relativePosition() const;
+    Vector2 relativePosition(const Vector2& dim) const;
 
     private:
-        Vector2 relativeOrigin;
-        bool renderScaling = true, aspectScaling = false;
+        bool renderScaling = false, aspectScaling = true;
 
         // refreshes the relative origin of the Rect
-        void refresh()
+        Vector2 relativeOrigin() const
         {
-            relativeOrigin = Vector2(alignment.horizontal-1, alignment.vertical-1);
+            return Vector2(alignment.horizontal-1, alignment.vertical-1);
         }
 };
 
-namespace text
-{
-    enum NewLineSetting
-    {
-        LETTER, WORD
-    };
-}
+//
 struct Text
 {
     bool update = false;
-    Shader shader;
-    void(*run)(entity e, const Text& sprite, const Camera& camera, const Transform& cameraTransform);
+    Shader textShader;
+    // void(*run)(entity e, const Text& sprite, const Camera& camera, const Transform& cameraTransform);
         
     Text() {}
-    Text(const Font& font__, const std::string& text__, float scale__, const Alignment& alignment__ = {align::TOP, align::LEFT}, const Color& color__ = color::BLACK, const Shader& shader__ = shader::get("ui_shader"), void(*run__)(entity, const Text&, const Camera&, const Transform&) = shader::ui);
+    Text(const Font& font__, const std::string& text__, float scale__, const Alignment& alignment__, const Shader& shader__ = Shader::get("ui_shader"), const Color& color__ = color::BLACK);
 
-    void initialize(const Rect& bounds);
-    void refresh(const Rect& bounds);
-    void render(entity e, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
-    {
-        run(e, *this, camera, cameraTransform);
-
-        if(result0.vertices.size())
-            result0.draw(texture0);
-        if(result1.vertices.size())
-            result1.draw(texture1);
-    }
+    void initialize(const Rect& bounds, const Vector2& dim);
+    void refresh(const Rect& bounds, const Vector2& dim);
     void destroy()
     {
         result0.remove();
@@ -228,5 +246,24 @@ struct Text
         void renderMesh(const Rect& bounds, std::vector<float>& result0, std::vector<float>& result1, std::vector<Vector3>& positions0, std::vector<Vector3>& positions1);
         void getUVs(char index, float scaling, Vector2& position, std::vector<float>& result0, std::vector<float>& result1, std::vector<Vector3>& positions0, std::vector<Vector3>& positions1);
 };
+
+
+//
+namespace ttf
+{
+    enum ErrorCode
+    {
+        SUCCESS, END_OF_FILE, INVALID_CHECKSUM, INVALID_BENCHMARK, UNSUPPORTED_CMAP, UNSUPPORTED_PLATFORM, UNSUPPORTED_FORMAT
+    };
+
+    void load(const std::string &fileName);
+    Font& get(const std::string &fileName);
+}
+
+//
+namespace file
+{
+    Font loadTTF(const std::string &fileName);
+}
 
 #endif

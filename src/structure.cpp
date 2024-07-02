@@ -10,7 +10,7 @@ uint8_t object::ecs::SystemManager::functionIndex = 0;
 
 uint32_t object::ecs::ComponentManager::idCount = 0;
 
-std::vector<size_t> object::ecs::SystemManager::m_spaceBuffer = {};
+std::vector<size_t> object::ecs::SystemManager::spaceBuffer = {};
 std::vector<size_t> object::ecs::ComponentManager::spaceBuffer = {};
 std::vector<bool> object::ecs::ComponentManager::complexBuffer = {};
 

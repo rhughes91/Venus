@@ -1,13 +1,8 @@
-#ifndef VENUS
-#define VENUS
+#ifndef VENUS_H
+#define VENUS_H
 
-#include "audio.h"
-#include "component.h"
 #include "file_util.h"
 #include "input.h"
-#include "machine.h"
 #include "setup.h"
-#include "structure.h"
-#include "ui.h"
 
 #endif

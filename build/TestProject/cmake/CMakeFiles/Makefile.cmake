@@ -59,10 +59,12 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "src/CMakeFiles/ecs_lib.dir/DependInfo.cmake"
+  "src/CMakeFiles/math_lib.dir/DependInfo.cmake"
   "src/CMakeFiles/file_lib.dir/DependInfo.cmake"
   "src/CMakeFiles/audio_lib.dir/DependInfo.cmake"
-  "src/CMakeFiles/venus_lib.dir/DependInfo.cmake"
+  "src/CMakeFiles/graphics_lib.dir/DependInfo.cmake"
   "src/CMakeFiles/global_lib.dir/DependInfo.cmake"
+  "src/CMakeFiles/venus_lib.dir/DependInfo.cmake"
   "vendor/CMakeFiles/vendor_lib.dir/DependInfo.cmake"
   "projects/TestProject/CMakeFiles/TestProject.dir/DependInfo.cmake"
   )

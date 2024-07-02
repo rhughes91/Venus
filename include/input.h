@@ -1,8 +1,9 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include <array>
+#include <set>
 #include <stdint.h>
+#include <string>
 #include <vector>
 
 uint32_t glInputToKeyCode(uint32_t input);
@@ -12,29 +13,30 @@ namespace key
 {
     enum KeyCode
     {
-        NIL, UP, DOWN, LEFT, RIGHT, PAGE_UP, PAGE_DOWN, NUM_LOCK, BACKSPACE, TAB, ENTER, K_ENTER, K_DECIMAL, K_ADD, K_SUBTRACT, K_MULTIPLY, K_DIVIDE, 
+        NIL, UP, DOWN, LEFT, RIGHT, PAGE_UP, PAGE_DOWN, END, BACKSPACE, TAB, ENTER, K_ENTER, K_DECIMAL, K_ADD, K_SUBTRACT, K_MULTIPLY, K_DIVIDE, 
         K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9, 
         ESCAPE, LEFT_SHIFT, RIGHT_SHIFT, LEFT_CTRL, RIGHT_CTRL, SPACE, INSERT, PRINT_SCREEN, LEFT_ALT, RIGHT_ALT, LEFT_SUPER, RIGHT_SUPER, APOSTROPHE, 
-        HOME, END, CAPS_LOCK, SCROLL_LOCK, COMMA, MINUS, PERIOD, SLASH, 
+        TOGGLE_START, MUTE = TOGGLE_START, NUM_LOCK, CAPS_LOCK, SCROLL_LOCK, COMMA, MINUS, PERIOD, SLASH, 
         ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, 
         PAUSE, SEMICOLON, K_EQUAL, EQUAL, MENU, DECR_VOLUME, INCR_VOLUME, 
         A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-        LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET, MUTE, CALCULATOR, GRAVE, 
+        LEFT_BRACKET, BACKSLASH, RIGHT_BRACKET, HOME, CALCULATOR, GRAVE, 
         F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, 
         GLOBAL_0, GLOBAL_1, GLOBAL_2, GLOBAL_3, DEL, UNKNOWN, LAST = UNKNOWN
     };
 
     using KeyArray = std::vector<KeyCode>;
 
-    bool pressed(int32_t id);
+    bool pressed(uint32_t id);
     bool pressed(KeyCode id);
     bool pressed(KeyArray ids);
-    bool held(int32_t id);
+    bool held(uint32_t id);
     bool held(KeyCode id);
     bool held(KeyArray ids);
-    bool released(int32_t id);
+    bool released(uint32_t id);
     bool released(KeyCode id);
     bool released(KeyArray ids);
+    bool toggled(KeyCode id);
 
     char typed();
     bool ascii_default(KeyCode key);
@@ -52,6 +54,35 @@ namespace mouse
     bool released(ButtonCode id);
 }
 
+// Key (struct): stores whether the stored key data (corresponding to GLFW key values) is being pressed, held, or released
+struct Key
+{
+    uint32_t data;
+    bool pressed, held, released;
+
+    operator std::string()
+    {
+        return "Pressed: "+std::to_string(pressed) + ", Held: "+std::to_string(held) + ", Released: "+std::to_string(released);
+    }
+    bool operator <(const Key& key) const
+    {
+        return data < key.data;
+    }
+};
+
+// InputManager (struct): stores keys and regulates whether they are being pressed, held, or released
+struct InputManager
+{
+    uint8_t heldKey = 0;
+
+    std::vector<bool> toggles;
+    std::vector<Key> inputs;
+    std::set<Key> heldKeys;
+
+    void initialize(int end, int toggleEnd = 0);                // initialized key values from 0 to 'end'
+    void parse(int32_t input, bool pressed); // determines whether the input is being pressed, held, or released
+    void refresh();                          // clears pressed and released keys after one frame, and erases held keys if they are released
+};
 
 // Button (struct): triggers its 'trigger' function when its attached Rect component is clicked on
 struct Button

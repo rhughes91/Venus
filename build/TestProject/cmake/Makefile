@@ -129,6 +129,19 @@ ecs_lib/fast:
 .PHONY : ecs_lib/fast
 
 #=============================================================================
+# Target rules for targets named math_lib
+
+# Build rule for target.
+math_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 math_lib
+.PHONY : math_lib
+
+# fast build rule for target.
+math_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\math_lib.dir\build.make src/CMakeFiles/math_lib.dir/build
+.PHONY : math_lib/fast
+
+#=============================================================================
 # Target rules for targets named file_lib
 
 # Build rule for target.
@@ -155,17 +168,17 @@ audio_lib/fast:
 .PHONY : audio_lib/fast
 
 #=============================================================================
-# Target rules for targets named venus_lib
+# Target rules for targets named graphics_lib
 
 # Build rule for target.
-venus_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 venus_lib
-.PHONY : venus_lib
+graphics_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 graphics_lib
+.PHONY : graphics_lib
 
 # fast build rule for target.
-venus_lib/fast:
-	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
-.PHONY : venus_lib/fast
+graphics_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/build
+.PHONY : graphics_lib/fast
 
 #=============================================================================
 # Target rules for targets named global_lib
@@ -179,6 +192,19 @@ global_lib: cmake_check_build_system
 global_lib/fast:
 	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/build
 .PHONY : global_lib/fast
+
+#=============================================================================
+# Target rules for targets named venus_lib
+
+# Build rule for target.
+venus_lib: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 venus_lib
+.PHONY : venus_lib
+
+# fast build rule for target.
+venus_lib/fast:
+	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\venus_lib.dir\build.make src/CMakeFiles/venus_lib.dir/build
+.PHONY : venus_lib/fast
 
 #=============================================================================
 # Target rules for targets named vendor_lib
@@ -219,6 +245,8 @@ help:
 	@echo ... ecs_lib
 	@echo ... file_lib
 	@echo ... global_lib
+	@echo ... graphics_lib
+	@echo ... math_lib
 	@echo ... vendor_lib
 	@echo ... venus_lib
 .PHONY : help
