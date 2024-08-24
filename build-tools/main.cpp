@@ -25,4 +25,5 @@ int main(int argc, char *argv[])
 
     std::filesystem::remove_all(source + "/../../Builds/"+argv[1]);
     std::filesystem::copy(source + "/../build/"+argv[1], source + "/../../Builds/"+argv[1], std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+    std::filesystem::remove_all(source + "/../../Builds/"+argv[1]+"/cmake");
 }

@@ -5,7 +5,7 @@
 
 namespace project
 {
-    void initialize();
+    void initialize(Application& app);
 };
 
 #endif

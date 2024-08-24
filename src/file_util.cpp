@@ -140,56 +140,64 @@ void file::loadFilesInDirectory(const std::string &fileName, void(*load)(const s
 }
 
 
-void ttf::load(const std::string &fileName)
+void Font::load(const std::string &fileName)
 {
     int index = fileName.find_last_of('/')+1;
-    Font::loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
+    loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
 }
-Font& ttf::get(const std::string &fileName)
+Font& Font::get(const std::string &fileName)
 {
-    if(!Font::loadedFonts.count(fileName))
+    if(!loadedFonts.count(fileName))
         std::cout << "ERROR :: TTF file " << fileName << " could not be found." << std::endl;
-    return Font::loadedFonts[fileName];
+    return loadedFonts[fileName];
 }
 
 void Source::initialize()
 {
     projSource = getCurrentDirectoryName();
-    std::vector<std::string> pathConfig = file::loadFileToStringVector("path.config");
-    for(const auto& line : pathConfig)
+    bool cmakeBuild = false;
+    for (const auto & entry : std::filesystem::directory_iterator(projSource))
+        if(entry.path().filename() == "cmake")
+            cmakeBuild = true;
+
+    // if(cmakeBuild)
     {
-        int index = -1;
-        if((index = line.find(':')) != std::string::npos)
+        std::vector<std::string> pathConfig = file::loadFileToStringVector("path.config");
+        for(const auto& line : pathConfig)
         {
-            std::string setting = line.substr(0, index);
-            
-            if(setting == "source")
+            int index = -1;
+            if((index = line.find(':')) != std::string::npos)
             {
-                projSource += line.substr(index+2);
-            }
-            else if(setting == "audio")
-            {
-                audioSource = line.substr(index+2) + "/";
-            }
-            else if(setting == "data")
-            {
-                configSource = line.substr(index+2) + "/";
-            }
-            else if(setting == "texture")
-            {
-                textureSource = line.substr(index+2) + "/";
-            }
-            else if(setting == "font")
-            {
-                fontSource = line.substr(index+2) + "/";
-            }
-            else if(setting == "model")
-            {
-                modelSource = line.substr(index+2) + "/";
-            }
-            else if(setting == "shader")
-            {
-                shaderSource = line.substr(index+2) + "/";
+                std::string setting = line.substr(0, index);
+                
+                if(setting == "source")
+                {
+                    projSource += line.substr(index+2);
+                }
+                else if(setting == "audio")
+                {
+                    audioSource = line.substr(index+2) + "/";
+                }
+                else if(setting == "data")
+                {
+                    configSource = line.substr(index+2) + "/";
+                }
+                else if(setting == "texture")
+                {
+                    textureSource = line.substr(index+2) + "/";
+                }
+                else if(setting == "font")
+                {
+                    fontSource = line.substr(index+2) + "/";
+                }
+                else if(setting == "model")
+                {
+                    modelSource = line.substr(index+2) + "/";
+                }
+                else if(setting == "shader")
+                {
+                    shaderSource = line.substr(index+2) + "/";
+                }
             }
         }
     }
@@ -879,7 +887,7 @@ Font file::loadTTF(const std::string &fileName)
             default:
                 font.maxScale = vec2::zero;
                 font.unitsPerEm = ttf.head.unitsPerEm;
-                font.characters = std::array<CharacterTTF, '~'+1>();
+                font.characters = std::vector<CharacterTTF>('~'+1);
                 for(int i=0; i<='~'; i++)
                 {
                     uint16_t index = ttf.cmap.glyphIndexMap[i];

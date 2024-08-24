@@ -119,6 +119,38 @@ src/CMakeFiles/graphics_lib.dir/graphics.cpp.obj: C:/Projects/Venus/src/graphics
   C:/Projects/Venus/include/graphics.h \
   C:/Projects/Venus/include/shader.h \
   C:/Projects/Venus/include/color.h \
+  C:/Projects/Venus/include/serialize.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cstring \
+  C:/msys64/mingw64/include/string.h \
+  C:/msys64/mingw64/include/sec_api/string_s.h \
+  C:/msys64/mingw64/include/c++/12.1.0/typeinfo \
+  C:/msys64/mingw64/include/c++/12.1.0/iostream \
+  C:/msys64/mingw64/include/c++/12.1.0/ostream \
+  C:/msys64/mingw64/include/c++/12.1.0/ios \
+  C:/msys64/mingw64/include/c++/12.1.0/exception \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/system_error \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h \
+  C:/msys64/mingw64/include/c++/12.1.0/stdexcept \
+  C:/msys64/mingw64/include/c++/12.1.0/streambuf \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cwctype \
+  C:/msys64/mingw64/include/wctype.h \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/istream \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
   C:/Projects/Venus/include/vector.h \
   C:/msys64/mingw64/include/c++/12.1.0/math.h \
   C:/msys64/mingw64/include/c++/12.1.0/cmath \
@@ -222,34 +254,6 @@ src/CMakeFiles/graphics_lib.dir/graphics.cpp.obj: C:/Projects/Venus/src/graphics
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxbf16intrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/prfchwintrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/keylockerintrin.h \
-  C:/msys64/mingw64/include/c++/12.1.0/iostream \
-  C:/msys64/mingw64/include/c++/12.1.0/ostream \
-  C:/msys64/mingw64/include/c++/12.1.0/ios \
-  C:/msys64/mingw64/include/c++/12.1.0/exception \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h \
-  C:/msys64/mingw64/include/c++/12.1.0/typeinfo \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/system_error \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h \
-  C:/msys64/mingw64/include/c++/12.1.0/stdexcept \
-  C:/msys64/mingw64/include/c++/12.1.0/streambuf \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h \
-  C:/msys64/mingw64/include/c++/12.1.0/cwctype \
-  C:/msys64/mingw64/include/wctype.h \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/istream \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
   C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
@@ -380,6 +384,38 @@ src/CMakeFiles/graphics_lib.dir/shader.cpp.obj: C:/Projects/Venus/src/shader.cpp
   C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
   C:/Projects/Venus/include/shader.h \
   C:/Projects/Venus/include/color.h \
+  C:/Projects/Venus/include/serialize.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cstring \
+  C:/msys64/mingw64/include/string.h \
+  C:/msys64/mingw64/include/sec_api/string_s.h \
+  C:/msys64/mingw64/include/c++/12.1.0/typeinfo \
+  C:/msys64/mingw64/include/c++/12.1.0/iostream \
+  C:/msys64/mingw64/include/c++/12.1.0/ostream \
+  C:/msys64/mingw64/include/c++/12.1.0/ios \
+  C:/msys64/mingw64/include/c++/12.1.0/exception \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/system_error \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h \
+  C:/msys64/mingw64/include/c++/12.1.0/stdexcept \
+  C:/msys64/mingw64/include/c++/12.1.0/streambuf \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cwctype \
+  C:/msys64/mingw64/include/wctype.h \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/istream \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
   C:/Projects/Venus/include/vector.h \
   C:/msys64/mingw64/include/c++/12.1.0/math.h \
   C:/msys64/mingw64/include/c++/12.1.0/cmath \
@@ -483,37 +519,6 @@ src/CMakeFiles/graphics_lib.dir/shader.cpp.obj: C:/Projects/Venus/src/shader.cpp
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxbf16intrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/prfchwintrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/keylockerintrin.h \
-  C:/msys64/mingw64/include/c++/12.1.0/iostream \
-  C:/msys64/mingw64/include/c++/12.1.0/ostream \
-  C:/msys64/mingw64/include/c++/12.1.0/ios \
-  C:/msys64/mingw64/include/c++/12.1.0/exception \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h \
-  C:/msys64/mingw64/include/c++/12.1.0/typeinfo \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/system_error \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h \
-  C:/msys64/mingw64/include/c++/12.1.0/stdexcept \
-  C:/msys64/mingw64/include/c++/12.1.0/streambuf \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h \
-  C:/msys64/mingw64/include/c++/12.1.0/cwctype \
-  C:/msys64/mingw64/include/wctype.h \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/istream \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
-  C:/Projects/Venus/include/glad/glad.h \
-  C:/Projects/Venus/include/KHR/khrplatform.h \
-  C:/Projects/Venus/include/image/stb_image.h \
   C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
   C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
@@ -523,7 +528,10 @@ src/CMakeFiles/graphics_lib.dir/shader.cpp.obj: C:/Projects/Venus/src/shader.cpp
   C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h
+  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
+  C:/Projects/Venus/include/glad/glad.h \
+  C:/Projects/Venus/include/KHR/khrplatform.h \
+  C:/Projects/Venus/include/image/stb_image.h
 
 src/CMakeFiles/graphics_lib.dir/ui.cpp.obj: C:/Projects/Venus/src/ui.cpp \
   C:/Projects/Venus/include/ui.h \
@@ -637,6 +645,43 @@ src/CMakeFiles/graphics_lib.dir/ui.cpp.obj: C:/Projects/Venus/src/ui.cpp \
   C:/msys64/mingw64/include/c++/12.1.0/cerrno \
   C:/msys64/mingw64/include/c++/12.1.0/bits/charconv.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/basic_string.tcc \
+  C:/Projects/Venus/include/serialize.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cstring \
+  C:/msys64/mingw64/include/string.h \
+  C:/msys64/mingw64/include/sec_api/string_s.h \
+  C:/msys64/mingw64/include/c++/12.1.0/typeinfo \
+  C:/msys64/mingw64/include/c++/12.1.0/vector \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/iostream \
+  C:/msys64/mingw64/include/c++/12.1.0/ostream \
+  C:/msys64/mingw64/include/c++/12.1.0/ios \
+  C:/msys64/mingw64/include/c++/12.1.0/exception \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/system_error \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h \
+  C:/msys64/mingw64/include/c++/12.1.0/stdexcept \
+  C:/msys64/mingw64/include/c++/12.1.0/streambuf \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cwctype \
+  C:/msys64/mingw64/include/wctype.h \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h \
+  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/istream \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
   C:/Projects/Venus/include/vector.h \
   C:/msys64/mingw64/include/c++/12.1.0/math.h \
   C:/msys64/mingw64/include/c++/12.1.0/cmath \
@@ -655,11 +700,6 @@ src/CMakeFiles/graphics_lib.dir/ui.cpp.obj: C:/Projects/Venus/src/ui.cpp \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/vector \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_uninitialized.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/immintrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/x86gprintrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/ia32intrin.h \
@@ -745,34 +785,16 @@ src/CMakeFiles/graphics_lib.dir/ui.cpp.obj: C:/Projects/Venus/src/ui.cpp \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxbf16intrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/prfchwintrin.h \
   C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/keylockerintrin.h \
-  C:/msys64/mingw64/include/c++/12.1.0/iostream \
-  C:/msys64/mingw64/include/c++/12.1.0/ostream \
-  C:/msys64/mingw64/include/c++/12.1.0/ios \
-  C:/msys64/mingw64/include/c++/12.1.0/exception \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/exception_ptr.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h \
-  C:/msys64/mingw64/include/c++/12.1.0/typeinfo \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_classes.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/system_error \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h \
-  C:/msys64/mingw64/include/c++/12.1.0/stdexcept \
-  C:/msys64/mingw64/include/c++/12.1.0/streambuf \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h \
-  C:/msys64/mingw64/include/c++/12.1.0/cwctype \
-  C:/msys64/mingw64/include/wctype.h \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h \
-  C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/istream \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
+  C:/msys64/mingw64/include/c++/12.1.0/ext/aligned_buffer.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
+  C:/msys64/mingw64/include/c++/12.1.0/tuple \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/uses_allocator.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
   C:/msys64/mingw64/include/c++/12.1.0/array \
   C:/msys64/mingw64/include/c++/12.1.0/compare
 
@@ -785,9 +807,9 @@ C:/Projects/Venus/src/graphics.cpp:
 
 C:/Projects/Venus/include/file_util.h:
 
-C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h:
-
 C:/msys64/mingw64/include/c++/12.1.0/bits/specfun.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf_iterator.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/string:
 
@@ -821,9 +843,9 @@ C:/msys64/mingw64/include/stdio.h:
 
 C:/msys64/mingw64/include/sdks/_mingw_ddk.h:
 
-C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h:
-
 C:/msys64/mingw64/include/c++/12.1.0/tr1/ell_integral.tcc:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/ios_base.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/bits/postypes.h:
 
@@ -926,6 +948,8 @@ C:/msys64/mingw64/include/c++/12.1.0/bits/move.h:
 C:/msys64/mingw64/include/locale.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/bits/ostream_insert.h:
+
+C:/msys64/mingw64/include/string.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/iosfwd:
 
@@ -1079,15 +1103,63 @@ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/vpclmulqdqintrin.h:
 
 C:/Projects/Venus/include/color.h:
 
+C:/Projects/Venus/include/serialize.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc:
+
+C:/msys64/mingw64/include/c++/12.1.0/cstring:
+
+C:/msys64/mingw64/include/sec_api/string_s.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/typeinfo:
+
+C:/msys64/mingw64/include/c++/12.1.0/ostream:
+
+C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512pfintrin.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/ios:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h:
+
+C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/mmintrin.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/system_error:
+
+C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/streambuf:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc:
+
+C:/msys64/mingw64/include/wctype.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/cwctype:
+
+C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc:
+
+C:/msys64/mingw64/include/math.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/istream:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc:
+
 C:/Projects/Venus/include/vector.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/math.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/cmath:
-
-C:/msys64/mingw64/include/c++/12.1.0/istream:
-
-C:/msys64/mingw64/include/math.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/limits:
 
@@ -1179,10 +1251,6 @@ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/xsavesintrin.h:
 
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/hresetintrin.h:
 
-C:/msys64/mingw64/include/c++/12.1.0/system_error:
-
-C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/mmintrin.h:
-
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/emmintrin.h:
 
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/pmmintrin.h:
@@ -1200,10 +1268,6 @@ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512fintrin.h:
 C:/Projects/Venus/include/ui.h:
 
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512erintrin.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/ios:
-
-C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512pfintrin.h:
 
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/avx512cdintrin.h:
 
@@ -1256,40 +1320,6 @@ C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxtileintrin.h:
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxint8intrin.h:
 
 C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/12.1.0/include/amxbf16intrin.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/ostream:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/cxxabi_init_exception.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/typeinfo:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/nested_exception.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/error_constants.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/streambuf:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/streambuf.tcc:
-
-C:/msys64/mingw64/include/wctype.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/cwctype:
-
-C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_base.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/x86_64-w64-mingw32/bits/ctype_inline.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/locale_facets.tcc:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/basic_ios.tcc:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc:
 
 C:/msys64/mingw64/include/c++/12.1.0/unordered_map:
 

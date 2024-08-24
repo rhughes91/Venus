@@ -41,11 +41,10 @@ struct FrameBuffer
 struct SimpleShader
 {
     Color color = color::WHITE;
-    Vector2 offset, scale = 1;
 
     bool flip = false;
 
-    SimpleShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1) : color(objColor), offset(uvOffset), scale(uvScale), flip(false) {}
+    SimpleShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0) : color(objColor), flip(false) {}
 };
 
 //
@@ -55,13 +54,18 @@ struct AdvancedShader : SimpleShader
     int32_t shine = 0;
 
     AdvancedShader(const Color& objColor = color::WHITE, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
-    AdvancedShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor, uvOffset, uvScale), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
 };
 
 //
 struct ComplexShader : SimpleShader
 {
-    ComplexShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0, const Vector2& uvScale = 1) : SimpleShader(objColor, uvOffset, uvScale) {}
+    ComplexShader(const Color& objColor = color::WHITE) : SimpleShader(objColor) {}
+};
+
+//
+struct TextShader : SimpleShader
+{
+
 };
 
 //
@@ -77,8 +81,10 @@ struct Model
 {
     Mesh data;
     Texture texture;
+    Vector2 offset, scale = 1;
 
     Model() {}
+    Model(const Texture& texture__, Vector2 offset__, Vector2 scale__, Mesh data__ = Mesh::get("square")) : data(data__), offset(offset__), scale(scale__), texture(texture__) {}
     Model(const Texture& texture__, Mesh data__ = Mesh::get("square")) : data(data__), texture(texture__) {}
 
     void refresh()

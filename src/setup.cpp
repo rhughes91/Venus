@@ -3,7 +3,6 @@
 #include "setup.h"
 
 #include "glad/glad.h"
-#define GLFW_DLL
 #include "GLFW/glfw3.h"
 #include "image/stb_image.h"
 
@@ -78,7 +77,7 @@ void physics::collisionMiss(entity e, object::ecs& container)
     container.getComponent<Physics2D>(e).resetCollisions();
 }
 
-Camera::Camera(Color color__, Vector3 front__, Vector3 up__, float aspect__, float near__, float far__, float fov__) : backgroundColor(color__), front(front__), up(up__), nearDistance(near__), farDistance(far__), fov(fov__)
+Camera::Camera(Color color__, float aspect__, Vector3 front__, Vector3 up__, float near__, float far__, float fov__) : backgroundColor(color__), front(front__), up(up__), nearDistance(near__), farDistance(far__), fov(fov__)
 {
     projection = mat4::per(math::radians(fov), aspect__, near__, far__);
 }
@@ -166,7 +165,7 @@ void object::setFunctionDefinitions(object::ecs& container, const std::vector<ui
 
 void MeshAddon::append(Model& model, const Transform& parentTransform)
 {
-    std::vector<Vertex> newVertices = model.data.vertices;
+    std::vector<Vertex> newVertices = model.data.getVertices();
     Vector3 average = 0, max = 0, min = -std::numeric_limits<float>::lowest();
     for(int i=0; i<additions.size(); i++)
     {
@@ -182,25 +181,17 @@ void MeshAddon::append(Model& model, const Transform& parentTransform)
         min = vec3::min(min, additions[i].transform.position);
         
         additions[i].transform.position = (mat4x4)parentTransform.rotation * additions[i].transform.position;
-
-        for(auto vertex : newVertices)
-        {
-            vertex.position = (mat4x4)additions[i].transform.rotation * (mat4x4)parentTransform.rotation * vertex.position;
-            vertex.position += additions[i].transform.position;
-            vertex.position = (mat4x4)parentTransform.rotation.conjugate() * vertex.position;
-            vertex.uv = vertex.uv * additions[i].uvScale + additions[i].uvOffset;
-            model.data.vertices.push_back(vertex);
-        }
+        model.data.append(newVertices, additions[i].transform.position, additions[i].transform.rotation, parentTransform.rotation, additions[i].uvScale, additions[i].uvOffset);
     }
 
     model.data.offset += average;
     model.data.dimensions += (max-min) * model.data.dimensions;
 
-    std::string addendumPath = "Mesh:"+std::to_string(model.data.VAO)+":"+std::to_string(model.data.VBO);
+    std::string addendumPath = model.data.identifier();
     if(!Mesh::contains(addendumPath))
     {
         model.data.generate();
-        addendumPath = "Mesh:"+std::to_string(model.data.VAO)+":"+std::to_string(model.data.VBO);
+        addendumPath = model.data.identifier();
     }
     Mesh::set(addendumPath, model.data);
     model.data.refresh();
@@ -248,6 +239,14 @@ void InputManager::refresh()
         }
     }
     heldKey = '\0';
+}
+void JoystickManager::initializeAxes(int end)
+{
+    axes = std::vector<float>(end+1);
+    for(uint32_t i = 0; i <= end; i++)
+    {
+        axes[i] = 0.0f;
+    }
 }
 
 void Timer::update(float delta, float max)
@@ -331,32 +330,6 @@ int Screen::getMaximumSamples()
     glGetIntegerv(GL_MAX_SAMPLES, &maxSamples);
     return maxSamples;
 }
-
-// void shader::ui(entity e, const Sprite& sprite, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
-// {
-//     Rect& transform = container.getComponent<Rect>(e);
-//     Shader shader = sprite.shader;
-//     shader.use();
-//    
-//     shader.setFloat("aspect", transform.useAspect() ? win.aspectRatio():1);
-//     shader.setVec2("position", transform.relativePosition());
-//     shader.setVec2("scale", transform.adjustedScale());
-//     shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
-//     shader.setVec4("objColor", sprite.color);
-// }
-// void shader::ui(entity e, const Text& text, const Camera& camera = Camera(), const Transform& cameraTransform = Transform())
-// {
-//     Rect& transform = container.getComponent<Rect>(e);
-//     Shader shader = text.shader;
-//     shader.use();
-//    
-//     float scaleModifier = (text.getScale()*5) / Window::height();
-//     shader.setFloat("aspect", win.aspectRatio());
-//     shader.setVec2("position", transform.relativePosition() + transform.adjustedScale() * Vector2(-win.aspectRatio(), 1) * 0.5f);
-//     shader.setVec2("scale", scaleModifier);
-//     shader.setMat4("model", (mat4x4(1) * (mat4x4)transform.rotation).matrix, false);
-//     shader.setVec4("objColor", text.getColor());
-// }
 
 uint32_t glInputToKeyCode(uint32_t input)
 {
@@ -500,6 +473,41 @@ uint32_t glInputToButtonCode(uint32_t input)
     }
     return mouse::UNKNOWN;
 }
+uint32_t glInputToJoystickCode(uint32_t input)
+{
+    switch(input)
+    {
+        case GLFW_GAMEPAD_BUTTON_A: return controller::BUTTON_A;
+        case GLFW_GAMEPAD_BUTTON_B: return controller::BUTTON_B;
+        case GLFW_GAMEPAD_BUTTON_X: return controller::BUTTON_X;
+        case GLFW_GAMEPAD_BUTTON_Y: return controller::BUTTON_Y;
+        case GLFW_GAMEPAD_BUTTON_LEFT_BUMPER: return controller::LEFT_BUMPER;
+        case GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER: return controller::RIGHT_BUMPER;
+        case GLFW_GAMEPAD_BUTTON_BACK: return controller::BACK;
+        case GLFW_GAMEPAD_BUTTON_START: return controller::START;
+        case GLFW_GAMEPAD_BUTTON_GUIDE: return controller::GUIDE;
+        case GLFW_GAMEPAD_BUTTON_LEFT_THUMB: return controller::LEFT_THUMB;
+        case GLFW_GAMEPAD_BUTTON_RIGHT_THUMB: return controller::RIGHT_THUMB;
+        case GLFW_GAMEPAD_BUTTON_DPAD_UP: return controller::DPAD_UP;
+        case GLFW_GAMEPAD_BUTTON_DPAD_RIGHT: return controller::DPAD_RIGHT;
+        case GLFW_GAMEPAD_BUTTON_DPAD_DOWN: return controller::DPAD_DOWN;
+        case GLFW_GAMEPAD_BUTTON_DPAD_LEFT: return controller::DPAD_LEFT;
+    }
+    return controller::UNKNOWN;
+}
+uint32_t glInputToJoystickAxisCode(uint32_t input)
+{
+    switch(input)
+    {
+        case GLFW_GAMEPAD_AXIS_LEFT_X: return controller::AXIS_LEFT_X;
+        case GLFW_GAMEPAD_AXIS_LEFT_Y: return controller::AXIS_LEFT_Y;
+        case GLFW_GAMEPAD_AXIS_RIGHT_X: return controller::AXIS_RIGHT_X;
+        case GLFW_GAMEPAD_AXIS_RIGHT_Y: return controller::AXIS_RIGHT_Y;
+        case GLFW_GAMEPAD_AXIS_LEFT_TRIGGER: return controller::AXIS_LEFT_TRIGGER;
+        case GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER: return controller::AXIS_RIGHT_TRIGGER;
+    }
+    return controller::AXIS_UNKNOWN;
+}
 
 void error_callback(int error, const char* msg)
 {
@@ -567,6 +575,34 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
     Application::cursorPosition = {(float)xpos, (float)ypos};
 }
+void JoystickManager::joystick_button_callback()
+{
+    GLFWgamepadstate state;
+    if(active && glfwGetGamepadState(id, &state))
+    {
+        for(GLenum k = 0; k <= GLFW_GAMEPAD_BUTTON_LAST; k++)
+        {
+            parse(glInputToJoystickCode(k), state.buttons[k]);
+        }
+        parse(controller::LEFT_TRIGGER, state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] > 0.5f);
+        parse(controller::RIGHT_TRIGGER, state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] > 0.5f);
+        for(GLenum k = 0; k <= GLFW_GAMEPAD_AXIS_LAST; k++)
+        {
+            axes[glInputToJoystickAxisCode(k)] = state.axes[k];
+        }
+    }
+}
+void joystick_callback(int jid, int event)
+{
+    if (event == GLFW_CONNECTED)
+    {
+        Application::controllers[jid].active = true;
+    }
+    else if (event == GLFW_DISCONNECTED)
+    {
+        Application::controllers[jid].active = false;
+    }
+}
 void framebuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 {
     glViewport(0, 0, width, height);
@@ -605,7 +641,16 @@ bool key::pressed(key::KeyCode id)
 }
 bool key::pressed(key::KeyArray ids)
 {
-    for(const KeyCode &id : ids)
+    for(const key::KeyCode &id : ids.get())
+    {
+        if(Application::keyboard.inputs[id].pressed)
+            return true;
+    }
+    return false;
+}
+bool key::pressed(const std::vector<key::KeyCode>& ids)
+{
+    for(const key::KeyCode &id : ids)
     {
         if(Application::keyboard.inputs[id].pressed)
             return true;
@@ -621,6 +666,17 @@ bool key::held(key::KeyCode id)
     return Application::keyboard.inputs[id].held;
 }
 bool key::held(key::KeyArray ids)
+{
+    for(const KeyCode &id : ids.get())
+    {
+        if(Application::keyboard.inputs[id].held)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool key::held(const std::vector<key::KeyCode>& ids)
 {
     for(const KeyCode &id : ids)
     {
@@ -640,6 +696,15 @@ bool key::released(key::KeyCode id)
     return Application::keyboard.inputs[id].released;
 }
 bool key::released(key::KeyArray ids)
+{
+    for(const KeyCode &id : ids.get())
+    {
+        if(Application::keyboard.inputs[id].released)
+            return true;
+    }
+    return false;
+}
+bool key::released(const std::vector<key::KeyCode>& ids)
 {
     for(const KeyCode &id : ids)
     {
@@ -742,13 +807,147 @@ bool mouse::pressed(mouse::ButtonCode id)
 {
     return Application::mouse.inputs[id].pressed;
 }
+bool mouse::pressed(mouse::ButtonArray ids)
+{
+    for(const mouse::ButtonCode &id : ids.get())
+    {
+        if(mouse::pressed(id))
+            return true;
+    }
+    return false;
+}
+bool mouse::pressed(const std::vector<mouse::ButtonCode>& ids)
+{
+    for(const mouse::ButtonCode &id : ids)
+    {
+        if(mouse::pressed(id))
+            return true;
+    }
+    return false;
+}
 bool mouse::held(mouse::ButtonCode id)
 {
     return Application::mouse.inputs[id].held;
 }
+bool mouse::held(mouse::ButtonArray ids)
+{
+    for(const mouse::ButtonCode &id : ids.get())
+    {
+        if(mouse::held(id))
+            return true;
+    }
+    return false;
+}
+bool mouse::held(const std::vector<mouse::ButtonCode>& ids)
+{
+    for(const mouse::ButtonCode &id : ids)
+    {
+        if(mouse::held(id))
+            return true;
+    }
+    return false;
+}
 bool mouse::released(mouse::ButtonCode id)
 {
     return Application::mouse.inputs[id].held;
+}
+bool mouse::released(mouse::ButtonArray ids)
+{
+    for(const mouse::ButtonCode &id : ids.get())
+    {
+        if(mouse::released(id))
+            return true;
+    }
+    return false;
+}
+bool mouse::released(const std::vector<mouse::ButtonCode>& ids)
+{
+    for(const mouse::ButtonCode &id : ids)
+    {
+        if(mouse::released(id))
+            return true;
+    }
+    return false;
+}
+
+bool controller::pressed(uint32_t index, controller::ButtonCode id)
+{
+    JoystickManager& controller =  Application::controllers[index];
+    if(controller.active)
+        return controller.inputs[id].pressed;
+    return false;
+}
+bool controller::pressed(uint32_t index, controller::ButtonArray ids)
+{
+    for(const controller::ButtonCode &id : ids.get())
+    {
+        if(controller::pressed(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::pressed(uint32_t index, const std::vector<controller::ButtonCode>& ids)
+{
+    for(const controller::ButtonCode &id : ids)
+    {
+        if(controller::pressed(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::held(uint32_t index, controller::ButtonCode id)
+{
+    JoystickManager& controller =  Application::controllers[index];
+    if(controller.active)
+        return controller.inputs[id].held;
+    return false;
+}
+bool controller::held(uint32_t index, controller::ButtonArray ids)
+{
+    for(const controller::ButtonCode &id : ids.get())
+    {
+        if(controller::held(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::held(uint32_t index, const std::vector<controller::ButtonCode>& ids)
+{
+    for(const controller::ButtonCode &id : ids)
+    {
+        if(controller::held(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::released(uint32_t index, controller::ButtonCode id)
+{
+    JoystickManager& controller =  Application::controllers[index];
+    if(controller.active)
+        return controller.inputs[id].held;
+    return false;
+}
+bool controller::released(uint32_t index, controller::ButtonArray ids)
+{
+    for(const controller::ButtonCode &id : ids.get())
+    {
+        if(controller::released(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::released(uint32_t index, const std::vector<controller::ButtonCode>& ids)
+{
+    for(const controller::ButtonCode &id : ids)
+    {
+        if(controller::released(index, id))
+            return true;
+    }
+    return false;
+}
+float controller::axis(uint32_t index, AxisCode id)
+{
+    return Application::controllers[index].axes[id];
 }
 
 bool Window::closing()
@@ -872,6 +1071,14 @@ void Window::enableDecoration(bool enable)
 {
     glfwSetWindowAttrib((GLFWwindow *)data, GLFW_DECORATED, enable);
 }
+void Window::enableFloating(bool enable)
+{
+    glfwSetWindowAttrib((GLFWwindow *)data, GLFW_FLOATING, enable);
+}
+void Window::enablePassthrough(bool enable)
+{
+    glfwSetWindowAttrib((GLFWwindow *)data, GLFW_MOUSE_PASSTHROUGH, enable);
+}
 void Window::fullscreen(bool enable, bool vsync)
 {
     if(enable && !fullscreened())
@@ -983,11 +1190,18 @@ float Window::getOpacity()
     return glfwGetWindowOpacity((GLFWwindow *)data);
 }
 
+Vector2 Window::fetchCursorPos()
+{
+    double xPos, yPos;
+    glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
+    return Vector2((float)xPos, (float)yPos);
+}
 Vector2 Window::cursorUniformScreenPosition()
 {
     Vector2 cursorPosition = Application::cursorPosition;
-    Vector2 pos = Window::position();
-    return Vector2((cursorPosition.x/(float)pos.x)*2 - 1, -(cursorPosition.y/pos.y)*2 + 1);
+    Vector2 res = Window::resolution();
+
+    return {((float)cursorPosition.x/(float)res.x)*2 - 1, -((float)cursorPosition.y/(float)res.y)*2 + 1};
 }
 Vector2 Window::cursorScreenPosition()
 {
@@ -1016,7 +1230,17 @@ Vector2I Window::monitorCenter()
     glfwGetMonitorPhysicalSize(glfwGetPrimaryMonitor(), &result.x, &result.y);
     return result * 2;
 }
-
+Color Window::getPixelColor(const Vector2& position)
+{
+    GLubyte pixel[4];
+    glReadPixels(position.x, resolution().y - position.y - 1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+    Color result = Color();
+    result.r = pixel[0];
+    result.g = pixel[1];
+    result.b = pixel[2];
+    result.a = pixel[3];
+    return result;
+}
 
 Window::Window(std::string name, uint32_t width__, uint32_t height__)
 {
@@ -1024,7 +1248,7 @@ Window::Window(std::string name, uint32_t width__, uint32_t height__)
     height = height__;
     screen.defaultColor = color::RED;
 
-    data = glfwCreateWindow(800, 600, "default", NULL, NULL);
+    data = glfwCreateWindow(width, height, name.c_str(), NULL, NULL);
     if(data == NULL)
     {
         std::cout << "ERROR :: Failed to create GLFW window." << std::endl;
@@ -1043,10 +1267,6 @@ Window::Window(std::string name, uint32_t width__, uint32_t height__)
 
     configureGLAD();
     glViewport(0, 0, width, height);
-    
-    double xPos, yPos;
-    glfwGetCursorPos((GLFWwindow *)data, &xPos, &yPos);
-    cursorPosition = {(int)xPos, (int)yPos};
 
     stbi_set_flip_vertically_on_load(true);
     screen.initialize(DirectionalLight(vec3::forward, color::WHITE), Shader("screen_vertex", "screen_frag"), width, height);
@@ -1088,7 +1308,7 @@ void Window::configureGLAD()
 void initializeECS(object::ecs& manager)
 {  
     object::setFunctionDefinitions(manager, {&object::fn::LOAD, &object::fn::START, &object::fn::UPDATE, &object::fn::LATE_UPDATE, &object::fn::FIXED_UPDATE, &object::fn::RENDER, &object::fn::DESTROY});
-
+    
     auto& audio = manager.createSystem<AudioManager, Audio, Transform>({}, 0);
     audio.setFunction(object::fn::LOAD, []
     (object::ecs &container, object::ecs::system &system, void *data)
@@ -1363,9 +1583,48 @@ void initializeECS(object::ecs& manager)
     {
         for(entity e : container.entities<AnimationManager>())
         {
-            // Animator2D& animator = container.getComponent<Animator2D>(e);
-            // Animation& animation = animator.transition().transition();
-            // container.getComponent<Model>(e).texture.texture = animation.frames[animation.step()].texture;
+            Animator2D animator = container.getComponent<Animator2D>(e);
+            AnimationState state = animator.getCurrent();
+            Animation2D animation = state.getCurrent();
+            Model model = container.getComponent<Model>(e);
+            Texture current = animation.current();
+            if(current != Texture() && model.texture != current)
+            {
+                model.texture = current;
+                container.setComponent<Model>(e, model);
+            }
+
+            animation.currentFrame = (animation.currentFrame + 1) % animation.frames.size();
+            state.setState(animation);
+            animator.setState(state);
+            container.setComponent<Animator2D>(e, animator);
+        }
+    });
+
+    auto& animationsUV = manager.createSystem<AnimationUVManager, AnimatorUV, Model>({}, 24);
+    animationsUV.setFunction(object::fn::FIXED_UPDATE, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        for(entity e : container.entities<AnimationUVManager>())
+        {
+            AnimatorUV animator = container.getComponent<AnimatorUV>(e);
+            AnimationStateUV state = animator.getCurrent();
+            AnimationUV animation = state.getCurrent();
+            Model model = container.getComponent<Model>(e);
+            Texture current = animation.texture;
+            
+            if(model.texture != current || (animation.update() && (animation.type != AnimationUV::STOP || animation.currentFrame != animation.length-1)))
+            {
+                model.texture = current;
+                model.scale = Vector2(1.0f / animation.bounds.x, 1.0f / animation.bounds.y);
+                model.offset = Vector2((animation.currentFrame % animation.bounds.x) / (float)animation.bounds.x, (animation.bounds.y - (int)(animation.currentFrame / animation.bounds.x) - 1) / (float)animation.bounds.y);
+                container.setComponent<Model>(e, model);
+                animation.currentFrame = (animation.currentFrame + 1) % animation.length;
+            }
+
+            state.setState(animation);
+            animator.setState(state);
+            container.setComponent<AnimatorUV>(e, animator);
         }
     });
 
@@ -1382,38 +1641,6 @@ void initializeECS(object::ecs& manager)
 
             container.setComponent<Model>(e, model);
         }
-    });
-
-    auto& uiRendering = manager.createSystem<UIRenderer, Rect, Sprite, SimpleShader>({}, 30);
-    uiRendering.setFunction(object::fn::RENDER, []
-    (object::ecs & container, object::ecs::system &system, void *data)
-    {
-        Window& win = Application::data(data).window();
-        Vector2I res = win.resolution();
-        uint32_t cam = win.screen.camera;
-        if(cam == -1)
-            return;
-
-        Camera& camera = container.getComponent<Camera>(cam);
-        Shader& shader = Shader::get("ui_shader");
-        shader.use();
-
-        glDisable(GL_DEPTH_TEST);
-        for(entity e : container.entities<UIRenderer>())
-        {
-            Sprite sprite = container.getComponent<Sprite>(e);
-            Rect& rect = container.getComponent<Rect>(e);
-            SimpleShader& mat = container.getComponent<SimpleShader>(e);
-
-            shader.setFloat("aspect", rect.useAspect() ? win.aspectRatio():1);
-            shader.setVec2("position", rect.relativePosition(res));
-            shader.setVec2("scale", rect.adjustedScale(res));
-            shader.setMat4("model", (mat4x4(1) * (mat4x4)rect.rotation).matrix, false);
-            shader.setVec4("objColor", mat.color);
-
-            sprite.render();
-        }
-        glEnable(GL_DEPTH_TEST);
     });
 
     auto& simpleRendering = manager.createSystem<SimpleRenderer, Transform, Model, SimpleShader>({}, 32);
@@ -1446,8 +1673,8 @@ void initializeECS(object::ecs& manager)
             shader.setMat4("projection", camera.projection.matrix, true);
             shader.setVec3("scale", transform.scale);
             shader.setVec4("objColor", mat.color);
-            shader.setVec2("offset", mat.offset);
-            shader.setVec2("uvScale", mat.scale);
+            shader.setVec2("offset", model.offset);
+            shader.setVec2("uvScale", model.scale);
             shader.setBool("flip", mat.flip);
 
             model.render();
@@ -1507,6 +1734,7 @@ void initializeECS(object::ecs& manager)
     (object::ecs &container, object::ecs::system &system, void *data)
     {
         ComplexRenderer& renderer = system.getInstance<ComplexRenderer>();
+        renderer.update = true;
         std::vector<int *> values = {&renderer.model, &renderer.view, &renderer.projection, &renderer.scale, &renderer.color, &renderer.offset, &renderer.uvScale, &renderer.flip};
         Shader::get("simple_shader").setUniforms({"model", "view", "projection", "scale", "objColor", "offset", "uvScale", "flip"}, values);
     });
@@ -1581,8 +1809,8 @@ void initializeECS(object::ecs& manager)
                 temp.setMat4("projection", camera.projection.matrix, true);
                 temp.setVec3("scale", transform.scale);
                 temp.setVec4("objColor", mat.color);
-                temp.setVec2("offset", mat.offset);
-                temp.setVec2("uvScale", mat.scale);
+                temp.setVec2("offset", model.offset);
+                temp.setVec2("uvScale", model.scale);
                 temp.setBool("flip", mat.flip);
                 temp.setFloat("rate", fade.rate);
                 temp.setFloat("distance", fade.distance);
@@ -1598,14 +1826,78 @@ void initializeECS(object::ecs& manager)
                 shdr.setMat4(rendering.projection, camera.projection.matrix, true);
                 shdr.setVec3(rendering.scale, transform.scale);
                 shdr.setVec4(rendering.color, mat.color);
-                shdr.setVec2(rendering.offset, mat.offset);
-                shdr.setVec2(rendering.uvScale, mat.scale);
+                shdr.setVec2(rendering.offset, model.offset);
+                shdr.setVec2(rendering.uvScale, model.scale);
                 shdr.setBool(rendering.flip, mat.flip);
 
                 model.render();
             }
         }
         glDepthMask(GL_TRUE);
+    });
+
+    auto& uiRendering = manager.createSystem<UIRenderer, Rect, Sprite, SimpleShader>({}, 34);
+    uiRendering.setFunction(object::fn::RENDER, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        Vector2I res = win.resolution();
+        uint32_t cam = win.screen.camera;
+        if(cam == -1)
+            return;
+
+        Camera& camera = container.getComponent<Camera>(cam);
+        Shader& shader = Shader::get("ui_shader");
+        shader.use();
+
+        glDisable(GL_DEPTH_TEST);
+        for(entity e : container.entities<UIRenderer>())
+        {
+            Sprite sprite = container.getComponent<Sprite>(e);
+            Rect& rect = container.getComponent<Rect>(e);
+            SimpleShader& mat = container.getComponent<SimpleShader>(e);
+
+            shader.setFloat("aspect", rect.useAspect() ? win.aspectRatio():1);
+            shader.setVec2("position", rect.relativePosition(res));
+            shader.setVec2("scale", rect.adjustedScale(res));
+            shader.setMat4("model", (mat4x4(1) * (mat4x4)rect.rotation).matrix, false);
+            shader.setVec4("objColor", mat.color);
+
+            sprite.render();
+        }
+        glEnable(GL_DEPTH_TEST);
+    });
+
+    auto& textRendering = manager.createSystem<TextRenderer, Text, Rect>({}, 36);
+    textRendering.setFunction(object::fn::RENDER, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Window& win = Application::data(data).window();
+        Vector2I res = win.resolution();
+        uint32_t cam = win.screen.camera;
+        if(cam == -1)
+            return;
+
+        Camera& camera = container.getComponent<Camera>(cam);
+        Shader& shader = Shader::get("text_shader");
+        shader.use();
+
+        glDisable(GL_DEPTH_TEST);
+        for(entity e : container.entities<TextRenderer>())
+        {
+            Text text = container.getComponent<Text>(e);
+            Rect& rect = container.getComponent<Rect>(e);
+            TextShader& mat = container.getComponent<TextShader>(e);
+
+            // shader.setFloat("aspect", rect.useAspect() ? win.aspectRatio():1);
+            // shader.setVec2("position", rect.relativePosition(res));
+            // shader.setVec2("scale", rect.adjustedScale(res));
+            // shader.setMat4("model", (mat4x4(1) * (mat4x4)rect.rotation).matrix, false);
+            // shader.setVec4("objColor", mat.color);
+
+            // sprite.render();
+        }
+        glEnable(GL_DEPTH_TEST);
     });
 
     auto& cameras = manager.createSystem<CameraManager, Camera, Transform>({}, 36);
@@ -1679,6 +1971,11 @@ void initializeECS(object::ecs& manager)
             transform.lastRotation = transform.rotation;
         }
     });
+    cameras.setFunction(object::fn::DESTROY, []
+    (object::ecs& container, object::ecs::system &system, void *data)
+    {
+        Application::data(data).window().setCamera(-1);
+    });
 
     auto& graphics = manager.createSystem<GraphicsManager, Transform, Model>({}, 36);
     graphics.setFunction(object::fn::START, []
@@ -1708,80 +2005,53 @@ void initializeECS(object::ecs& manager)
             container.getComponent<Sprite>(e).refresh();
         }
     });
+    uis.setFunction(object::fn::RENDER, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        for(entity e : container.entities<UIManager>())
+        {
+            Rect& transform = container.getComponent<Rect>(e);
+            transform.storedPosition = transform.position;
+        }
+    });
 
-    // auto& buttons = manager.createSystem<ButtonManager, Button, Rect>({}, 36);
-    // buttons.setFunction(object::fn::UPDATE, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     for(Entity entity : container.entities<ButtonManager>())
-    //     {
-    //         Rect& rect = container.getComponent<Rect>(entity);
-    //         Button& button = container.getComponent<Button>(entity);
-    //         if(mouse::pressed(mouse::LEFT) && rect.contains(Window::cursorScreenPosition()))
-    //         {
-    //             button.trigger(entity);
-    //         }
-    //         else
-    //         {
-    //             for(auto key : button.keyInputs)
-    //             {
-    //                 if(key::pressed((key::KeyCode)key))
-    //                 {
-    //                     button.trigger(entity);
-    //                 }
-    //             }
-    //
-    //             for(auto click : button.buttonInputs)
-    //             {
-    //                 if(mouse::pressed((mouse::ButtonCode)click))
-    //                 {
-    //                     button.trigger(entity);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // });
-
-    // auto& texts = manager.createSystem<TextManager, Text, Rect>({}, 36);
-    // texts.setFunction(object::fn::START, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     for(Entity entity : container.entities<TextManager>())
-    //     {
-    //         container.getComponent<Text>(entity).initialize(container.getComponent<Rect>(entity));
-    //     }
-    // });
-    // texts.setFunction(object::fn::RENDER, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     Camera& camera = container.getComponent<Camera>(Window::camera());
-    //     Transform& cameraTransform = container.getComponent<Transform>(Window::camera());
-    //
-    //     glDisable(GL_DEPTH_TEST);
-    //     for(Entity entity : container.entities<TextManager>())
-    //     {
-    //         Text& text = container.getComponent<Text>(entity);
-    //         if(text.update || Window::resolutionUpdated())
-    //         {
-    //             text.refresh(container.getComponent<Rect>(entity));
-    //             text.update = false;
-    //         }
-    //
-    //         text.render(entity, camera, cameraTransform);
-    //     }
-    //     glEnable(GL_DEPTH_TEST);
-    // });
-    // texts.setFunction(object::fn::DESTROY, []
-    // (object::ecs & container, object::ecs::system &system)
-    // {
-    //     for(Entity entity : container.entities<TextManager>())
-    //     {
-    //         container.getComponent<Text>(entity).destroy();
-    //     }
-    // });
+    auto& buttons = manager.createSystem<ButtonManager, Button, Rect>({}, 36);
+    buttons.setFunction(object::fn::UPDATE, []
+    (object::ecs & container, object::ecs::system &system, void *data)
+    {
+        Application& app = Application::data(data);
+        Window& win = app.window();
+        for(entity e : container.entities<ButtonManager>())
+        {
+            Rect& rect = container.getComponent<Rect>(e);
+            Button& button = container.getComponent<Button>(e);\
+            if(mouse::pressed(mouse::LEFT))
+            {
+                if(rect.contains(win.cursorScreenPosition(), win.resolution()))
+                {
+                    app.runEvent(button.event, &e);
+                }
+            }
+        }
+    });
 }
 
-ProjectManager::ProjectManager(std::vector<Window>& windows)
+Scene::Scene(const object::ecs& container__)
+{
+    container = container__;
+    pause = container.createSystemToggle();
+    container.addToToggle<AudioManager>(pause, object::fn::UPDATE);
+    container.addToToggle<PointLightManager>(pause, object::fn::UPDATE);
+    container.addToToggle<SpotLightManager>(pause, object::fn::UPDATE);
+    container.addToToggle<PhysicsManager>(pause, object::fn::UPDATE);
+    container.addToToggle<AABBHandler>(pause, object::fn::UPDATE);
+    container.addToToggle<AABB2DHandler>(pause, object::fn::UPDATE);
+    container.addToToggle<BillboardManager>(pause, object::fn::LATE_UPDATE);
+    container.addToToggle<AnimationManager>(pause, object::fn::FIXED_UPDATE);
+    container.addToToggle<AnimationUVManager>(pause, object::fn::FIXED_UPDATE);
+}
+
+ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& name, uint32_t width, uint32_t height)
 {
     Source::initialize();
 
@@ -1800,16 +2070,16 @@ ProjectManager::ProjectManager(std::vector<Window>& windows)
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwSetErrorCallback(error_callback);
+    glfwSetJoystickCallback(joystick_callback);
 
-    windows.push_back(Window("default", 800, 600));
+    windows.push_back(Window(name, width, height));
     Window& window = windows.back();
 
     Texture::load("default", {Color8(255, 255, 255, 255)}, 1, 1, Texture::RGBA, Texture::PNG);
     Mesh::load("square", shape::square());
     Mesh::load("cube", shape::cube());
-    Mesh::load("sphere", shape::sphere(1));
 
-    file::loadFilesInDirectory(Source::root() + Source::font(), ttf::load);
+    file::loadFilesInDirectory(Source::root() + Source::font(), Font::load);
 
     std::vector<std::string> shaderConfig = file::loadFileToStringVector(Source::config() + "shader.config");
     for(const auto& line : shaderConfig)
@@ -1833,14 +2103,88 @@ ProjectManager::ProjectManager(std::vector<Window>& windows)
     
     (window.screen.quad = Mesh::get("square")).refresh();
 
-    Application::keyboard.initialize(GLFW_KEY_LAST, 3);
-    Application::mouse.initialize(GLFW_MOUSE_BUTTON_LAST);
+    Application::keyboard.initialize(key::LAST, 3);
+    Application::mouse.initialize(mouse::LAST);
+    for(int i=GLFW_JOYSTICK_1; i<=GLFW_JOYSTICK_LAST; i++)
+    {
+        JoystickManager& manager = Application::controllers[i] = JoystickManager();
+        manager.initialize(controller::LAST);
+        manager.initializeAxes(controller::AXIS_LAST);
+        if((int)glfwJoystickPresent(i))
+        {
+            manager.id = i;
+            if (glfwJoystickIsGamepad(i))
+            {
+                manager.active = true;
+                Application::currentJoystick = i;
+            }
+            else
+            {
+                int count;
+                const float* axes = glfwGetJoystickAxes(i, &count);
+                std::cout << "Axes: " << count << '\n';
+                for(int j=0; j<count; j++)
+                {
+                    std::cout << axes[j] << '\n';
+                }
+
+                const unsigned char* buttons = glfwGetJoystickButtons(i, &count);
+                std::cout << "\nButtons: " << count << '\n';
+                for(int j=0; j<count; j++)
+                {
+                    std::cout << (int)buttons[j] << '\n';
+                }
+
+                const unsigned char* hats = glfwGetJoystickHats(i, &count);
+                std::cout << "\nHats: " << " : " << count << '\n';
+                for(int j=0; j<count; j++)
+                {
+                    std::cout << (int)hats[j] << '\n';
+                }
+            }
+        }
+    }
 }
 
-Application::Application()
+Application::Application(const std::string& name, uint32_t width, uint32_t height)
 {
-    manager = ProjectManager(windows);
-    initializeECS(container);
+    manager = ProjectManager(windows, name, width, height);
+    currentScene = createScene();
+}
+
+uint32_t Application::createScene()
+{
+    uint32_t result = scenes.size();
+    object::ecs ecs;
+    initializeECS(ecs);
+    scenes.push_back(Scene(ecs));
+    return result;
+}
+
+Scene& Application::getScene()
+{
+    if(currentScene == -1)
+        std::cout << "ERROR :: Current scene has not been set.\n";
+    return scenes[currentScene];
+}
+
+void Application::updateScene()
+{
+    if(sceneChanged)
+    {
+        if(lastScene != -1)
+        {
+            object::ecs& last = scenes[lastScene].container;
+            last.run(object::fn::DESTROY, this);
+            last.clearEntities();
+        }
+
+        object::ecs& current = scenes[currentScene].container;
+        current.run(object::fn::LOAD, this);
+        current.run(object::fn::START, this);
+
+        sceneChanged = false;
+    }
 }
 
 Application& Application::data(void *data)

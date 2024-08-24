@@ -123,7 +123,7 @@ struct Camera
     float nearDistance, farDistance, fov;
 
     Camera() {}
-    Camera(Color color__, Vector3 front__, Vector3 up__, float aspect__, float near__ = 0.01f, float far__ = 200.f, float fov___ = 45);
+    Camera(Color color__, float aspect__, Vector3 front__ = vec3::forward, Vector3 up__ = vec3::up, float near__ = 0.01f, float far__ = 200.f, float fov___ = 45);
 
     Frustum getFrustum(const Vector3& position, float aspect);
 };

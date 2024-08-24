@@ -116,19 +116,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named ecs_lib
-
-# Build rule for target.
-ecs_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 ecs_lib
-.PHONY : ecs_lib
-
-# fast build rule for target.
-ecs_lib/fast:
-	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
-.PHONY : ecs_lib/fast
-
-#=============================================================================
 # Target rules for targets named math_lib
 
 # Build rule for target.
@@ -181,19 +168,6 @@ graphics_lib/fast:
 .PHONY : graphics_lib/fast
 
 #=============================================================================
-# Target rules for targets named global_lib
-
-# Build rule for target.
-global_lib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 global_lib
-.PHONY : global_lib
-
-# fast build rule for target.
-global_lib/fast:
-	$(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/build
-.PHONY : global_lib/fast
-
-#=============================================================================
 # Target rules for targets named venus_lib
 
 # Build rule for target.
@@ -242,9 +216,7 @@ help:
 	@echo ... rebuild_cache
 	@echo ... TestProject
 	@echo ... audio_lib
-	@echo ... ecs_lib
 	@echo ... file_lib
-	@echo ... global_lib
 	@echo ... graphics_lib
 	@echo ... math_lib
 	@echo ... vendor_lib

@@ -12,9 +12,8 @@ bool math::lineLineIntersect(const Vector2& p1, const Vector2& p2, const Vector2
 }
 bool math::quadPointIntersect(const Quad& quad, const Vector2& point)
 {
-    float precision = 2;
+    float precision = 5;
     float triArea = math::roundTo(math::triArea(quad.p1, quad.p2, point) + math::triArea(quad.p2, quad.p3, point) + math::triArea(quad.p3, quad.p4, point) + math::triArea(quad.p4, quad.p1, point), precision);
-    // std::cout << quad.p1 << " : " << quad.p2 << " : " << quad.p3 << " : " << quad.p4 << std::endl;
     return math::roundTo(math::quadArea(quad), precision) >= triArea;
 }
 float math::quadArea(const Quad& quad)

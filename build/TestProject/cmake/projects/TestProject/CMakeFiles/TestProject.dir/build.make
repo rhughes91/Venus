@@ -109,16 +109,14 @@ TestProject_EXTERNAL_OBJECTS =
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/build.make
-C:/Projects/Venus/build/TestProject/TestProject.exe: src/libglobal_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libvenus_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libgraphics_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: vendor/libvendor_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libfile_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libaudio_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libmath_lib.a
-C:/Projects/Venus/build/TestProject/TestProject.exe: src/libecs_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: C:/Projects/Venus/lib/libOpenAL32.a
-C:/Projects/Venus/build/TestProject/TestProject.exe: C:/Projects/Venus/lib/libglfw3dll.a
+C:/Projects/Venus/build/TestProject/TestProject.exe: C:/Projects/Venus/lib/libglfw3.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/linkLibs.rsp
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/objects1
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/link.txt

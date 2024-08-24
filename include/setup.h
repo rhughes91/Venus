@@ -9,11 +9,16 @@
 #include "ui.h"
 
 
+using AnimationStateUV = object::state_machine<AnimationUV>;
+using AnimatorUV = object::state_machine<AnimationStateUV>;
+
 using AnimationState = object::state_machine<Animation2D>;
 using Animator2D = object::state_machine<AnimationState>;
 
+struct Application;
+
 struct AnimationManager{};
-struct AnimationManager2D{};
+struct AnimationUVManager{};
 struct AudioManager{};
 struct BillboardManager{};
 struct ButtonManager{};
@@ -25,8 +30,6 @@ struct Mesh2DManager{};
 struct PhysicsManager{};
 struct PointLightManager{};
 struct SpotLightManager{};
-struct SpriteManager{};
-struct TextManager{};
 struct UIManager{};
 
 struct SimpleRenderer{};
@@ -36,7 +39,11 @@ struct ComplexRenderer
     bool update = true;
     int model, view, projection, scale, color, offset, uvScale, flip;
 };
-struct UIRenderer{};
+struct UIRenderer
+{
+    bool update = true;
+};
+struct TextRenderer{};
 
 struct AABB2DHandler{};
 struct AABBHandler{};
@@ -55,12 +62,32 @@ struct MeshModule
 
 struct MeshAddon
 {
-    std::vector<MeshModule> additions;
+    static size_t length(const MeshAddon& data)
+    {        
+        return object::length(data.additions);
+    }
+
+    static size_t serialize(const MeshAddon& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        return object::serialize(value.additions, stream, index);
+    }
+
+    static MeshAddon deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        MeshAddon result = MeshAddon();
+        result.additions = object::deserialize<std::vector<MeshModule>>(stream, index);
+
+        return result;
+    }
+
 
     MeshAddon() {}
     MeshAddon(const std::vector<MeshModule>& additions__) : additions(additions__) {}
 
     void append(Model& model, const Transform& parentTransform);
+
+    private:
+        std::vector<MeshModule> additions;
 };
 
 
@@ -109,7 +136,7 @@ class Window
 {
     public:
         Screen screen;
-        Vector2I cursorPosition, lastPosition, lastResolution;
+        Vector2I lastPosition, lastResolution;
         uint16_t width = 0;
         uint16_t height = 0;
 
@@ -134,6 +161,8 @@ class Window
         void centerWindow();
         void close();
         void enableDecoration(bool enable);
+        void enableFloating(bool enable);
+        void enablePassthrough(bool enable);
         bool enableVSync(bool enable);
         void fullscreen(bool enable, bool vsync);
         void hideCursor(bool enable);
@@ -155,11 +184,14 @@ class Window
         float getOpacity();
 
         Vector2I position();
+        Vector2 fetchCursorPos();
         Vector2 cursorUniformScreenPosition();
         Vector2 cursorScreenPosition();
         Vector2I center();
         Vector2I monitorCenter();
         Vector2I resolution();
+
+        Color getPixelColor(const Vector2& position);
         
     private:
         void configureGLAD();
@@ -169,14 +201,38 @@ class Window
 struct ProjectManager
 {
     ProjectManager() {}
-    ProjectManager(std::vector<Window>& windows);
+    ProjectManager(std::vector<Window>& windows, const std::string& name, uint32_t width, uint32_t height);
 };
 
+//
+struct Scene
+{
+    uint32_t pause = -1;
+    object::ecs container;
+
+    Scene(const object::ecs& container__);
+
+    template<typename T>
+    void setPausable(uint8_t function)
+    {
+        container.addToToggle<T>(pause, function);
+    }
+
+    template<typename T>
+    void setPausable()
+    {
+        container.addToToggle<T>(pause);
+    }
+
+    void pauseScene()
+    {
+        container.toggle(pause);
+    }
+};
 
 // Time (struct): holds all the timing data that happens between frames :: controls when "fixedUpdate" is run
 struct Time
 {
-    bool frozen = false;
     int32_t advanceKey = '\\';
 
     double deltaTime = 0.0f;
@@ -211,20 +267,44 @@ struct Time
         int32_t framerateIndex = 0;
 };
 
+//
+namespace object
+{
+    using event = uint32_t;
+    struct Event
+    {
+        Event() {}
+        Event(void(*function)(Application&, void *))
+        {
+            set(function);
+        }
+
+        void set(void(*function)(Application&, void *))
+        {
+            func = function;
+        }
+
+        void run(Application &app, void *data)
+        {
+            func(app, data);
+        }
+
+        private:
+            void (*func)(Application &app, void *data);
+    };
+}
 
 struct Application
 {
     static inline InputManager keyboard, mouse;
+    static inline std::array<JoystickManager, 17> controllers;
+    static inline uint32_t currentJoystick = 0;
     static inline Vector2 cursorPosition;
 
-    uint32_t currentWindow = 0;
-    std::vector<Window> windows;
-
     Time time;
-    object::ecs container;
     ProjectManager manager;
 
-    Application();
+    Application(const std::string& name = "default", uint32_t width = 800, uint32_t height = 600);
 
     static Application& data(void *);
     static void beginEventLoop(Application& app);
@@ -233,6 +313,75 @@ struct Application
     {
         return windows[currentWindow];
     }
+
+
+    object::event createEvent(void(*function)(Application&, void *))
+    {
+        object::event e = events.size();
+        events.push_back(object::Event(function));
+        return e;
+    }
+
+    void runEvent(object::event event, void *data = NULL)
+    {
+        events[event].run(*this, data);
+    }
+
+
+    uint32_t createScene();
+
+    uint32_t getCurrentScene() const
+    {
+        return currentScene;
+    }
+
+    Scene& getScene(uint32_t scene)
+    {
+        return scenes[scene];
+    }
+
+    Scene& getScene();
+
+    void setScene(uint32_t scene)
+    {
+        sceneChanged = true;
+        lastScene = currentScene;
+        currentScene = scene;
+    }
+
+    void setScene()
+    {
+        setScene(currentScene);
+    }
+
+    static uint32_t currentController()
+    {
+        return currentJoystick;
+    }
+
+    static void updateCursor()
+    {
+        lastCursorPosition = cursorPosition;
+    }
+
+    static Vector2 cursorDifference()
+    {
+        return lastCursorPosition - cursorPosition;
+    }
+
+    private:
+        static inline Vector2 lastCursorPosition = 0;
+
+        uint32_t currentWindow = 0;
+        std::vector<Window> windows;
+
+        bool sceneChanged = false;
+        uint32_t currentScene = -1, lastScene = -1;
+        std::vector<Scene> scenes;
+
+        std::vector<object::Event> events;
+
+        void updateScene();
 };
 
 
@@ -250,93 +399,15 @@ namespace object
 
 
 template <>
-struct Serialization<MeshAddon>
-{
-    static size_t length(const MeshAddon& data)
-    {        
-        return 
-            object::length(data.additions);
-    }
-
-    static size_t serialize(const MeshAddon& value, std::vector<uint8_t>& stream, size_t index)
-    {
-        size_t count = 0;
-
-        count += object::serialize(value.additions, stream, index + count);
-
-        return count;
-    }
-
-    static MeshAddon deserialize(std::vector<uint8_t>& stream, size_t index)
-    {
-        MeshAddon result = MeshAddon();
-        size_t count = 0;
-
-        result.additions = object::deserialize<std::vector<MeshModule>>(stream, index + count);
-        count += object::length(result.additions);
-
-        return result;
-    }
-};
-
-template <>
-struct Serialization<Mesh>
-{
-    static size_t length(const Mesh& data)
-    {        
-        return 
-            object::length(data.vertices) + 
-            object::length(data.VAO) + 
-            object::length(data.VBO) + 
-            object::length(data.dimensions) +
-            object::length(data.offset);
-    }
-
-    static size_t serialize(const Mesh& value, std::vector<uint8_t>& stream, size_t index)
-    {
-        size_t count = 0;
-
-        count += object::serialize(value.vertices, stream, index + count);
-        count += object::serialize(value.VAO, stream, index + count);
-        count += object::serialize(value.VBO, stream, index + count);
-        count += object::serialize(value.dimensions, stream, index + count);
-        count += object::serialize(value.offset, stream, index + count);
-
-        return count;
-    }
-
-    static Mesh deserialize(std::vector<uint8_t>& stream, size_t index)
-    {
-        Mesh result = Mesh();
-        size_t count = 0;
-
-        result.vertices = object::deserialize<std::vector<Vertex>>(stream, index + count);
-        count += object::length(result.vertices);
-
-        result.VAO = object::deserialize<uint32_t>(stream, index + count);
-        count += object::length(result.VAO);
-
-        result.VBO = object::deserialize<uint32_t>(stream, index + count);
-        count += object::length(result.VBO);
-
-        result.dimensions = object::deserialize<Vector3>(stream, index + count);
-        count += object::length(result.dimensions);
-
-        result.offset = object::deserialize<Vector3>(stream, index + count);
-        count += object::length(result.offset);
-
-        return result;
-    }
-};
-
-template <>
 struct Serialization<Model>
 {
     static size_t length(const Model& value)
     {        
         return 
             object::length(value.data) + 
-            object::length(value.texture);
+            object::length(value.texture) +
+            object::length(value.offset) +
+            object::length(value.scale);
     }
 
     static size_t serialize(const Model& value, std::vector<uint8_t>& stream, size_t index)
@@ -345,6 +416,8 @@ struct Serialization<Model>
 
         count += object::serialize(value.data, stream, index + count);
         count += object::serialize(value.texture, stream, index + count);
+        count += object::serialize(value.offset, stream, index + count);
+        count += object::serialize(value.scale, stream, index + count);
 
         return count;
     }
@@ -360,40 +433,11 @@ struct Serialization<Model>
         result.texture = object::deserialize<Texture>(stream, index + count);
         count += object::length(result.texture);
 
-        return result;
-    }
-};
+        result.offset = object::deserialize<Vector2>(stream, index + count);
+        count += object::length(result.offset);
 
-template <>
-struct Serialization<Sprite>
-{
-    static size_t length(const Sprite& data)
-    {        
-        return 
-            object::length(data.texture) + 
-            object::length(data.square);
-    }
-
-    static size_t serialize(const Sprite& value, std::vector<uint8_t>& stream, size_t index)
-    {
-        size_t count = 0;
-
-        count += object::serialize(value.texture, stream, index + count);
-        count += object::serialize(value.square, stream, index + count);
-
-        return count;
-    }
-
-    static Sprite deserialize(std::vector<uint8_t>& stream, size_t index)
-    {
-        Sprite result = Sprite();
-        size_t count = 0;
-
-        result.texture = object::deserialize<Texture>(stream, index + count);
-        count += object::length(result.texture);
-
-        result.square = object::deserialize<Mesh>(stream, index + count);
-        count += object::length(result.square);
+        result.scale = object::deserialize<Vector2>(stream, index + count);
+        count += object::length(result.scale);
 
         return result;
     }
@@ -405,7 +449,8 @@ struct Serialization<Animation2D>
     static size_t length(const Animation2D& data)
     {        
         return 
-            object::length(data.frames);
+            object::length(data.frames) +
+            object::length(data.currentFrame);
     }
 
     static size_t serialize(const Animation2D& value, std::vector<uint8_t>& stream, size_t index)
@@ -413,6 +458,7 @@ struct Serialization<Animation2D>
         size_t count = 0;
 
         count += object::serialize(value.frames, stream, index + count);
+        count += object::serialize(value.currentFrame, stream, index + count);
 
         return count;
     }
@@ -424,6 +470,9 @@ struct Serialization<Animation2D>
 
         result.frames = object::deserialize<std::vector<Texture>>(stream, index + count);
         count += object::length(result.frames);
+
+        result.currentFrame = object::deserialize<uint32_t>(stream, index + count);
+        count += object::length(result.currentFrame);
 
         return result;
     }

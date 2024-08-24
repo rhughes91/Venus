@@ -19,30 +19,30 @@ struct Serialization
 void printSerializationError(const std::string& );
 
 template<typename T>
-size_t defaultLengthSetter(const T&)
+size_t defaultLengthSetter(const T& value)
 {
-    printSerializationError("ERROR: " + std::string(typeid(T).name()) + std::string(" does not have a function to define serialization length.\n"));
-    return 0;
+    // printSerializationError("ERROR: " + std::string(typeid(T).name()) + std::string(" does not have a function to define serialization length.\n"));
+    return T::length(value);
 }
 
 template<typename T>
 size_t (*Serialization<T>::length)(const T&) = defaultLengthSetter;
 
 template<typename T>
-size_t defaultSerialization(const T&, std::vector<uint8_t>&, size_t)
+size_t defaultSerialization(const T& value, std::vector<uint8_t>& stream, size_t index)
 {
-    printSerializationError("ERROR: " + std::string(typeid(T).name()) + " does not have a defined serialization function.\n");
-    return 0;
+    // printSerializationError("ERROR: " + std::string(typeid(T).name()) + " does not have a defined serialization function.\n");
+    return T::serialize(value, stream, index);
 }
 
 template<typename T>
 size_t(*Serialization<T>::serialize)(const T&, std::vector<uint8_t>&, size_t) = defaultSerialization;
 
 template<typename T>
-T defaultDeserialization(std::vector<uint8_t>&, size_t)
+T defaultDeserialization(std::vector<uint8_t>& stream, size_t index)
 {
-    printSerializationError("ERROR: " + std::string(typeid(T).name()) + " does not have a defined deserialization function.\n");
-    return T();
+    // printSerializationError("ERROR: " + std::string(typeid(T).name()) + " does not have a defined deserialization function.\n");
+    return T::deserialize(stream, index);
 }
 
 template<typename T>

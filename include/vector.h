@@ -642,6 +642,7 @@ struct Point
     Vector2I position;
     bool onCurve;
 
+    Point() {}
     Point(bool onCurve__) : onCurve(onCurve__) {}
 };
 

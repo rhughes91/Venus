@@ -2,19 +2,10 @@
 #define SHADER_H
 
 #include "color.h"
+#include "serialize.h"
 #include "vector.h"
 
-#include <vector>
 #include <unordered_map>
-
-template<typename T>
-struct ShaderVar
-{
-    std::string name = "";
-    T value;
-
-    ShaderVar(const std::string& name__, const T& value__) : name(name__), value(value__) {}
-};
 
 // shader (struct): wrapper for graphical shader data :: allows for .hlsl files to be updated and used
 struct Shader
@@ -69,9 +60,55 @@ struct Vertex
 // Mesh (struct): wrapper for the Vertex Array Object and Vertex Buffer Object necessary to render a mesh
 struct Mesh
 {
-    std::vector<Vertex> vertices;
-    uint32_t VAO, VBO;
     Vector3 offset, dimensions;
+
+
+    static size_t length(const Mesh& data)
+    {        
+        return 
+            object::length(data.vertices) + 
+            object::length(data.VAO) + 
+            object::length(data.VBO) + 
+            object::length(data.dimensions) +
+            object::length(data.offset);
+    }
+
+    static size_t serialize(const Mesh& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.vertices, stream, index + count);
+        count += object::serialize(value.VAO, stream, index + count);
+        count += object::serialize(value.VBO, stream, index + count);
+        count += object::serialize(value.dimensions, stream, index + count);
+        count += object::serialize(value.offset, stream, index + count);
+
+        return count;
+    }
+
+    static Mesh deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        Mesh result = Mesh();
+        size_t count = 0;
+
+        result.vertices = object::deserialize<std::vector<Vertex>>(stream, index + count);
+        count += object::length(result.vertices);
+
+        result.VAO = object::deserialize<uint32_t>(stream, index + count);
+        count += object::length(result.VAO);
+
+        result.VBO = object::deserialize<uint32_t>(stream, index + count);
+        count += object::length(result.VBO);
+
+        result.dimensions = object::deserialize<Vector3>(stream, index + count);
+        count += object::length(result.dimensions);
+
+        result.offset = object::deserialize<Vector3>(stream, index + count);
+        count += object::length(result.offset);
+
+        return result;
+    }
+
 
     Mesh() {}
     Mesh(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__, const Vector3& offset__ = 0)
@@ -85,6 +122,26 @@ struct Mesh
     void refresh();
     void draw(const uint32_t texture) const;
     void remove();
+    void append(const std::vector<Vertex> &buffer, const Vector3& position, const Quaternion &rotation, const Quaternion &parentRotation, const Vector2& uvScale, const Vector2& uvOffset)
+    {
+        for(auto vertex : buffer)
+        {
+            vertex.position = (mat4x4)rotation * (mat4x4)parentRotation * vertex.position;
+            vertex.position += position;
+            vertex.position = (mat4x4)parentRotation.conjugate() * vertex.position;
+            vertex.uv = vertex.uv * uvScale + uvOffset;
+            vertices.push_back(vertex);
+        }
+    }
+    std::string identifier() const
+    {
+        return "Mesh:"+std::to_string(VAO)+":"+std::to_string(VBO);
+    }
+
+    std::vector<Vertex> getVertices()
+    {
+        return vertices;
+    }
 
     static Mesh &load(const std::string &path);
     static Mesh &load(const std::string& path, const Mesh& mesh);
@@ -96,13 +153,11 @@ struct Mesh
     static bool contains(const std::string& path);
 
     private:
+        std::vector<Vertex> vertices;
+        uint32_t VAO, VBO;
+        
         inline static std::unordered_map<std::string, Mesh> loadedMeshes;
 };
-
-// namespace texture
-// {
-    
-// };
 
 //
 struct Texture
@@ -150,6 +205,16 @@ struct Texture
     static std::vector<Texture> get(const std::string &path, const std::vector<std::string> &subPaths, Type type);
     static void clear();
 
+    bool operator==(const Texture& comparison) const
+    {
+        return texture == comparison.texture && resolution == comparison.resolution; 
+    }
+
+    bool operator!=(const Texture& comparison) const
+    {
+        return !((*this) == comparison); 
+    }
+
     private:
         inline static std::unordered_map<std::string, Texture> loadedTextures;
 };
@@ -158,6 +223,54 @@ struct Texture
 struct Animation2D
 {
     std::vector<Texture> frames;
+    uint32_t currentFrame = 0;
+
+    Animation2D(std::vector<Texture> frames__ = std::vector<Texture>())
+    {
+        frames = frames__;
+    }
+
+    Texture current()
+    {
+        if(frames.size() == 0)
+            return Texture();
+        return frames[currentFrame];
+    }
+};
+
+//
+struct AnimationUV
+{
+    enum Type
+    {
+        LOOP, STOP
+    };
+
+    Vector2I bounds;
+    Texture texture;
+    uint32_t length, currentFrame = 0, rate = 0;
+    Type type;
+
+    AnimationUV(Texture texture__ = Texture(), uint32_t length__ = 0, uint32_t rate__ = 10, Type type__ = LOOP)
+    {
+        texture = texture__;
+        length = length__;
+        rate = rate__;
+        type = type__;
+
+        uint32_t square = std::ceil(std::sqrt(length));
+        bool offset = (square * square - length) >= square; 
+        bounds = Vector2I(square, square - (uint32_t)offset);
+    }
+
+    bool update()
+    {
+        frameCount = (frameCount + 1) % rate;
+        return !frameCount;
+    }
+
+    private:
+        uint32_t frameCount = 0;
 };
 
 // file (namespace)

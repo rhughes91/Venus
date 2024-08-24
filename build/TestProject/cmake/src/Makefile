@@ -116,20 +116,6 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/ecs_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/ecs_lib.dir/rule
-.PHONY : src/CMakeFiles/ecs_lib.dir/rule
-
-# Convenience name for target.
-ecs_lib: src/CMakeFiles/ecs_lib.dir/rule
-.PHONY : ecs_lib
-
-# fast build rule for target.
-ecs_lib/fast:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/build
-.PHONY : ecs_lib/fast
-
-# Convenience name for target.
 src/CMakeFiles/math_lib.dir/rule:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/math_lib.dir/rule
 .PHONY : src/CMakeFiles/math_lib.dir/rule
@@ -184,20 +170,6 @@ graphics_lib: src/CMakeFiles/graphics_lib.dir/rule
 graphics_lib/fast:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/build
 .PHONY : graphics_lib/fast
-
-# Convenience name for target.
-src/CMakeFiles/global_lib.dir/rule:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 src/CMakeFiles/global_lib.dir/rule
-.PHONY : src/CMakeFiles/global_lib.dir/rule
-
-# Convenience name for target.
-global_lib: src/CMakeFiles/global_lib.dir/rule
-.PHONY : global_lib
-
-# fast build rule for target.
-global_lib/fast:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/build
-.PHONY : global_lib/fast
 
 # Convenience name for target.
 src/CMakeFiles/venus_lib.dir/rule:
@@ -285,30 +257,6 @@ file_util.cpp.s:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\file_lib.dir\build.make src/CMakeFiles/file_lib.dir/file_util.cpp.s
 .PHONY : file_util.cpp.s
 
-global.obj: global.cpp.obj
-.PHONY : global.obj
-
-# target to build an object file
-global.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/global.cpp.obj
-.PHONY : global.cpp.obj
-
-global.i: global.cpp.i
-.PHONY : global.i
-
-# target to preprocess a source file
-global.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/global.cpp.i
-.PHONY : global.cpp.i
-
-global.s: global.cpp.s
-.PHONY : global.s
-
-# target to generate assembly for a file
-global.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\global_lib.dir\build.make src/CMakeFiles/global_lib.dir/global.cpp.s
-.PHONY : global.cpp.s
-
 graphics.obj: graphics.cpp.obj
 .PHONY : graphics.obj
 
@@ -381,30 +329,6 @@ shader.cpp.s:
 	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\graphics_lib.dir\build.make src/CMakeFiles/graphics_lib.dir/shader.cpp.s
 .PHONY : shader.cpp.s
 
-structure.obj: structure.cpp.obj
-.PHONY : structure.obj
-
-# target to build an object file
-structure.cpp.obj:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.obj
-.PHONY : structure.cpp.obj
-
-structure.i: structure.cpp.i
-.PHONY : structure.i
-
-# target to preprocess a source file
-structure.cpp.i:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.i
-.PHONY : structure.cpp.i
-
-structure.s: structure.cpp.s
-.PHONY : structure.s
-
-# target to generate assembly for a file
-structure.cpp.s:
-	cd /d C:\Projects\Venus\build\TestProject\cmake && $(MAKE) $(MAKESILENT) -f src\CMakeFiles\ecs_lib.dir\build.make src/CMakeFiles/ecs_lib.dir/structure.cpp.s
-.PHONY : structure.cpp.s
-
 ui.obj: ui.cpp.obj
 .PHONY : ui.obj
 
@@ -462,9 +386,7 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... audio_lib
-	@echo ... ecs_lib
 	@echo ... file_lib
-	@echo ... global_lib
 	@echo ... graphics_lib
 	@echo ... math_lib
 	@echo ... venus_lib
@@ -477,9 +399,6 @@ help:
 	@echo ... file_util.obj
 	@echo ... file_util.i
 	@echo ... file_util.s
-	@echo ... global.obj
-	@echo ... global.i
-	@echo ... global.s
 	@echo ... graphics.obj
 	@echo ... graphics.i
 	@echo ... graphics.s
@@ -489,9 +408,6 @@ help:
 	@echo ... shader.obj
 	@echo ... shader.i
 	@echo ... shader.s
-	@echo ... structure.obj
-	@echo ... structure.i
-	@echo ... structure.s
 	@echo ... ui.obj
 	@echo ... ui.i
 	@echo ... ui.s

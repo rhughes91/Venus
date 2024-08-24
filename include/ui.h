@@ -14,16 +14,108 @@ struct CharacterTTF
     int32_t lsb, rsb;
     std::vector<uint16_t> contourEnds;
     std::vector<Point> points;
+
+    static size_t length(const CharacterTTF& data)
+    {        
+        return 
+            object::length(data.min) + 
+            object::length(data.scale) +
+            object::length(data.lsb) +
+            object::length(data.rsb) +
+            object::length(data.contourEnds) +
+            object::length(data.points);
+    }
+
+    static size_t serialize(const CharacterTTF& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.min, stream, index + count);
+        count += object::serialize(value.scale, stream, index + count);
+        count += object::serialize(value.lsb, stream, index + count);
+        count += object::serialize(value.rsb, stream, index + count);
+        count += object::serialize(value.contourEnds, stream, index + count);
+        count += object::serialize(value.points, stream, index + count);
+
+        return count;
+    }
+
+    static CharacterTTF deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        CharacterTTF result = CharacterTTF();
+        size_t count = 0;
+
+        result.min = object::deserialize<Vector2I>(stream, index + count);
+        count += object::length(result.min);
+
+        result.scale = object::deserialize<Vector2I>(stream, index + count);
+        count += object::length(result.scale);
+
+        result.lsb = object::deserialize<int32_t>(stream, index + count);
+        count += object::length(result.lsb);
+
+        result.rsb = object::deserialize<int32_t>(stream, index + count);
+        count += object::length(result.rsb);
+
+        result.contourEnds = object::deserialize<std::vector<uint16_t>>(stream, index + count);
+        count += object::length(result.contourEnds);
+
+        result.points = object::deserialize<std::vector<Point>>(stream, index + count);
+        count += object::length(result.points);
+
+        return result;
+    }
 };
 
 //
 struct Font
 {
     Vector2 maxScale = 0;
-    std::array<CharacterTTF, '~'+1> characters;
+    std::vector<CharacterTTF> characters;
     uint16_t unitsPerEm;
 
-    inline static std::unordered_map<std::string, Font> loadedFonts;
+    static size_t length(const Font& data)
+    {        
+        return 
+            object::length(data.maxScale) + 
+            object::length(data.characters) +
+            object::length(data.unitsPerEm);
+    }
+
+    static size_t serialize(const Font& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.maxScale, stream, index + count);
+        count += object::serialize(value.characters, stream, index + count);
+        count += object::serialize(value.unitsPerEm, stream, index + count);
+
+        return count;
+    }
+
+    static Font deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        Font result = Font();
+        size_t count = 0;
+
+        result.maxScale = object::deserialize<Vector2>(stream, index + count);
+        count += object::length(result.maxScale);
+
+        result.characters = object::deserialize<std::vector<CharacterTTF>>(stream, index + count);
+        count += object::length(result.characters);
+
+        result.unitsPerEm = object::deserialize<uint16_t>(stream, index + count);
+        count += object::length(result.unitsPerEm);
+
+        return result;
+    }
+
+
+    static void load(const std::string &fileName);
+    static Font& get(const std::string &fileName);
+
+    private:
+        inline static std::unordered_map<std::string, Font> loadedFonts;
 };
 
 //
@@ -55,6 +147,37 @@ struct Sprite
 {
     Texture texture;
 
+    static size_t length(const Sprite& data)
+    {        
+        return 
+            object::length(data.texture) + 
+            object::length(data.square);
+    }
+
+    static size_t serialize(const Sprite& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.texture, stream, index + count);
+        count += object::serialize(value.square, stream, index + count);
+
+        return count;
+    }
+
+    static Sprite deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        Sprite result = Sprite();
+        size_t count = 0;
+
+        result.texture = object::deserialize<Texture>(stream, index + count);
+        count += object::length(result.texture);
+
+        result.square = object::deserialize<Mesh>(stream, index + count);
+        count += object::length(result.square);
+
+        return result;
+    }
+
     Sprite(){}
     Sprite(const Texture& texture__) : texture(texture__)
     {
@@ -70,8 +193,9 @@ struct Sprite
         square.draw(texture.texture);
     }
 
-    Mesh square;
-    float sorting = 0;
+    private:
+        Mesh square;
+        float sorting = 0;
 };
 
 
@@ -88,7 +212,7 @@ namespace text
 struct Rect
 {
     Alignment alignment;
-    Vector2 position;
+    Vector2 position, storedPosition;
     Vector2 scale;
     Quaternion rotation;
 
@@ -132,119 +256,74 @@ struct Rect
 
 //
 struct Text
-{
-    bool update = false;
-    Shader textShader;
-    // void(*run)(entity e, const Text& sprite, const Camera& camera, const Transform& cameraTransform);
-        
+{        
+    static size_t length(const Text& data)
+    {        
+        return 
+            object::length(data.font) + 
+            object::length(data.text) +
+            object::length(data.scale) +
+            object::length(data.spacing) +
+            object::length(data.linePadding) +
+            object::length(data.newLineSetting) +
+            object::length(data.alignment);
+    }
+
+    static size_t serialize(const Text& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.font, stream, index + count);
+        count += object::serialize(value.text, stream, index + count);
+        count += object::serialize(value.scale, stream, index + count);
+        count += object::serialize(value.spacing, stream, index + count);
+        count += object::serialize(value.linePadding, stream, index + count);
+        count += object::serialize(value.newLineSetting, stream, index + count);
+        count += object::serialize(value.alignment, stream, index + count);
+
+        return count;
+    }
+
+    static Text deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        Text result = Text();
+        size_t count = 0;
+
+        result.font = object::deserialize<Font>(stream, index + count);
+        count += object::length(result.font);
+
+        result.text = object::deserialize<std::string>(stream, index + count);
+        count += object::length(result.text);
+
+        result.scale = object::deserialize<float>(stream, index + count);
+        count += object::length(result.scale);
+
+        result.spacing = object::deserialize<float>(stream, index + count);
+        count += object::length(result.spacing);
+
+        result.linePadding = object::deserialize<float>(stream, index + count);
+        count += object::length(result.linePadding);
+
+        result.newLineSetting = object::deserialize<text::NewLineSetting>(stream, index + count);
+        count += object::length(result.newLineSetting);
+
+        result.alignment = object::deserialize<Alignment>(stream, index + count);
+        count += object::length(result.alignment);
+
+        return result;
+    }
+
+
     Text() {}
-    Text(const Font& font__, const std::string& text__, float scale__, const Alignment& alignment__, const Shader& shader__ = Shader::get("ui_shader"), const Color& color__ = color::BLACK);
-
-    void initialize(const Rect& bounds, const Vector2& dim);
-    void refresh(const Rect& bounds, const Vector2& dim);
-    void destroy()
-    {
-        result0.remove();
-        result1.remove();
-    }
-
-    void setText(const std::string& newText)
-    {
-        text = newText;
-        update = true;
-    }
-    void setText(char newText)
-    {
-        text = std::string(1, newText);
-        update = true;
-    }
-    void addText(const std::string& newText)
-    {
-        for(auto c : newText)
-            addText(c);
-    }
-    void addText(char newText)
-    {
-        if(newText == '\b')
-        {
-            if(text.size() > 0)
-            {
-                text = text.substr(0, text.length()-1);
-                update = true;
-            }
-            return;
-        }
-        text += newText;
-        update = true;
-    }
-
-
-    float getScale() const
-    {
-        return scale;
-    }
-    void setScale(float scale__)
-    {
-        scale = scale__;
-        reinit();
-        update = true;
-    }
-
-    float getSpacing() const
-    {
-        return spacing;
-    }
-    void setSpacing(float spacing__)
-    {
-        spacing = spacing__;
-        update = true;
-    }
-
-    text::NewLineSetting getNewLineSetting() const
-    {
-        return newLineSetting;
-    }
-    void setNewLineSetting(text::NewLineSetting newLineSetting__)
-    {
-        newLineSetting = newLineSetting__;
-        update = true;
-    }
-
-    Alignment getAlignment() const
-    {
-        return alignment;
-    }
-    void setAlignment(Alignment alignment__)
-    {
-        alignment = alignment__;
-        update = true;
-    }
-
-    Color getColor() const
-    {
-        return color;
-    }
-    void setColor(const Color& p_color)
-    {
-        color = p_color;
-    }
+    Text(const Font& font__, const std::string& text__, float scale__, const Alignment& alignment__);    
 
     private:
         Font font;
         std::string text;
-        Color color;
         float scale, spacing, linePadding;
 
         text::NewLineSetting newLineSetting = text::WORD;
         Alignment alignment;
-
-        uint32_t texture0, texture1;
-        Mesh result0, result1;
-
-        CharacterTTF letterData(char index);
-        void reinit();
-        void renderMesh(const Rect& bounds, std::vector<float>& result0, std::vector<float>& result1, std::vector<Vector3>& positions0, std::vector<Vector3>& positions1);
-        void getUVs(char index, float scaling, Vector2& position, std::vector<float>& result0, std::vector<float>& result1, std::vector<Vector3>& positions0, std::vector<Vector3>& positions1);
 };
 
 
@@ -255,9 +334,6 @@ namespace ttf
     {
         SUCCESS, END_OF_FILE, INVALID_CHECKSUM, INVALID_BENCHMARK, UNSUPPORTED_CMAP, UNSUPPORTED_PLATFORM, UNSUPPORTED_FORMAT
     };
-
-    void load(const std::string &fileName);
-    Font& get(const std::string &fileName);
 }
 
 //

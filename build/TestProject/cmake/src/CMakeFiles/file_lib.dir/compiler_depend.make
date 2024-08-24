@@ -408,9 +408,18 @@ src/CMakeFiles/file_lib.dir/file_util.cpp.obj: C:/Projects/Venus/src/file_util.c
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/stl_bvector.h \
   C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc \
+  C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
+  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
   C:/Projects/Venus/include/graphics.h \
   C:/Projects/Venus/include/shader.h \
   C:/Projects/Venus/include/color.h \
+  C:/Projects/Venus/include/serialize.h \
+  C:/msys64/mingw64/include/c++/12.1.0/cstring \
   C:/Projects/Venus/include/vector.h \
   C:/msys64/mingw64/include/c++/12.1.0/math.h \
   C:/msys64/mingw64/include/c++/12.1.0/cmath \
@@ -428,13 +437,6 @@ src/CMakeFiles/file_lib.dir/file_util.cpp.obj: C:/Projects/Venus/src/file_util.c
   C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_laguerre.tcc \
   C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc \
-  C:/msys64/mingw64/include/c++/12.1.0/unordered_map \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
-  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
   C:/Projects/Venus/include/ui.h \
   C:/msys64/mingw64/include/c++/12.1.0/array \
   C:/msys64/mingw64/include/c++/12.1.0/compare \
@@ -895,6 +897,8 @@ C:/msys64/mingw64/include/wingdi.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/ostream:
 
+C:/msys64/mingw64/include/c++/12.1.0/cstring:
+
 C:/msys64/mingw64/include/c++/12.1.0/bits/ostream.tcc:
 
 C:/msys64/mingw64/include/c++/12.1.0/bits/istream.tcc:
@@ -1279,7 +1283,17 @@ C:/msys64/mingw64/include/c++/12.1.0/bits/stl_vector.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/bits/vector.tcc:
 
+C:/msys64/mingw64/include/c++/12.1.0/unordered_map:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h:
+
 C:/Projects/Venus/include/graphics.h:
+
+C:/Projects/Venus/include/serialize.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/tr1/gamma.tcc:
 
@@ -1296,14 +1310,6 @@ C:/msys64/mingw64/include/c++/12.1.0/tr1/modified_bessel_func.tcc:
 C:/msys64/mingw64/include/c++/12.1.0/tr1/poly_hermite.tcc:
 
 C:/msys64/mingw64/include/c++/12.1.0/tr1/riemann_zeta.tcc:
-
-C:/msys64/mingw64/include/c++/12.1.0/unordered_map:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/hashtable_policy.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/enable_special_members.h:
-
-C:/msys64/mingw64/include/c++/12.1.0/bits/node_handle.h:
 
 C:/msys64/mingw64/include/c++/12.1.0/compare:
 

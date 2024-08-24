@@ -8,14 +8,18 @@
 
 void Application::beginEventLoop(Application& app)
 {    
-    object::ecs &ecs = app.container;
     Window& win = app.window();
-    ecs.run(object::fn::LOAD, &app);
-    ecs.run(object::fn::START, &app);
-    
     app.time.beginTimer();
+    app.setScene();
+    app.lastScene = -1;
+    app.updateScene();
+
+    Application::updateCursor();
+
     while(!win.closing())
     {        
+        object::ecs& ecs = app.getScene().container;
+
         Window& win = app.window();
         if(app.keyboard.inputs[key::ESCAPE].pressed)
             win.close();
@@ -41,11 +45,8 @@ void Application::beginEventLoop(Application& app)
             app.time.resetTimer(0.02f);
         }
         
-        if((!app.time.frozen || key::pressed(app.time.advanceKey)))
-        {
-            ecs.run(object::fn::UPDATE, &app);
-            ecs.run(object::fn::LATE_UPDATE, &app);
-        }
+        ecs.run(object::fn::UPDATE, &app);
+        ecs.run(object::fn::LATE_UPDATE, &app);
 
         win.screen.store();
         if(camera != -1)
@@ -67,7 +68,13 @@ void Application::beginEventLoop(Application& app)
         
         app.keyboard.refresh();
         app.mouse.refresh();
+        for(JoystickManager& controller : app.controllers)
+        {
+            controller.refresh();
+            controller.joystick_button_callback();
+        }
 
+        Application::updateCursor();
         win.refresh();
         win.poll();
 
@@ -78,8 +85,11 @@ void Application::beginEventLoop(Application& app)
         }
         
         win.screen.resolutionUpdated = (fullscreen != win.fullscreened() || maximized != win.maximized() || win.screen.resolution != win.resolution() || fovChanged);
+        
+        app.updateScene();
     }
 
+    object::ecs& ecs = app.getScene().container;
     ecs.run(object::fn::DESTROY, &app);
     
     Mesh::clear();
@@ -87,8 +97,9 @@ void Application::beginEventLoop(Application& app)
     Texture::clear();
     Audio::clear();
 
-    std::cout << app.time.framerate() << " FPS : " << app.time.deltaTime*1000 << " ms" << std::endl;
+    std::cout << app.time.framerate() << " FPS : " << app.time.deltaTime*1000 << " ms\n";
     win.throwError();
     win.throwAudioError();
+    std::cout << ecs.parseError() << " (ECS)" << std::endl;
     win.terminate(win.audioDevice, win.audioContext);
 }

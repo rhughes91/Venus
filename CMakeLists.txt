@@ -1,8 +1,4 @@
 cmake_minimum_required(VERSION 3.25.0)
-
-# set(DCMAKE_C_COMPILER "C:/msys64/mingw64/bin/gcc.exe")
-# set(DCMAKE_CXX_COMPILER "C:/msys64/mingw64/bin/g++.exe")
-
 project(Venus)
 
 set(CMAKE_SKIP_INSTALL_RULES True)
@@ -18,15 +14,11 @@ if(BUILD_EXAMPLES)
     add_subdirectory(projects)
 endif()
 
-IF(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../glfw3.dll)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/GLFW/glfw3.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
-endif()
-
-IF(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../path.config)
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../path.config)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/default_resources/path.config DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/..)
 endif()
 
-IF(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../resources)
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/../resources)
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../resources)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/default_resources/audio DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../resources)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/default_resources/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../resources)
