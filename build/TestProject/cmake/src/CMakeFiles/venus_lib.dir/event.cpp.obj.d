@@ -266,8 +266,7 @@ src/CMakeFiles/venus_lib.dir/event.cpp.obj: \
  C:/Projects/Venus/include/machine.h \
  C:/msys64/mingw64/include/c++/12.1.0/unordered_set \
  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_set.h \
- C:/Projects/Venus/include/ui.h C:/Projects/Venus/include/structure.h \
- C:/Projects/Venus/include/component.h \
+ C:/Projects/Venus/include/ui.h \
  C:/msys64/mingw64/include/c++/12.1.0/thread \
  C:/msys64/mingw64/include/c++/12.1.0/bits/std_thread.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/unique_ptr.h \
