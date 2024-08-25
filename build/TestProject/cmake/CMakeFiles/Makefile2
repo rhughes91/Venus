@@ -325,12 +325,12 @@ vendor/CMakeFiles/vendor_lib.dir/clean:
 # Target rules for target projects/TestProject/CMakeFiles/TestProject.dir
 
 # All Build rule for target.
+projects/TestProject/CMakeFiles/TestProject.dir/all: src/CMakeFiles/math_lib.dir/all
 projects/TestProject/CMakeFiles/TestProject.dir/all: src/CMakeFiles/file_lib.dir/all
 projects/TestProject/CMakeFiles/TestProject.dir/all: src/CMakeFiles/audio_lib.dir/all
 projects/TestProject/CMakeFiles/TestProject.dir/all: src/CMakeFiles/graphics_lib.dir/all
 projects/TestProject/CMakeFiles/TestProject.dir/all: src/CMakeFiles/venus_lib.dir/all
 projects/TestProject/CMakeFiles/TestProject.dir/all: vendor/CMakeFiles/vendor_lib.dir/all
-projects/TestProject/CMakeFiles/TestProject.dir/all: src/CMakeFiles/math_lib.dir/all
 	$(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject.dir\build.make projects/TestProject/CMakeFiles/TestProject.dir/depend
 	$(MAKE) $(MAKESILENT) -f projects\TestProject\CMakeFiles\TestProject.dir\build.make projects/TestProject/CMakeFiles/TestProject.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=C:\Projects\Venus\build\TestProject\cmake\CMakeFiles --progress-num=1,2,3 "Built target TestProject"

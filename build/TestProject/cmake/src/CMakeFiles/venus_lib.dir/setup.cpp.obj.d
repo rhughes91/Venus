@@ -271,8 +271,6 @@ src/CMakeFiles/venus_lib.dir/setup.cpp.obj: \
  C:/Projects/Venus/include/KHR/khrplatform.h \
  C:/Projects/Venus/include/GLFW/glfw3.h \
  C:/Projects/Venus/include/image/stb_image.h \
- C:/Projects/Venus/include/OpenAL/al.h \
- C:/Projects/Venus/include/OpenAL/alc.h \
  C:/msys64/mingw64/include/c++/12.1.0/algorithm \
  C:/msys64/mingw64/include/c++/12.1.0/bits/stl_algo.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/algorithmfwd.h \

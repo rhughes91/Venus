@@ -576,7 +576,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    std::cout << "mouse callback" << '\n';
     Application::cursorPosition = {(float)xpos, (float)ypos};
 }
 void JoystickManager::joystick_button_callback()

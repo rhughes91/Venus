@@ -59,9 +59,6 @@ struct Vertex
 // Mesh (struct): wrapper for the Vertex Array Object and Vertex Buffer Object necessary to render a mesh
 struct Mesh
 {
-    Vector3 offset, dimensions;
-
-
     static size_t length(const Mesh& data)
     {        
         return 
@@ -110,7 +107,7 @@ struct Mesh
 
 
     Mesh() {}
-    Mesh(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__, const Vector3& offset__ = 0)
+    Mesh(const std::vector<Vector3> &vertices__, const std::vector<float> &texture__, const Vector3& dimensions__, const Vector3& offset__ = 0) : offset(offset__)
     {
         reinit(vertices__, texture__, dimensions__);
     }
@@ -156,6 +153,9 @@ struct Mesh
         uint32_t VAO, VBO;
         
         inline static std::unordered_map<std::string, Mesh> loadedMeshes;
+    
+    public:
+        Vector3 dimensions, offset;
 };
 
 //

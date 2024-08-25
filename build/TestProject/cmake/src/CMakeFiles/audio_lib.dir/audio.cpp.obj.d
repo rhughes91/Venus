@@ -118,8 +118,6 @@ src/CMakeFiles/audio_lib.dir/audio.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/bits/unordered_map.h \
  C:/msys64/mingw64/include/c++/12.1.0/bits/erase_if.h \
  C:/Projects/Venus/include/file_util.h \
- C:/Projects/Venus/include/OpenAL/al.h \
- C:/Projects/Venus/include/OpenAL/alc.h \
  C:/msys64/mingw64/include/c++/12.1.0/iostream \
  C:/msys64/mingw64/include/c++/12.1.0/ostream \
  C:/msys64/mingw64/include/c++/12.1.0/ios \

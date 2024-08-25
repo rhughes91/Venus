@@ -115,7 +115,6 @@ C:/Projects/Venus/build/TestProject/TestProject.exe: vendor/libvendor_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libfile_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libaudio_lib.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: src/libmath_lib.a
-C:/Projects/Venus/build/TestProject/TestProject.exe: C:/Projects/Venus/lib/libOpenAL32.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: C:/Projects/Venus/lib/libglfw3.a
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/linkLibs.rsp
 C:/Projects/Venus/build/TestProject/TestProject.exe: projects/TestProject/CMakeFiles/TestProject.dir/objects1

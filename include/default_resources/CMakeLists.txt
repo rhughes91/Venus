@@ -18,19 +18,14 @@ if(${FILE_NAME} STREQUAL ${PARENT_DIR_NAME})
     set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${FILE_NAME})
     add_executable(${FILE_NAME} ${PROJECT_SRC} main.cpp)
 
-    set(VENUS_ADLIB ${CMAKE_SOURCE_DIR}/lib/libOpenAL32.a ${CMAKE_SOURCE_DIR}/lib/libglfw3.a)
+    if(WIN32)
+        set(VENUS_ADLIB ${CMAKE_SOURCE_DIR}/lib/libglfw3.a)
+    elseif(UNIX)
+    	set(VENUS_ADLIB ${CMAKE_SOURCE_DIR}/lib/libglfw3_linux.a)
+    endif()
 
     # This command will suppress the default Windows console; nothing can be printed to the console, and no console will show up when the built '.exe' file is run.
     # target_link_options(${FILE_NAME} PRIVATE -mwindows)
 
     target_link_libraries(${FILE_NAME} PRIVATE venus_lib graphics_lib vendor_lib file_lib audio_lib math_lib ${VENUS_ADLIB} -static-libgcc -static-libstdc++ -static)
-
-    # Platform-specific settings
-    if (WIN32)
-        # Windows-specific settings
-    elseif (UNIX)
-        # Linux
-        target_compile_options(${FILE_NAME} PRIVATE -Wall -Wextra)
-    endif()
-    # set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cross-linux-gcc.cmake)
 endif()

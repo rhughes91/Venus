@@ -173,7 +173,7 @@ namespace object
 
                 void setActive(bool state)
                 {
-                    for(int i=0 ; i<functions.size(); i++)
+                    for(size_t i=0; i<functions.size(); i++)
                     {
                         bool& current = functions[i].active;
                         if(state && !current)
@@ -197,7 +197,7 @@ namespace object
 
                 void toggle()
                 {
-                    for(int i=0 ; i<functions.size(); i++)
+                    for(size_t i=0 ; i<functions.size(); i++)
                     {
                         bool& current = functions[i].active;
                         auto temp = functions[i].func;
@@ -596,7 +596,7 @@ namespace object
             systemManager.addRequirements<T, Args...>();
             
             entity totalEntities = entityManager.totalEntityCount();
-            for(int i=0; i<totalEntities; i++)
+            for(entity i=0; i<totalEntities; i++)
             {
                 if(entityManager.entityActive(i))
                 {
@@ -1122,7 +1122,7 @@ namespace object
                 ComponentManager(entity identifiers) : indexMaps(cidCount, std::vector<size_t>(identifiers))
                 {
                     componentArrays = std::vector<ComponentArray>();
-                    for(int i=0; i<cidCount; i++)
+                    for(uint32_t i=0; i<cidCount; i++)
                     {
                         // space is allocated for an empty object of type T; this object can be used for error-handling
                         componentArrays.push_back(ComponentArray(spaceBuffer[i], complexBuffer[i]));
@@ -1194,8 +1194,7 @@ namespace object
                 template<typename T, typename = std::enable_if_t<!std::is_trivially_copyable<T>::value>>
                 T addComponent(entity e, uint32_t cid, const T& component)
                 {
-                    ComponentArray& array = componentArrays[cid];
-                    size_t& index = indexMaps[cid][e];              
+                    ComponentArray& array = componentArrays[cid];       
                     return array.addComponent<T>(indexMaps[cid][e], component);
                 }
 
@@ -1288,7 +1287,7 @@ namespace object
                     size_t offset = componentArrays[cid].setComponent<T>(index, update);
 
                     size_t size = indexMaps[cid].size();
-                    for(int i=0; i<size; i++)
+                    for(size_t i=0; i<size; i++)
                     {
                         if(indexMaps[cid][i] > index)
                             indexMaps[cid][i] += offset;
@@ -1305,7 +1304,7 @@ namespace object
                  * @return A unique 32-bit ID.
                  */
                 template<typename T>
-                static const uint32_t newId()
+                static uint32_t newId()
                 {
                     // whenever the compiler finds a new ComponentType, this function is called
                     uint32_t index = cidCount;
@@ -1325,7 +1324,7 @@ namespace object
                         indexMaps[cid][e] = -1;
 
                         size_t size = indexMaps[cid].size();
-                        for(int i=0; i<size; i++)
+                        for(size_t i=0; i<size; i++)
                         {
                             if(indexMaps[cid][i] > index && indexMaps[cid][i] != (size_t)-1)
                             {
@@ -1464,7 +1463,7 @@ namespace object
                     requirement = std::vector<uint32_t>();
                     indexMap = std::vector<size_t>(numberOfEntities);
                     reverseIndexMap = std::vector<entity>();
-                    insertion = [] (ecs& container, entity e, std::vector<entity>& entities, std::vector<size_t>& map)
+                    insertion = [] (ecs&, entity e, std::vector<entity>& entities, std::vector<size_t>& map)
                     {
                         map[e] = entities.size();
                         entities.push_back(e);
@@ -1508,9 +1507,9 @@ namespace object
 
                 uint8_t functionIndex = 0;
 
-                std::vector<uint32_t> indexMap;
                 std::vector<system> stores;
                 std::vector<SystemSupplement> supplements;
+                std::vector<uint32_t> indexMap;
                 std::vector<SystemToggle> toggles;
 
 
@@ -1580,9 +1579,9 @@ namespace object
 
                 void runFunction(ecs& container, uint8_t index, void *data)
                 {
-                    for(int i=0; i<stores.size(); i++)
+                    for(size_t i=0; i<stores.size(); i++)
                     {                  
-                        if(indexMap[i] != -1 && stores[indexMap[i]].isInitialized())
+                        if(indexMap[i] != (entity)-1 && stores[indexMap[i]].isInitialized())
                         {
                             stores[indexMap[i]].runFunction(container, index, data);
                         }
@@ -1776,7 +1775,7 @@ namespace object
                             buffer = index;
                             index = index/2;
 
-                            int32_t priorityTwo = indexMap[total] == -1 ? INT_MAX : stores[indexMap[total]].priority;
+                            int32_t priorityTwo = (indexMap[total] == (entity)-1) ? INT_MAX : stores[indexMap[total]].priority;
                             if(priorityTwo > priority)
                             {
                                 total -= (index+(buffer % 2));
@@ -1794,7 +1793,7 @@ namespace object
                     }
 
                     
-                    for(int i=id; i>total; i--)
+                    for(uint32_t i=id; i>total; i--)
                     {
                         indexMap[i] = indexMap[i-1];
                     }
@@ -1827,7 +1826,7 @@ namespace object
 
                 void clearEntities()
                 {
-                    for(int i=0; i<supplements.size(); i++)
+                    for(size_t i=0; i<supplements.size(); i++)
                     {
                         supplements[i].clearEntities();
                     }
@@ -1842,7 +1841,7 @@ namespace object
                 }
 
                 template<typename T>
-                static const uint32_t newId()
+                static uint32_t newId()
                 {
                     uint32_t index = idCount;
                     // whenever the compiler finds a new ComponentType, this function is called
@@ -1876,7 +1875,7 @@ namespace object
 
                     // this is the end point for `addRequirementsRecursive` (it only runs when there are no more arguments to proceess)
                     template<typename Sys, typename... Args>
-                    std::enable_if_t<sizeof...(Args) == 0> addRequirementsRecursive(uint32_t id) {}
+                    std::enable_if_t<sizeof...(Args) == 0> addRequirementsRecursive(uint32_t) {}
             };
 
 

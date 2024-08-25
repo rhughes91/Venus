@@ -52,7 +52,7 @@ namespace object
     template <typename T, std::enable_if_t<std::is_trivially_copyable<T>::value, int> = 0>
     size_t length(const T& value)
     {
-        return sizeof(T);
+        return sizeof(value);
     }
 
     template <typename T, std::enable_if_t<!std::is_trivially_copyable<T>::value, int> = 0>
@@ -148,7 +148,7 @@ struct Serialization<std::string>
 
         std::string result = "";
 
-        for(int i=0; i<size; i++)
+        for(size_t i=0; i<size; i++)
         {
             auto v = object::deserialize<char>(stream, index + offset + count);
             result += v;
@@ -166,7 +166,7 @@ struct Serialization<std::vector<T>>
     {
         size_t result = 0;
         size_t length = data.size();
-        for(int i=0; i<length; i++)
+        for(size_t i=0; i<length; i++)
         {
             result += object::length(data[i]);
         }
@@ -200,7 +200,7 @@ struct Serialization<std::vector<T>>
 
         std::vector<T> result = std::vector<T>(size);
 
-        for(int i=0; i<size; i++)
+        for(size_t i=0; i<size; i++)
         {
             result[i] = object::deserialize<T>(stream, index + offset + count);
             count += object::length<T>(result[i]);

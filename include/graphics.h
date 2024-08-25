@@ -43,7 +43,7 @@ struct SimpleShader
 
     bool flip = false;
 
-    SimpleShader(const Color& objColor = color::WHITE, const Vector2& uvOffset = 0) : color(objColor), flip(false) {}
+    SimpleShader(const Color& objColor = color::WHITE) : color(objColor), flip(false) {}
 };
 
 //
@@ -78,13 +78,13 @@ struct Fade
 // Model (struct): holds an entity's Texture and Mesh data which allows it to be rendered
 struct Model
 {
-    Mesh data;
     Texture texture;
     Vector2 offset, scale = 1;
+    Mesh data;
 
     Model() {}
-    Model(const Texture& texture__, Vector2 offset__, Vector2 scale__, Mesh data__ = Mesh::get("square")) : data(data__), offset(offset__), scale(scale__), texture(texture__) {}
-    Model(const Texture& texture__, Mesh data__ = Mesh::get("square")) : data(data__), texture(texture__) {}
+    Model(const Texture& texture__, Vector2 offset__, Vector2 scale__, Mesh data__ = Mesh::get("square")) : texture(texture__), offset(offset__), scale(scale__), data(data__)  {}
+    Model(const Texture& texture__, Mesh data__ = Mesh::get("square")) : texture(texture__), data(data__) {}
 
     void refresh()
     {
@@ -94,11 +94,6 @@ struct Model
     void render()
     {
         data.draw(texture.texture);
-    }
-
-    bool in(const Frustum& frustum)
-    {
-        return false;
     }
 };
 

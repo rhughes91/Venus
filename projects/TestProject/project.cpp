@@ -27,8 +27,8 @@ void project::initialize(Application& app)
 
     struct CameraLook // This is an example of a component script.
     {
-        float mouseSensitivity = 0.25f;
-        Vector2 lastCursorPosition, angle;
+        float mouseSensitivity = 0.005f;
+        Vector2 angle;
     };
     auto& look = container.createSystem<CameraLook, CameraLook, Camera>();
     look.setFunction(object::fn::START, []
@@ -43,7 +43,6 @@ void project::initialize(Application& app)
                 If the component requires an explicit serialization function, it cannot be stored as a reference; 'setComponent' can be used in this case.
             */
             CameraLook& cameraLook = container.getComponent<CameraLook>(e);
-            cameraLook.lastCursorPosition = win.center();
             cameraLook.angle = {4.7f, 16.3f};
         }
     });
@@ -55,20 +54,18 @@ void project::initialize(Application& app)
         {
             CameraLook& cameraLook = container.getComponent<CameraLook>(entity);
 
-            cameraLook.angle = vec2::modf(cameraLook.angle + (cameraLook.lastCursorPosition - win.cursorScreenPosition()) * cameraLook.mouseSensitivity, 2*M_PI);
+            cameraLook.angle = vec2::modf(cameraLook.angle + (Application::cursorDifference()) * cameraLook.mouseSensitivity * Vector2(1, -1), 2*M_PI);
             if(math::abs(cameraLook.angle.y) > M_PI/2)
             {
                 cameraLook.angle.y = M_PI/2 * math::sign(cameraLook.angle.y);
             }
             container.getComponent<Camera>(win.screen.camera).front = Vector3(std::sin(cameraLook.angle.x), -std::sin(cameraLook.angle.y), std::cos(cameraLook.angle.x)).normalized();
-
-            cameraLook.lastCursorPosition = win.cursorScreenPosition();
         }
     });
 
     struct Movement // This is an example of a generic script. The fields stored here act as static fields across each of the key functions. Component script fields can also be accessed statically, but this is not usually intended behavior.
     {
-        float speed = 0.1f;
+        float speed = 0.25f;
     };
     auto& movement = container.createSystem<Movement>();
     {

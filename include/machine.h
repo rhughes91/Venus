@@ -42,31 +42,8 @@ namespace object
             two = two_;
         }
 
-        bool ready(std::vector<uint8_t>& parameters)
-        {
-            switch(trans)
-            {
-                case conditions::LESS:
-
-                break;
-                case conditions::GREATER:
-
-                break;
-                case conditions::LESS_OR_EQUAL:
-
-                break;
-                case conditions::GREATER_OR_EQUAL:
-
-                break;
-                case conditions::EQUAL:
-
-                break;
-            }
-            return true;
-        }
-
         template<typename T>
-        static const uint32_t newId()
+        static uint32_t newId()
         {
             uint32_t index = idCount;
             idCount++;
@@ -231,7 +208,7 @@ namespace object
                 {
                     for(const auto& trans : transitions[currentState])
                     {
-                        if(switched = trans.valid && lastStates.find(trans.target) == lastStates.end())
+                        if((switched = trans.valid) && lastStates.find(trans.target) == lastStates.end())
                         {
                             currentState = trans.target;
                             lastStates.insert(currentState);
