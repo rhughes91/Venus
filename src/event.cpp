@@ -95,11 +95,11 @@ void Application::beginEventLoop(Application& app)
     Mesh::clear();
     Shader::clear();
     Texture::clear();
-    Audio::clear();
+    // Audio::clear();
 
     std::cout << app.time.framerate() << " FPS : " << app.time.deltaTime*1000 << " ms\n";
     win.throwError();
-    win.throwAudioError();
+    // win.throwAudioError();
     std::cout << ecs.parseError() << " (ECS)" << std::endl;
-    win.terminate(win.audioDevice, win.audioContext);
+    // win.terminate(win.audioDevice, win.audioContext);
 }

@@ -4,10 +4,8 @@
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
-#include "image/stb_image.h"
 
-#include "OpenAL/al.h"
-#include "OpenAL/alc.h"
+#include "image/stb_image.h"
 
 #include <algorithm>
 #include <iostream>
@@ -230,13 +228,18 @@ void InputManager::parse(int32_t input, bool pressed)
 }
 void InputManager::refresh()
 {
+    std::vector bufferKeys = std::vector<Key>();
     for(Key key : heldKeys)
     {
         inputs[key.data].pressed = inputs[key.data].released = false;
         if(!inputs[key.data].held)
         {
-            heldKeys.erase(key);
+            bufferKeys.push_back(key);
         }
+    }
+    for(Key key : bufferKeys)
+    {
+      heldKeys.erase(key);
     }
     heldKey = '\0';
 }
@@ -573,6 +576,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    std::cout << "mouse callback" << '\n';
     Application::cursorPosition = {(float)xpos, (float)ypos};
 }
 void JoystickManager::joystick_button_callback()
@@ -1008,55 +1012,7 @@ bool Window::throwError()
 }
 bool Window::throwAudioError()
 {
-    uint32_t error = alGetError();
-    std::string errorMessage;
-    switch(error)
-    {
-        case 0:
-            errorMessage = "SUCCESS (AL)";
-        break;
-        case AL_INVALID_NAME:
-            errorMessage = "AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function";
-        break;
-        case AL_INVALID_ENUM:
-            errorMessage = "AL_INVALID_ENUM: an invalid enum value was passed to an OpenAL function";
-        break;
-        case AL_INVALID_VALUE:
-            errorMessage = "AL_INVALID_VALUE: an invalid value was passed to an OpenAL function";
-        break;
-        case AL_INVALID_OPERATION:
-            errorMessage = "AL_INVALID_OPERATION: the requested operation is not valid";
-        break;
-        case AL_OUT_OF_MEMORY:
-            errorMessage = "AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory";
-        break;
-        default:
-            errorMessage = "UNKNOWN AL ERROR: " + error;
-    }
-    error = alcGetError(NULL);
-    switch(error)
-    {
-        case 0:
-            errorMessage +=  "\nSUCCESS (ALC)";
-        break;
-        case ALC_INVALID_VALUE:
-            errorMessage +=  "\nALC_INVALID_VALUE: an invalid value was passed to an OpenAL function";
-        break;
-        case ALC_INVALID_DEVICE:
-            errorMessage +=  "\nALC_INVALID_DEVICE: a bad device was passed to an OpenAL function";
-        break;
-        case ALC_INVALID_CONTEXT:
-            errorMessage +=  "\nALC_INVALID_CONTEXT: a bad context was passed to an OpenAL function";
-        break;
-        case ALC_INVALID_ENUM:
-            errorMessage +=  "\nALC_INVALID_ENUM: an unknown enum value was passed to an OpenAL function";
-        break;
-        case ALC_OUT_OF_MEMORY:
-            errorMessage +=  "\nALC_OUT_OF_MEMORY: an unknown enum value was passed to an OpenAL function";
-        break;
-    }
-    std::cout << errorMessage << '\n';
-    return error;
+    return false;
 }
 void Window::centerWindow()
 {
@@ -1171,8 +1127,6 @@ void Window::setTitle(const char *title)
 void Window::terminate(void *audioDevice, void *audioContext)
 {
     glfwTerminate();
-    alcCloseDevice((ALCdevice *)audioDevice);
-    alcDestroyContext((ALCcontext *)audioContext);
 }
 
 float Window::aspectRatioInv()
@@ -1270,20 +1224,6 @@ Window::Window(std::string name, uint32_t width__, uint32_t height__)
 
     stbi_set_flip_vertically_on_load(true);
     screen.initialize(DirectionalLight(vec3::forward, color::WHITE), Shader("screen_vertex", "screen_frag"), width, height);
-
-    audioDevice = alcOpenDevice(NULL);
-    if(audioDevice == NULL)
-    {
-        std::cout << "ERROR :: Failed to initialize audio device(s)." << std::endl;
-        return;
-    }
-
-    audioContext = alcCreateContext((ALCdevice *)audioDevice, NULL);
-    if(!alcMakeContextCurrent((ALCcontext *)audioContext))
-    {
-        std::cout << "ERROR :: Failed to initialize audio context." << std::endl;
-        return;
-    }
 }
 void Window::configureGLAD()
 {
@@ -1309,42 +1249,6 @@ void initializeECS(object::ecs& manager)
 {  
     object::setFunctionDefinitions(manager, {&object::fn::LOAD, &object::fn::START, &object::fn::UPDATE, &object::fn::LATE_UPDATE, &object::fn::FIXED_UPDATE, &object::fn::RENDER, &object::fn::DESTROY});
     
-    auto& audio = manager.createSystem<AudioManager, Audio, Transform>({}, 0);
-    audio.setFunction(object::fn::LOAD, []
-    (object::ecs &container, object::ecs::system &system, void *data)
-    {
-        for(entity e : container.entities<AudioManager>())
-        {
-            Audio& audio = container.getComponent<Audio>(e);
-            Transform& transform = container.getComponent<Transform>(e);
-
-            alSourcef(audio.source, AL_PITCH, 1);
-            alSourcef(audio.source, AL_GAIN, 1);
-            alSource3f(audio.source, AL_POSITION, transform.position.x, transform.position.y, transform.position.z);
-            alSource3f(audio.source, AL_VELOCITY, 0, 0, 0);
-            alSourcei(audio.source, AL_LOOPING, AL_FALSE);
-        }
-    });
-    audio.setFunction(object::fn::UPDATE, []
-    (object::ecs &container, object::ecs::system &system, void *data)
-    {
-        for(entity e : container.entities<AudioManager>())
-        {
-            Audio& audio = container.getComponent<Audio>(e);
-            Transform& transform = container.getComponent<Transform>(e);
-
-            alSource3f(audio.source, AL_POSITION, transform.position.x, transform.position.y, transform.position.z);
-        }
-    });
-    audio.setFunction(object::fn::DESTROY, []
-    (object::ecs &container, object::ecs::system &system, void *data)
-    {
-        for(entity e : container.entities<AudioManager>())
-        {
-            container.getComponent<Audio>(e).destroy();
-        }
-    });
-
     auto& pointlights = manager.createSystem<PointLightManager, PointLight, Transform>({}, 3);
     pointlights.setFunction(object::fn::UPDATE, []
     (object::ecs &container, object::ecs::system &system, void *data)
@@ -1916,23 +1820,6 @@ void initializeECS(object::ecs& manager)
             }
         }
     });
-    cameras.setFunction(object::fn::START, []
-    (object::ecs & container, object::ecs::system &system, void *data)
-    {
-        Window& win = Application::data(data).window();
-        uint32_t& cam = win.screen.camera;
-        if(cam != -1)
-        {
-            Camera camera = container.getComponent<Camera>(cam);
-            Vector3 position = container.getComponent<Transform>(cam).position;
-
-            ALfloat listenerOri[] = {camera.front.x, camera.front.y, camera.front.z, camera.up.x, camera.up.y, camera.up.z};
-
-            alListener3f(AL_POSITION, position.x, position.y, position.z);
-            alListener3f(AL_VELOCITY, 0, 0, 0);
-            alListenerfv(AL_ORIENTATION, listenerOri);
-        }
-    });
     cameras.setFunction(object::fn::LATE_UPDATE, []
     (object::ecs & container, object::ecs::system &system, void *data)
     {
@@ -1962,12 +1849,6 @@ void initializeECS(object::ecs& manager)
             Transform& transform = container.getComponent<Transform>(cam);
 
             Vector3& position = transform.position;
-
-            ALfloat listenerOri[] = {camera.front.x, camera.front.y, camera.front.z, camera.up.x, camera.up.y, camera.up.z};
-
-            alListener3f(AL_POSITION, position.x, position.y, position.z);
-            alListenerfv(AL_ORIENTATION, listenerOri);
-
             transform.lastRotation = transform.rotation;
         }
     });
@@ -2057,7 +1938,7 @@ ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& 
 
     if(windows.size() > 0)
         return;
-         
+    
     if(!glfwInit())
     {
         std::cout << "ERROR :: GLFW could not be initialized." << std::endl;
@@ -2078,7 +1959,6 @@ ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& 
     Texture::load("default", {Color8(255, 255, 255, 255)}, 1, 1, Texture::RGBA, Texture::PNG);
     Mesh::load("square", shape::square());
     Mesh::load("cube", shape::cube());
-
     file::loadFilesInDirectory(Source::root() + Source::font(), Font::load);
 
     std::vector<std::string> shaderConfig = file::loadFileToStringVector(Source::config() + "shader.config");
@@ -2102,7 +1982,6 @@ ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& 
     Shader::get("ui_shader").setInt("text", 0);
     
     (window.screen.quad = Mesh::get("square")).refresh();
-
     Application::keyboard.initialize(key::LAST, 3);
     Application::mouse.initialize(mouse::LAST);
     for(int i=GLFW_JOYSTICK_1; i<=GLFW_JOYSTICK_LAST; i++)

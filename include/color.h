@@ -41,11 +41,11 @@ struct Color8
     }
 };
 
-inline operator==(const Color8& color1, const Color8& color2)
+inline bool operator==(const Color8& color1, const Color8& color2)
 {
     return color1.r == color2.r && color1.g == color2.g && color1.b == color2.b && color1.a == color2.a;
 }
-inline operator!=(const Color8& color1, const Color8& color2)
+inline bool operator!=(const Color8& color1, const Color8& color2)
 {
     return !(color1 == color2);
 }

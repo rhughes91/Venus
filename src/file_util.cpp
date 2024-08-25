@@ -4,7 +4,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <windows.h>
+
+#if defined(_WIN32)
+  #include <windows.h>
+#endif
 
 #include "audio.h"
 #include "graphics.h"
@@ -237,10 +240,15 @@ void Source::initialize()
 }
 std::string Source::getCurrentDirectoryName()
 {
+    std::string source;
+    #if defined(_WIN32)
     TCHAR buffer[260] = { 0 };
     GetModuleFileName(NULL, buffer, 256);
-
-    std::string source = std::string(buffer);
+    source = std::string(buffer);
+    #elif defined(__linux__)
+    source = std::filesystem::canonical("/proc/self/exe");
+    #endif
+    
     int size = source.size();
     for(int i=0; i<size; i++)
     {
