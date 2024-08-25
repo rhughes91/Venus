@@ -1,6 +1,6 @@
-#ifndef COLOR_H
-#define COLOR_H
+#pragma once
 
+#include <cstdint>
 #include <string>
 
 // Color (struct): structure that holds four variables (r, g, b, a) that represent the four basic color channels (red, green, blue, alpha)
@@ -489,5 +489,3 @@ inline Color &operator /=(Color &color1, float num)
 std::ostream& operator<<(std::ostream& os, const Color& obj);
 
 inline Color8 operator *(const Color8 &color, float num) {return Color8(color.r*num, color.g*num, color.b*num, color.a);}
-
-#endif

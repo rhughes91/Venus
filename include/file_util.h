@@ -1,6 +1,6 @@
-#ifndef FILEUTIL_H
-#define FILEUTIL_H
+#pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -95,5 +95,3 @@ namespace image
 {
 
 }
-
-#endif

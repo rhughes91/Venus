@@ -1,5 +1,4 @@
-#ifndef MACHINE_H
-#define MACHINE_H
+#pragma once
 
 #include "serialize.h"
 #include <unordered_set>
@@ -355,5 +354,3 @@ struct Serialization<object::state_machine<T>>
         return result;
     }
 };
-
-#endif

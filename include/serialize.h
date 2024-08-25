@@ -1,5 +1,4 @@
-#ifndef SERIALIZE_H
-#define SERIALIZE_H
+#pragma once
 
 #include <cstring>
 #include <stdint.h>
@@ -210,5 +209,3 @@ struct Serialization<std::vector<T>>
         return result;
     }
 };
-
-#endif

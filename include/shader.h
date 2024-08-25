@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include "color.h"
 #include "serialize.h"
@@ -291,5 +290,3 @@ namespace shape
 
     std::vector<Vector3> triangulate(const std::vector<Vector3>& vertices, int32_t recursions);
 }
-
-#endif

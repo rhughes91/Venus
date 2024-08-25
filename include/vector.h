@@ -1,5 +1,4 @@
-#ifndef VECTOR_H
-#define VECTOR_H
+#pragma once
 
 #include <string>
 
@@ -7,6 +6,7 @@
 #include <math.h>
 #include <vector>
 #include <immintrin.h>
+#include <cstdint>
 
 struct Vector2;
 struct Vector2I;
@@ -1309,5 +1309,3 @@ struct Frustum
                topPlane.in(position, radius) && bottomPlane.in(position, radius);
     }
 };
-
-#endif

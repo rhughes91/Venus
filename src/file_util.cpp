@@ -152,9 +152,35 @@ Font& Font::get(const std::string &fileName)
     return loadedFonts[fileName];
 }
 
+void replaceKeywords(std::string &current, const std::string& sourceName)
+{
+    size_t offset = 0;
+    size_t index = -1;
+    while((index = current.find('{', offset)) != std::string::npos)
+    {
+        size_t end = current.find('}', offset);
+        if(end == std::string::npos)
+        {
+            std::cout << "ERROR :: Brace enclosed keyword was not close with character \'}\'." << std::endl;
+            offset = index + 1;
+            break;
+        }
+        std::string keyword = current.substr(index + 1, end - index - 1);
+        if(keyword == "Project Name")
+        {
+            current = current.substr(0, index) + sourceName + current.substr(end+1, current.size() - end - 1);
+        }
+        offset = end;
+    }
+}
 void Source::initialize()
 {
     projSource = getCurrentDirectoryName();
+    
+    size_t nameEnd = projSource.size()-1;
+    size_t nameIndex = projSource.substr(0, nameEnd).find_last_of('/') + 1;
+
+    std::string sourceName = projSource.substr(nameIndex, nameEnd - nameIndex);
     bool cmakeBuild = false;
     for (const auto & entry : std::filesystem::directory_iterator(projSource))
         if(entry.path().filename() == "cmake")
@@ -173,30 +199,37 @@ void Source::initialize()
                 if(setting == "source")
                 {
                     projSource += line.substr(index+2);
+                    replaceKeywords(projSource, sourceName);
                 }
                 else if(setting == "audio")
                 {
                     audioSource = line.substr(index+2) + "/";
+                    replaceKeywords(audioSource, sourceName);
                 }
                 else if(setting == "data")
                 {
                     configSource = line.substr(index+2) + "/";
+                    replaceKeywords(configSource, sourceName);
                 }
                 else if(setting == "texture")
                 {
                     textureSource = line.substr(index+2) + "/";
+                    replaceKeywords(textureSource, sourceName);
                 }
                 else if(setting == "font")
                 {
                     fontSource = line.substr(index+2) + "/";
+                    replaceKeywords(fontSource, sourceName);
                 }
                 else if(setting == "model")
                 {
                     modelSource = line.substr(index+2) + "/";
+                    replaceKeywords(modelSource, sourceName);
                 }
                 else if(setting == "shader")
                 {
                     shaderSource = line.substr(index+2) + "/";
+                    replaceKeywords(shaderSource, sourceName);
                 }
             }
         }

@@ -1,5 +1,4 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#pragma once
 
 #include "shader.h"
 
@@ -115,6 +114,3 @@ namespace buffer
     void disableDepthTest();
     void blit(FrameBuffer& one, FrameBuffer& two, const Vector2& dim);
 };
-
-
-#endif

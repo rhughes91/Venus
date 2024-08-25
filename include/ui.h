@@ -1,5 +1,4 @@
-#ifndef UI_H
-#define UI_H
+#pragma once
 
 #include "shader.h"
 #include <array>
@@ -341,5 +340,3 @@ namespace file
 {
     Font loadTTF(const std::string &fileName);
 }
-
-#endif

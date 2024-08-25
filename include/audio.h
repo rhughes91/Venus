@@ -1,6 +1,6 @@
-#ifndef AUDIO_H
-#define AUDIO_H
+#pragma once
 
+#include <cstdint>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -46,5 +46,3 @@ namespace file
 
     MP3 loadMP3(const std::string& fileName);
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef INPUT_H
-#define INPUT_H
+#pragma once
 
 #include <bit>
 #include <set>
@@ -246,5 +245,3 @@ struct Button
         uint32_t keys = 0;
         uint32_t buttons = 0;
 };
-
-#endif

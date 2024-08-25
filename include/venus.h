@@ -1,8 +1,5 @@
-#ifndef VENUS_H
-#define VENUS_H
+#pragma once
 
 #include "file_util.h"
 #include "input.h"
 #include "setup.h"
-
-#endif

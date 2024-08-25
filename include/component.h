@@ -1,5 +1,4 @@
-#ifndef COMPONENT_H
-#define COMPONENT_H
+#pragma once
 
 #include <array>
 #include <set>
@@ -253,5 +252,3 @@ namespace object
 {
     Vector3 brightness(int32_t value);
 }
-
-#endif

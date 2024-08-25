@@ -1,5 +1,4 @@
-#ifndef SETUP_H
-#define SETUP_H
+#pragma once
 
 #include "audio.h"
 #include "component.h"
@@ -477,5 +476,3 @@ struct Serialization<Animation2D>
         return result;
     }
 };
-
-#endif

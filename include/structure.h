@@ -1,5 +1,4 @@
-#ifndef STRUCTURE_H
-#define STRUCTURE_H
+#pragma once
 
 #include "serialize.h"
 
@@ -2022,5 +2021,3 @@ namespace object
         addRequirementsRecursive<T, Args...>(id);
     }
 }
-
-#endif
