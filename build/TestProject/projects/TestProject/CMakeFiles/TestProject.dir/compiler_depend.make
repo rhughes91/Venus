@@ -282,6 +282,7 @@ projects/TestProject/CMakeFiles/TestProject.dir/main.cpp.obj: C:/Projects/Venus/
   C:/msys64/mingw64/include/c++/12.1.0/cstring \
   C:/msys64/mingw64/include/string.h \
   C:/msys64/mingw64/include/sec_api/string_s.h \
+  C:/msys64/mingw64/include/c++/12.1.0/climits \
   C:/Projects/Venus/include/graphics.h \
   C:/Projects/Venus/include/shader.h \
   C:/Projects/Venus/include/machine.h \
@@ -570,6 +571,7 @@ projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj: C:/Projects/Ven
   C:/msys64/mingw64/include/c++/12.1.0/cstring \
   C:/msys64/mingw64/include/string.h \
   C:/msys64/mingw64/include/sec_api/string_s.h \
+  C:/msys64/mingw64/include/c++/12.1.0/climits \
   C:/Projects/Venus/include/graphics.h \
   C:/Projects/Venus/include/shader.h \
   C:/Projects/Venus/include/machine.h \
@@ -793,6 +795,8 @@ C:/msys64/mingw64/include/c++/12.1.0/bits/range_access.h:
 C:/msys64/mingw64/include/c++/12.1.0/initializer_list:
 
 C:/msys64/mingw64/include/c++/12.1.0/bits/basic_string.h:
+
+C:/msys64/mingw64/include/c++/12.1.0/climits:
 
 C:/msys64/mingw64/include/c++/12.1.0/ext/atomicity.h:
 
