@@ -1,7 +1,7 @@
 #pragma once
 
 #include "serialize.h"
-#include <iostream>
+#include <climits>
 
 // #define ECS_DEBUG_OFF
 

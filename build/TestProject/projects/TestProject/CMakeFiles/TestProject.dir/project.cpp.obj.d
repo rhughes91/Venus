@@ -271,6 +271,7 @@ projects/TestProject/CMakeFiles/TestProject.dir/project.cpp.obj: \
  C:/msys64/mingw64/include/c++/12.1.0/cstring \
  C:/msys64/mingw64/include/string.h \
  C:/msys64/mingw64/include/sec_api/string_s.h \
+ C:/msys64/mingw64/include/c++/12.1.0/climits \
  C:/Projects/Venus/include/graphics.h C:/Projects/Venus/include/shader.h \
  C:/Projects/Venus/include/machine.h \
  C:/msys64/mingw64/include/c++/12.1.0/unordered_set \
