@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\TestProject.dir/objects.a
-C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\TestProject.dir/objects.a @CMakeFiles\TestProject.dir\objects1
-C:\msys64\mingw64\bin\c++.exe -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles\TestProject.dir/objects.a -Wl,--no-whole-archive -o ..\..\TestProject.exe -Wl,--out-implib,libTestProject.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\TestProject.dir\linkLibs.rsp

@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libgraphics_lib.a CMakeFiles/graphics_lib.dir/graphics.cpp.obj CMakeFiles/graphics_lib.dir/ui.cpp.obj CMakeFiles/graphics_lib.dir/shader.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libgraphics_lib.a

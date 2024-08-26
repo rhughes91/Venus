@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libaudio_lib.a CMakeFiles/audio_lib.dir/audio.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libaudio_lib.a

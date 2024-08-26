@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libmath_lib.a CMakeFiles/math_lib.dir/vector.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libmath_lib.a
