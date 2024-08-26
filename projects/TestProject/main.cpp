@@ -3,7 +3,6 @@
 int main()
 {
     Application app = Application("Example", 400, 400);
-    Audio::load("breeze.wav");
     Texture::load("block", Texture::PNG);
     Texture::load("crate", Texture::PNG);
     Texture::load("floor", Texture::PNG);

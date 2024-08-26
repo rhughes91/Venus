@@ -10,10 +10,13 @@ endif()
 
 get_filename_component(DIR_NAME ${CMAKE_BINARY_DIR} NAME)
 get_filename_component(FILE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-
-if(${FILE_NAME} STREQUAL ${DIR_NAME})
+if(${FILE_NAME} STREQUAL ${DIR_NAME} OR ${DIR_NAME} STREQUAL "build")
+    if(${DIR_NAME} STREQUAL "build")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
+    else()
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${FILE_NAME})
+    endif()
     
-    set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/${FILE_NAME})
     add_executable(${FILE_NAME} ${PROJECT_SRC} main.cpp)
 
     if(WIN32)
