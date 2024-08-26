@@ -1,6 +1,7 @@
 #pragma once
 
 #include "serialize.h"
+#include <iostream>
 
 // #define ECS_DEBUG_OFF
 
@@ -1764,44 +1765,46 @@ namespace object
                 template<typename T>
                 system& createSystem(const T& instance, int32_t priority, uint32_t id)
                 {
-                    indexMap[id] = id;
-
-                    uint32_t index = id/2;
+                    uint32_t max = idCount-1;
+                    uint32_t index = max/2;
                     uint32_t total = index, buffer;
-                    if(id > 0)
+                    while (index != 0)
                     {
-                        do
-                        {
-                            buffer = index;
-                            index = index/2;
+                        buffer = index;
+                        index = index/2;
 
-                            int32_t priorityTwo = (indexMap[total] == (entity)-1) ? INT_MAX : stores[indexMap[total]].priority;
-                            if(priorityTwo > priority)
-                            {
-                                total -= (index+(buffer % 2));
-                            }
-                            else
-                            {
-                                total += (index+(buffer % 2));
-                                if(!index)
-                                {
-                                    total += id%2;
-                                }
-                            }
+                        int32_t priorityTwo = (indexMap[total] == (entity)-1) ? INT_MAX : stores[indexMap[total]].priority;
+                        if(priorityTwo > priority)
+                        {
+                            total -= (index+(buffer % 2));
                         }
-                        while (index != 0);
+                        else
+                        {
+                            total += (index+(buffer % 2));
+                        }
                     }
 
                     
-                    for(uint32_t i=id; i>total; i--)
+                    if(id >= total)
                     {
-                        indexMap[i] = indexMap[i-1];
+                        for(uint32_t i=max; i>total; i--)
+                        {
+                            indexMap[i] = indexMap[i-1];
+                        }
+                    }
+                    else
+                    {
+                        for(uint32_t i=0; i<total; i++)
+                        {
+                            indexMap[i] = indexMap[i+1];
+                        }
                     }
 
                     indexMap[total] = id;
 
                     stores[id].initialize<T>(instance);
                     stores[id].priority = priority;
+
                     return stores[id];
                 }
 

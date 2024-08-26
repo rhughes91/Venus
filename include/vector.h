@@ -3,6 +3,7 @@
 #include <string>
 
 #define M_PI 3.14159265358979323846
+#include <cmath>
 #include <math.h>
 #include <vector>
 #include <immintrin.h>

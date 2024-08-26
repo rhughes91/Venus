@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bit>
+#include <limits>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -70,14 +71,15 @@ namespace key
             uint64_t temp = one;
             while(temp)
             {
-                KeyCode code = (KeyCode)(std::__countr_zero(temp));
+                
+                KeyCode code = (KeyCode)(std::countr_zero(temp));
                 temp &= ~((uint64_t)1 << code);
                 result.push_back(code);
             }
             temp = two;
             while(temp)
             {
-                KeyCode code = (KeyCode)(std::__countr_zero(temp));
+                KeyCode code = (KeyCode)(std::countr_zero(temp));
                 temp &= ~((uint64_t)1 << code);
                 result.push_back((KeyCode)(code+64));
             }
@@ -130,7 +132,7 @@ namespace mouse
             uint64_t temp = one;
             while(temp)
             {
-                ButtonCode code = (ButtonCode)(std::__countr_zero(temp));
+                ButtonCode code = (ButtonCode)(std::countr_zero(temp));
                 temp &= ~((uint16_t)1 << code);
                 result.push_back(code);
             }
@@ -182,8 +184,8 @@ namespace controller
             uint64_t temp = one;
             while(temp)
             {
-                ButtonCode code = (ButtonCode)(std::__countr_zero(temp));
-                temp &= ~((uint32_t)1 << code);
+                ButtonCode code = (ButtonCode)(std::countr_zero(temp));
+                temp &= ~(1 << code);
                 result.push_back(code);
             }
             return result;

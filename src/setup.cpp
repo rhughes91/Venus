@@ -520,9 +520,9 @@ void error_callback(int error, const char* msg)
 }
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    Application::keyboard.toggles[key::CAPS_LOCK - key::TOGGLE_START] = ((bool)(mods & GLFW_MOD_CAPS_LOCK));
-    Application::keyboard.toggles[key::NUM_LOCK - key::TOGGLE_START] = ((bool)(mods & GLFW_MOD_NUM_LOCK));
-    Application::keyboard.toggles[key::SCROLL_LOCK - key::TOGGLE_START] = (key == GLFW_KEY_SCROLL_LOCK);
+    Application::keyboard.toggles[key::CAPS_LOCK - key::TOGGLE_START - 1] = ((bool)(mods & GLFW_MOD_CAPS_LOCK));
+    Application::keyboard.toggles[key::NUM_LOCK - key::TOGGLE_START - 1] = ((bool)(mods & GLFW_MOD_NUM_LOCK));
+    Application::keyboard.toggles[key::SCROLL_LOCK - key::TOGGLE_START - 1] = (key == GLFW_KEY_SCROLL_LOCK);
 
     if(action != GLFW_RELEASE)
     {

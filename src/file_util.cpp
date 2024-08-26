@@ -180,28 +180,52 @@ void Source::initialize()
 {
     projSource = getCurrentDirectoryName();
     
-    size_t nameEnd = projSource.size()-1;
-    size_t nameIndex = projSource.substr(0, nameEnd).find_last_of('/') + 1;
-
-    std::string sourceName = projSource.substr(nameIndex, nameEnd - nameIndex);
-    bool cmakeBuild = false;
+    bool cmakeBuild = false, vsBuild = false;
     for (const auto & entry : std::filesystem::directory_iterator(projSource))
+    {
         if(entry.path().filename() == "cmake")
             cmakeBuild = true;
+        else if(entry.path().filename().string().find(".pdb") != std::string::npos)
+            cmakeBuild = vsBuild = true;
+    }
+        
+    size_t nameEnd, nameIndex;
+    if(vsBuild)
+    {
+        nameEnd = projSource.size()-1;
+        nameIndex = projSource.substr(0, nameEnd).find_last_of('/') + 1;
+        nameEnd = nameIndex - 1;
+        nameIndex = projSource.substr(0, nameEnd).find_last_of('/') + 1;
+    }
+    else
+    {
+        nameEnd = projSource.size()-1;
+        nameIndex = projSource.substr(0, nameEnd).find_last_of('/') + 1;
+    }
+
+    std::string sourceName = projSource.substr(nameIndex, nameEnd - nameIndex);
 
     // if(cmakeBuild)
     {
-        std::vector<std::string> pathConfig = file::loadFileToStringVector("path.config");
+        std::string configPath = "";
+        if(vsBuild)
+        {
+            configPath = "../";
+        }
+        std::vector<std::string> pathConfig = file::loadFileToStringVector(configPath + "path.config");
         for(const auto& line : pathConfig)
         {
             int index = -1;
+            std::string append = "";
             if((index = line.find(':')) != std::string::npos)
             {
                 std::string setting = line.substr(0, index);
                 
                 if(setting == "source")
                 {
-                    projSource += line.substr(index+2);
+                    if(vsBuild)
+                        append = "../";
+                    projSource += append + line.substr(index+2);
                     replaceKeywords(projSource, sourceName);
                 }
                 else if(setting == "audio")
@@ -1001,7 +1025,7 @@ std::vector<char> file::loadPNG(const std::string &fileName)
             {
                 uint32_t size = file.toUInt32();
                 name = file.toUInt32();
-                uint8_t data[size];
+                std::vector<uint8_t> data = std::vector<uint8_t>(size);
                 std::bitset<8> byte;
 
                 switch(name)

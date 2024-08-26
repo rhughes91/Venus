@@ -23,6 +23,5 @@ FOREACH(child ${children})
     ENDIF()
 ENDFOREACH()
 
-get_filename_component(PARENT_DIR ${CMAKE_BINARY_DIR} DIRECTORY)
-get_filename_component(PARENT_DIR_NAME ${PARENT_DIR} NAME)
-ADD_SUBDIRECTORY(${PARENT_DIR_NAME})
+get_filename_component(DIR_NAME ${CMAKE_BINARY_DIR} NAME)
+ADD_SUBDIRECTORY(${DIR_NAME})
