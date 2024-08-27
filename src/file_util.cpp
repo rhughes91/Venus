@@ -180,14 +180,17 @@ void Source::initialize()
 {
     projSource = getCurrentDirectoryName();
     
-    bool cmakeBuild = false, vsBuild = false;
+    bool cmakeBuild = false, vsBuild = true, inPath = false;
     for (const auto & entry : std::filesystem::directory_iterator(projSource))
     {
         if(entry.path().filename() == "cmake")
             cmakeBuild = true;
-        else if(entry.path().filename().string().find(".pdb") != std::string::npos)
-            cmakeBuild = vsBuild = true;
+        else if(entry.path().filename().string().find("CMakeCache.txt") != std::string::npos)
+            vsBuild = false;
+        else if(entry.path().filename().string().find("path.config") != std::string::npos)
+            inPath = true;
     }
+    vsBuild = vsBuild && !inPath;
         
     size_t nameEnd, nameIndex;
     if(vsBuild)
