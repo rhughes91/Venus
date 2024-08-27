@@ -26,9 +26,11 @@ int main(int argc, char *argv[])
     std::replace(source.begin(), source.end(), '\\', '/');
     source = source.substr(0, source.find_last_of("/"));
 
-    std::filesystem::remove_all(source + "/../../Builds/"+argv[1]);
-    std::filesystem::create_directory(source + "/../../Builds/"+argv[1]);
-    std::filesystem::copy(source + "/../projects/"+argv[1]+"/resources", source + "/../../Builds/"+argv[1]+"/resources", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+    std::string target = "/../export/";
+
+    std::filesystem::remove_all(source + target + argv[1]);
+    std::filesystem::create_directory(source + target +argv[1]);
+    std::filesystem::copy(source + "/../projects/"+argv[1]+"/resources", source + target + argv[1]+"/resources", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
     
     // Built default project.
     if(std::filesystem::exists(source + "/../build/CMakeCache.txt"))
@@ -36,14 +38,14 @@ int main(int argc, char *argv[])
         #if defined(_WIN32)
         if(std::filesystem::exists(source + "/../build/Venus.sln"))
         {
-            std::filesystem::copy(source + "/../build/Debug/"+argv[1]+".exe", source + "/../../Builds/"+argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+            std::filesystem::copy(source + "/../build/Debug/"+argv[1]+".exe", source + target + argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
         }
         else
         {
-            std::filesystem::copy(source + "/../build/"+argv[1]+".exe", source + "/../../Builds/"+argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+            std::filesystem::copy(source + "/../build/"+argv[1]+".exe", source + target + argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
         }
         #elif defined(__linux__)
-        std::filesystem::copy(source + "/../build/"+argv[1], source + "/../../Builds/"+argv[1]+"/"+argv[1], std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+        std::filesystem::copy(source + "/../build/"+argv[1], source + target + argv[1]+"/"+argv[1], std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
         #endif
     }
     else
@@ -51,16 +53,16 @@ int main(int argc, char *argv[])
         #if defined(_WIN32)
         if(std::filesystem::exists(source + "/../build/"+argv[1]+"/Venus.sln"))
         {
-            std::filesystem::copy(source + "/../build/"+argv[1]+"/Debug/"+argv[1]+".exe", source + "/../../Builds/"+argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+            std::filesystem::copy(source + "/../build/"+argv[1]+"/Debug/"+argv[1]+".exe", source + target + argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
         }
         else
         {
-            std::filesystem::copy(source + "/../build/"+argv[1]+"/"+argv[1]+".exe", source + "/../../Builds/"+argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+            std::filesystem::copy(source + "/../build/"+argv[1]+"/"+argv[1]+".exe", source + target + argv[1]+"/"+argv[1]+".exe", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
         }
         #elif defined(__linux__)
-        std::filesystem::copy(source + "/../build/"+argv[1]+"/"+argv[1], source + "/../../Builds/"+argv[1]+"/"+argv[1], std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+        std::filesystem::copy(source + "/../build/"+argv[1]+"/"+argv[1], source + target + argv[1]+"/"+argv[1], std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
         #endif
     }
     
-    std::filesystem::copy(source + "/path.config", source + "/../../Builds/"+argv[1]+"/path.config", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
+    std::filesystem::copy(source + "/path.config", source + target + argv[1]+"/path.config", std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive);
 }

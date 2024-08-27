@@ -1,6 +1,6 @@
 project(Venus)
 
-set(VENUS_SRC event.cpp setup.cpp)
+set(VENUS_SRC event.cpp application.cpp)
 add_library(math_lib vector.cpp)
 add_library(file_lib file_util.cpp)
 add_library(audio_lib audio.cpp)

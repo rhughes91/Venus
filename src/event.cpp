@@ -1,5 +1,5 @@
 #include "input.h"
-#include "setup.h"
+#include "application.h"
 #include "structure.h"
 #include "component.h"
 
