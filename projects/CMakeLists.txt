@@ -37,4 +37,3 @@ endif()
 
 add_subdirectory(${PROJ_NAME} ${CMAKE_CURRENT_BINARY_DIR}/src)
 get_directory_property(PROJECT_SRC DIRECTORY ${PROJ_NAME} DEFINITION PROJECT_SRC)
-get_directory_property(FILE_NAME DIRECTORY ${PROJ_NAME} DEFINITION FILE_NAME)
