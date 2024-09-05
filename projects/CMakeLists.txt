@@ -1,10 +1,6 @@
 project(Venus)
 
-if(${EXAMPLE})
-    set(DIR_NAME ${DEFAULT_PROJECT})
-endif()
-
-set(PROJ_NAME ${CMAKE_CURRENT_SOURCE_DIR}/${DIR_NAME})
+set(PROJ_NAME ${PROJECT_DIRECTORY}/${DIR_NAME})
 
 # Add CMakeLists.txt file
 if(NOT EXISTS ${PROJ_NAME}/CMakeLists.txt)
@@ -39,6 +35,6 @@ if(NOT EXISTS ${PROJ_NAME}/resources)
     endif()
 endif()
 
-add_subdirectory(${DIR_NAME})
-get_directory_property(PROJECT_SRC DIRECTORY ${DIR_NAME} DEFINITION PROJECT_SRC)
-get_directory_property(FILE_NAME DIRECTORY ${DIR_NAME} DEFINITION FILE_NAME)
+add_subdirectory(${PROJ_NAME} ${CMAKE_CURRENT_BINARY_DIR}/src)
+get_directory_property(PROJECT_SRC DIRECTORY ${PROJ_NAME} DEFINITION PROJECT_SRC)
+get_directory_property(FILE_NAME DIRECTORY ${PROJ_NAME} DEFINITION FILE_NAME)
