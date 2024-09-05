@@ -180,12 +180,10 @@ void Source::initialize()
 {
     projSource = getCurrentDirectoryName();
     
-    bool cmakeBuild = false, vsBuild = true, inPath = false;
+    bool vsBuild = true, inPath = false;
     for (const auto & entry : std::filesystem::directory_iterator(projSource))
     {
-        if(entry.path().filename() == "cmake")
-            cmakeBuild = true;
-        else if(entry.path().filename().string().find("CMakeCache.txt") != std::string::npos)
+        if(entry.path().filename().string().find("CMakeCache.txt") != std::string::npos)
             vsBuild = false;
         else if(entry.path().filename().string().find("path.config") != std::string::npos)
             inPath = true;
@@ -208,59 +206,67 @@ void Source::initialize()
 
     std::string sourceName = projSource.substr(nameIndex, nameEnd - nameIndex);
 
-    // if(cmakeBuild)
+    std::string configPath = "";
+    if(vsBuild)
     {
-        std::string configPath = "";
-        if(vsBuild)
+        configPath = "../";
+    }
+    bool build = false;
+    std::vector<std::string> pathConfig = file::loadFileToStringVector(configPath + "path.config");
+    for(const auto& line : pathConfig)
+    {
+        if(line == "BUILD")
         {
-            configPath = "../";
+            build = true;
         }
-        std::vector<std::string> pathConfig = file::loadFileToStringVector(configPath + "path.config");
-        for(const auto& line : pathConfig)
+
+        int index = -1;
+        std::string append = "";
+        if((index = line.find(':')) != std::string::npos)
         {
-            int index = -1;
-            std::string append = "";
-            if((index = line.find(':')) != std::string::npos)
+            std::string setting = line.substr(0, index);
+            
+            if(setting == "source")
             {
-                std::string setting = line.substr(0, index);
-                
-                if(setting == "source")
+                if(build)
                 {
-                    if(vsBuild)
-                        append = "../";
-                    projSource += append + line.substr(index+2);
-                    replaceKeywords(projSource, sourceName);
+                    projSource = line.substr(index+2);
                 }
-                else if(setting == "audio")
+                else
                 {
-                    audioSource = line.substr(index+2) + "/";
-                    replaceKeywords(audioSource, sourceName);
+                    projSource += line.substr(index+2);
                 }
-                else if(setting == "data")
-                {
-                    configSource = line.substr(index+2) + "/";
-                    replaceKeywords(configSource, sourceName);
-                }
-                else if(setting == "texture")
-                {
-                    textureSource = line.substr(index+2) + "/";
-                    replaceKeywords(textureSource, sourceName);
-                }
-                else if(setting == "font")
-                {
-                    fontSource = line.substr(index+2) + "/";
-                    replaceKeywords(fontSource, sourceName);
-                }
-                else if(setting == "model")
-                {
-                    modelSource = line.substr(index+2) + "/";
-                    replaceKeywords(modelSource, sourceName);
-                }
-                else if(setting == "shader")
-                {
-                    shaderSource = line.substr(index+2) + "/";
-                    replaceKeywords(shaderSource, sourceName);
-                }
+                replaceKeywords(projSource, sourceName);
+            }
+            else if(setting == "audio")
+            {
+                audioSource = line.substr(index+2) + "/";
+                replaceKeywords(audioSource, sourceName);
+            }
+            else if(setting == "data")
+            {
+                configSource = line.substr(index+2) + "/";
+                replaceKeywords(configSource, sourceName);
+            }
+            else if(setting == "texture")
+            {
+                textureSource = line.substr(index+2) + "/";
+                replaceKeywords(textureSource, sourceName);
+            }
+            else if(setting == "font")
+            {
+                fontSource = line.substr(index+2) + "/";
+                replaceKeywords(fontSource, sourceName);
+            }
+            else if(setting == "model")
+            {
+                modelSource = line.substr(index+2) + "/";
+                replaceKeywords(modelSource, sourceName);
+            }
+            else if(setting == "shader")
+            {
+                shaderSource = line.substr(index+2) + "/";
+                replaceKeywords(shaderSource, sourceName);
             }
         }
     }
