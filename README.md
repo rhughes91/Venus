@@ -1,51 +1,71 @@
 # Venus Game Engine
-The Venus Game Engine is a C++ framework meant to simplify game development.
+The **Venus Game Engine** is a C++ framework meant to simplify game development.
 
-## Usage
-For the simplest experience, any code for game development should placed within the **projects** folder. The engine uses [CMake](https://cmake.org/download/) 
-to create a portable Windows or Linux buid. It currently supports the [MingGW](https://www.mingw-w64.org/) compiler, MSVC (Visual Studio), and g++ for Linux.
+## About
+**Venus** uses [CMake](https://cmake.org/download/) 
+to create a portable Windows or Linux buid. It currently supports the Visual Studio, [MingGW](https://www.mingw-w64.org/), and [Ninja](https://ninja-build.org/) build environments. It can currently utilize the MSVC or g++ compiler.
 
-If a new `.cpp` file is added to a project directory, then that file's name will need to be added to the `PROJECT_SRC` variable in its *CMakeFileLists.txt* file. A *main.cpp* script is required in every project made with Venus, but it does not need to be added to the `PROJECT_SRC` variable. If a new directory is added to the **projects** folder, the CMake Pipeline will need to be rebuilt (this will add a *CMakeFileLists.txt* file and a *main.cpp* file).
+## Build
+### Projects
+Any projects in the `PROJECT_DIRECTORY` can be easily built with CMake. The default value of this variable is the **projects** directory in **Venus**, but that value can be changed when generating the build system.
 
-A supplementary script is provided to export built projects into the **export** folder. The command `build-tools/main {Project Name}` will export the executable and it's resources to this folder with a directory matching the project name. These exported files can be safely zipped and distributed to other Windows or Linux machines (depending on how the project was compiled).
-
-## CMake Commands
-### Example Project
-If only the TestProject is being built, basic CMake commands can be used in the **build** directory.
-
-#### (Re)build CMake Pipeline
+#### Create Build System
 ```
-cmake ..
+cmake <source-path> -B <build-path>/<project-name> -G <generator> -DPROJECT_DIRECTORY=<projects-path>
+```
+It's important to note that the generator and projects directory do not need to be explicitly set. The generator will default to one available on your system, and the default projects directory was explained above.
+
+In order to target a specific project, the build path *must end* in a directory with the same name. Assuming the user to be in the **build** directory within **Venus**, in order to target **TestProject** in the **projects** directory, the user can simply call:
+```
+cmake .. -B TestProject
 ```
 
-#### Build project
+#### Build Project
+```
+cmake --build <build-path>
+```
+The build path here must match the one used in the creation of the build system. An executable will be built in this location that the user can easily run. Using the previous example, it may simply be `TestProject`:
+```
+cmake --build TestProject
+```
+
+#### Install/Export Project
+```
+cmake --install <build-path> --prefix <install-path>
+```
+All the installation process consists of is copy and pasting all the required files into a directory of the user's choice. This just includes the `.exe`, `path.config`, and `resources` files. If the prefix is not set, CMake will place the files into the **bin** directory. Following the previous example, the command would be:
+```
+cmake --install TestProject
+```
+
+### Default Project
+In the case that the set built directory does not match any project name, a default project will be build instead. This value (`DEFAULT_PROJECT`) is set to `TestProject` by default, but it can be altered by the user when creating the build system.
+#### Create Build System
+```
+cmake <source-path> -B <build-path> -G <generator> -DPROJECT_DIRECTORY=<projects-path> -DDEFAULT_PROJECT=<project-name>
+```
+All the previous rules apply with this command, except the build directory can have any arbitrary name. If the user wanted to generate a default project called `Example` directly in the **build** directory, that would look like this (assuming the user is still in the **build** directory):
+```
+cmake .. -DDEFAULT_PROJECT=Example
+```
 ```
 cmake --build .
 ```
+```
+cmake --install .
+```
+For building and installation, keep in mind that the build path is no longer the name of the project. The user simply needs to reference whatever build directory they had previously chosen.
 
-### Other Cases
-If other projects are being built, CMake will need more details to accurately build the project. These commands should be run in the main **Venus** directory. The *{Project Name}* should be replaced with the name of your directory in the **projects** folder. For example, if you added a directory called "Platformer" in the **projects** folder, you would need to run `cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build/Platformer` in order to make the CMake pipeline using MinGW. For the TestProject example provided, *{Project Name}* can simply be replaced with *TestProject*.
+## Usage
+**Venus** allows for project, build, and binary files to be placed anywhere the user specifies (inside and out of source). By default, **Venus** searches for project files in the **project** directory and exports binary files to the **bin** directory.
 
-#### (Re)build CMake Pipeline
-<ins>*MinGW*</ins>
+If a new `.cpp` file is added to a project directory, then that file will need to be added to the `PROJECT_SRC` variable in its *CMakeFileLists.txt* file.
 ```
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -S . -B build/{Project Name}
-```
+project(Venus)
 
-<ins>*MSVC*</ins>
+set(PROJECT_SRC example1.cpp example2.cpp)
 ```
-cmake -S . -B build/{Project Name}
-```
-
-<ins>*g++*</ins>
-```
-cmake -DCMAKE_BUILD_TYPE=Release -S . -B build/{Project Name}
-```
-
-#### Build project
-```
-cmake --build build/{Project Name}
-```
+A `main.cpp` script is required in every project made with Venus, but it does not need to be added to this variable. As long as the directory exists, a `main.cpp`, `CMakeLists.txt`, and `resources` directory will be automatically added to the project. If the directory *does not* exist, the default project will be generated instead.
 
 ## Contributions
 At its current state, the Venus Game Engine is not yet open to contributions.
