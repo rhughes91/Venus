@@ -13,19 +13,19 @@ Shader::Shader(std::string vertexPath, std::string fragmentPath)
 {
     ID = glCreateProgram();
     uint32_t shader;
-    if(shader = compileShader
+    if((shader = compileShader
     (
         file::loadFileToString((Source::shader()+vertexPath+".hlsl").c_str()), GL_VERTEX_SHADER
-    ))
+    )))
     {
         glAttachShader(ID, shader);
         glDeleteShader(shader);
     }
     else return;
-    if(shader = compileShader
+    if((shader = compileShader
     (
         file::loadFileToString((Source::shader()+fragmentPath+".hlsl").c_str()), GL_FRAGMENT_SHADER
-    ))
+    )))
     {
         glAttachShader(ID, shader);
         glDeleteShader(shader);

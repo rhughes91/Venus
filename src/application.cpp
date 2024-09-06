@@ -761,6 +761,7 @@ char key::typed()
                 case '.': return '>';
                 case '/': return '?';
                 case '`': return '~';
+                default: break;
             }
         }
     }
@@ -780,6 +781,7 @@ char key::typed()
             case key::K_8: return '8';
             case key::K_9: return '9';
             case key::K_DECIMAL: return '.';
+            default: break;
         }
     }
     else if(key::toggled(key::CAPS_LOCK))
@@ -797,6 +799,7 @@ char key::typed()
         case key::K_MULTIPLY: return '*';
         case key::K_ENTER: return '\n';
         case key::K_EQUAL: return '=';
+        default: break;
     }
     return key;
 }

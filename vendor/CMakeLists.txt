@@ -1,6 +1,9 @@
 project(Venus)
 
-set(VENDOR_SRC glad.c stb_image.cpp)
-add_library(vendor ${VENDOR_SRC})
+add_subdirectory(GLFW)
 
-target_include_directories(vendor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+add_library(glad glad/glad.c)
+add_library(stb_image stb_image/stb_image.cpp)
+
+target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/vendor/glad/include)
+target_include_directories(stb_image PUBLIC ${CMAKE_SOURCE_DIR}/vendor/stb_image/include)
