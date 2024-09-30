@@ -576,7 +576,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-    Application::cursorPosition = {(float)xpos, (float)ypos};
+    Application::setCursorPos({(float)xpos, (float)ypos});
 }
 void JoystickManager::joystick_button_callback()
 {
@@ -901,6 +901,34 @@ bool controller::pressed(uint32_t index, const std::vector<controller::ButtonCod
     }
     return false;
 }
+bool controller::pressed(controller::ButtonCode id)
+{
+    uint32_t index = Application::currentController();
+    JoystickManager& controller =  Application::controllers[index];
+    if(controller.active)
+        return controller.inputs[id].pressed;
+    return false;
+}
+bool controller::pressed(controller::ButtonArray ids)
+{
+    uint32_t index = Application::currentController();
+    for(const controller::ButtonCode &id : ids.get())
+    {
+        if(controller::pressed(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::pressed(const std::vector<controller::ButtonCode>& ids)
+{
+    uint32_t index = Application::currentController();
+    for(const controller::ButtonCode &id : ids)
+    {
+        if(controller::pressed(index, id))
+            return true;
+    }
+    return false;
+}
 bool controller::held(uint32_t index, controller::ButtonCode id)
 {
     JoystickManager& controller =  Application::controllers[index];
@@ -919,6 +947,34 @@ bool controller::held(uint32_t index, controller::ButtonArray ids)
 }
 bool controller::held(uint32_t index, const std::vector<controller::ButtonCode>& ids)
 {
+    for(const controller::ButtonCode &id : ids)
+    {
+        if(controller::held(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::held(controller::ButtonCode id)
+{
+    uint32_t index = Application::currentController();
+    JoystickManager& controller =  Application::controllers[index];
+    if(controller.active)
+        return controller.inputs[id].held;
+    return false;
+}
+bool controller::held(controller::ButtonArray ids)
+{
+    uint32_t index = Application::currentController();
+    for(const controller::ButtonCode &id : ids.get())
+    {
+        if(controller::held(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::held(const std::vector<controller::ButtonCode>& ids)
+{
+    uint32_t index = Application::currentController();
     for(const controller::ButtonCode &id : ids)
     {
         if(controller::held(index, id))
@@ -951,9 +1007,41 @@ bool controller::released(uint32_t index, const std::vector<controller::ButtonCo
     }
     return false;
 }
+bool controller::released(controller::ButtonCode id)
+{
+    uint32_t index = Application::currentController();
+    JoystickManager& controller =  Application::controllers[index];
+    if(controller.active)
+        return controller.inputs[id].held;
+    return false;
+}
+bool controller::released(controller::ButtonArray ids)
+{
+    uint32_t index = Application::currentController();
+    for(const controller::ButtonCode &id : ids.get())
+    {
+        if(controller::released(index, id))
+            return true;
+    }
+    return false;
+}
+bool controller::released(const std::vector<controller::ButtonCode>& ids)
+{
+    uint32_t index = Application::currentController();
+    for(const controller::ButtonCode &id : ids)
+    {
+        if(controller::released(index, id))
+            return true;
+    }
+    return false;
+}
 float controller::axis(uint32_t index, AxisCode id)
 {
     return Application::controllers[index].axes[id];
+}
+float controller::axis(AxisCode id)
+{
+    return Application::controllers[Application::currentController()].axes[id];
 }
 
 bool Window::closing()
@@ -1130,6 +1218,13 @@ void Window::terminate(void *audioDevice, void *audioContext)
 {
     glfwTerminate();
 }
+void Window::updateResolution()
+{
+    if(screen.resolutionUpdated)
+    {
+        screen.refreshResolution(resolution());
+    }
+}
 
 float Window::aspectRatioInv()
 {
@@ -1154,7 +1249,7 @@ Vector2 Window::fetchCursorPos()
 }
 Vector2 Window::cursorUniformScreenPosition()
 {
-    Vector2 cursorPosition = Application::cursorPosition;
+    Vector2 cursorPosition = Application::getCursorPos();
     Vector2 res = Window::resolution();
 
     return {((float)cursorPosition.x/(float)res.x)*2 - 1, -((float)cursorPosition.y/(float)res.y)*2 + 1};
@@ -1198,7 +1293,7 @@ Color Window::getPixelColor(const Vector2& position)
     return result;
 }
 
-Window::Window(std::string name, uint32_t width__, uint32_t height__)
+Window::Window(std::string name, uint32_t width__, uint32_t height__, uint32_t x__, uint32_t y__)
 {
     width = width__;
     height = height__;
@@ -1214,7 +1309,7 @@ Window::Window(std::string name, uint32_t width__, uint32_t height__)
     glfwMakeContextCurrent((GLFWwindow *)data);
 
     glfwShowWindow((GLFWwindow *)data);
-    glfwSetWindowPos((GLFWwindow *)data, 0, 25);
+    glfwSetWindowPos((GLFWwindow *)data, x__, y__);
     glfwSetFramebufferSizeCallback((GLFWwindow *)data, framebuffer_size_callback);
     glfwSetKeyCallback((GLFWwindow *)data, key_callback);
     glfwSetCursorPosCallback((GLFWwindow *)data, mouse_callback);
@@ -1329,7 +1424,7 @@ void initializeECS(object::ecs& manager)
             Vector3& position = container.getComponent<Transform>(e).position;
             Physics2D& physics = container.getComponent<Physics2D>(e);
 
-            physics.time.update((Application::data(data).time).deltaTime, physics.maxDeltaTime);
+            physics.time.update(Application::data(data).getTime().deltaTime, physics.maxDeltaTime);
             float time = physics.time.interval;
 
             while(physics.time.timer > physics.time.interval)
@@ -1429,6 +1524,7 @@ void initializeECS(object::ecs& manager)
     aabb2D.setFunction(object::fn::UPDATE, []
     (object::ecs & container, object::ecs::system &system, void *data)
     {
+        Application& app = Application::data(data);
         for(entity e : container.entities<AABB2DHandler>())
         {
             if(!container.containsComponent<Physics2D>(e))
@@ -1458,14 +1554,17 @@ void initializeECS(object::ecs& manager)
                 if(positive.x >= negative2.x && negative.x <= positive2.x && positive.y >= negative2.y && negative.y <= positive2.y)
                 {          
                     bool edge = (positive.x == negative2.x || negative.x == positive2.x || positive.y == negative2.y || negative.y == positive2.y);
-                    physics::collisionTrigger(e, compare, edge, triggered, container);
-                    // collider2.trigger(compare, e, edge, triggered);
+                    auto info = BoxCollider::CollisionData(e, compare, edge, triggered);
+                    app.runEvent(collider.enterEvent, &info);
+                    info.one = compare;
+                    info.two = e;
+                    app.runEvent(collider2.enterEvent, &info);
                     collider.enter = collider2.enter = triggered = true;
                 }
             }
             if(!triggered)
             {
-                physics::collisionMiss(e, container);
+                app.runEvent(collider.exitEvent, &e);
                 collider.enter = false;
             }
         }
@@ -1550,6 +1649,13 @@ void initializeECS(object::ecs& manager)
     });
 
     auto& simpleRendering = manager.createSystem<SimpleRenderer, Transform, Model, SimpleShader>({}, 32);
+    simpleRendering.setFunction(object::fn::LOAD, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        SimpleRenderer& renderer = system.getInstance<SimpleRenderer>();
+        std::vector<int *> values = {&renderer.model, &renderer.view, &renderer.projection, &renderer.scale, &renderer.color, &renderer.offset, &renderer.uvScale, &renderer.flip};
+        Shader::get("simple_shader").setUniforms({"model", "view", "projection", "scale", "objColor", "offset", "uvScale", "flip"}, values);
+    });
     simpleRendering.setFunction(object::fn::RENDER, []
     (object::ecs &container, object::ecs::system &system, void *data)
     {
@@ -1562,6 +1668,7 @@ void initializeECS(object::ecs& manager)
         Transform& cameraTransform = container.getComponent<Transform>(cam);
         Frustum frustum = camera.getFrustum(cameraTransform.position, win.aspectRatioInv());
 
+        SimpleRenderer& rendering = system.getInstance<SimpleRenderer>();
         Shader& shader = Shader::get("simple_shader");
         shader.use();
 
@@ -1572,22 +1679,29 @@ void initializeECS(object::ecs& manager)
             if(!frustum.contains(transform.position + model.data.offset, model.data.dimensions.length() * vec3::high(transform.scale)))
                 continue;
                 
-            SimpleShader& mat = container.getComponent<SimpleShader>(e);
+            SimpleShader mat = container.getComponent<SimpleShader>(e);
 
-            shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
-            shader.setMat4("view", camera.view.matrix, true);
-            shader.setMat4("projection", camera.projection.matrix, true);
-            shader.setVec3("scale", transform.scale);
-            shader.setVec4("objColor", mat.color);
-            shader.setVec2("offset", model.offset);
-            shader.setVec2("uvScale", model.scale);
-            shader.setBool("flip", mat.flip);
+            shader.setMat4(rendering.model, (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+            shader.setMat4(rendering.view, camera.view.matrix, true);
+            shader.setMat4(rendering.projection, camera.projection.matrix, true);
+            shader.setVec3(rendering.scale, transform.scale);
+            shader.setVec4(rendering.color, mat.color);
+            shader.setVec2(rendering.offset, model.offset);
+            shader.setVec2(rendering.uvScale, model.scale);
+            shader.setBool(rendering.flip, mat.flip);
 
             model.render();
         }
     });
 
     auto& advancedRendering = manager.createSystem<AdvancedRenderer, Transform, Model, AdvancedShader>({}, 32);
+    advancedRendering.setFunction(object::fn::LOAD, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        AdvancedRenderer& renderer = system.getInstance<AdvancedRenderer>();
+        std::vector<int *> values = {&renderer.model, &renderer.view, &renderer.projection, &renderer.scale, &renderer.color, &renderer.viewPos, &renderer.lightDir, &renderer.lightColor, &renderer.lightStr, &renderer.matShininess, &renderer.matAmb, &renderer.matDiff, &renderer.matSpec};
+        Shader::get("object_shader").setUniforms({"model", "view", "projection", "scale", "objColor", "viewPos", "dirLight.direction", "dirLight.color", "dirLight.strength", "material.shininess", "material.ambientStrength", "material.diffuseStrength", "material.specularStrength"}, values);
+    });
     advancedRendering.setFunction(object::fn::RENDER, []
     (object::ecs &container, object::ecs::system &system, void *data)
     {
@@ -1605,6 +1719,7 @@ void initializeECS(object::ecs& manager)
 
         for(entity e : container.entities<AdvancedRenderer>())
         {
+            AdvancedRenderer& rendering = system.getInstance<AdvancedRenderer>();
             Model model = container.getComponent<Model>(e);
             Transform& transform = container.getComponent<Transform>(e);
             if(!frustum.contains(transform.position + model.data.offset, model.data.dimensions.length() * vec3::high(transform.scale)))
@@ -1613,24 +1728,24 @@ void initializeECS(object::ecs& manager)
             }
 
             DirectionalLight& light = win.screen.dirLight;
-            AdvancedShader& mat = container.getComponent<AdvancedShader>(e);
+            AdvancedShader mat = container.getComponent<AdvancedShader>(e);
     
-            shader.setMat4("model", (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
-            shader.setMat4("view", camera.view.matrix, true);
-            shader.setMat4("projection", camera.projection.matrix, true);
-            shader.setVec3("scale", transform.scale);
+            shader.setMat4(rendering.model, (mat4x4(1).rotated(transform.rotation).translated(transform.position)).matrix, true);
+            shader.setMat4(rendering.view, camera.view.matrix, true);
+            shader.setMat4(rendering.projection, camera.projection.matrix, true);
+            shader.setVec3(rendering.scale, transform.scale);
             
-            shader.setVec3("dirLight.direction", light.direction);
-            shader.setVec4("dirLight.color", light.color);
-            shader.setFloat("dirLight.strength", light.strength);
+            shader.setVec3(rendering.lightDir, light.direction);
+            shader.setVec4(rendering.lightColor, light.color);
+            shader.setFloat(rendering.lightStr, light.strength);
 
-            shader.setVec3("viewPos", cameraTransform.position);
-            shader.setVec4("objColor", mat.color);
+            shader.setVec3(rendering.viewPos, cameraTransform.position);
+            shader.setVec4(rendering.color, mat.color);
 
-            shader.setFloat("material.shininess", mat.shine);
-            shader.setFloat("material.ambientStrength", mat.ambient);
-            shader.setFloat("material.diffuseStrength", mat.diffuse);
-            shader.setFloat("material.specularStrength", mat.specular);
+            shader.setFloat(rendering.matShininess, mat.shine);
+            shader.setFloat(rendering.matAmb, mat.ambient);
+            shader.setFloat(rendering.matDiff, mat.diffuse);
+            shader.setFloat(rendering.matSpec, mat.specular);
             model.render();
         }
     });
@@ -1701,7 +1816,7 @@ void initializeECS(object::ecs& manager)
                 continue;
             }
 
-            ComplexShader& mat = container.getComponent<ComplexShader>(e);
+            ComplexShader mat = container.getComponent<ComplexShader>(e);
 
             if(container.containsComponent<Fade>(e))
             {
@@ -1743,6 +1858,14 @@ void initializeECS(object::ecs& manager)
     });
 
     auto& uiRendering = manager.createSystem<UIRenderer, Rect, Sprite, SimpleShader>({}, 34);
+    uiRendering.setFunction(object::fn::LOAD, []
+    (object::ecs &container, object::ecs::system &system, void *data)
+    {
+        UIRenderer& renderer = system.getInstance<UIRenderer>();
+        renderer.update = true;
+        std::vector<int *> values = {&renderer.aspect, &renderer.position, &renderer.scale, &renderer.model, &renderer.color};
+        Shader::get("ui_shader").setUniforms({"aspect", "position", "scale", "model", "objColor"}, values);
+    });
     uiRendering.setFunction(object::fn::RENDER, []
     (object::ecs & container, object::ecs::system &system, void *data)
     {
@@ -1753,6 +1876,7 @@ void initializeECS(object::ecs& manager)
             return;
 
         Camera& camera = container.getComponent<Camera>(cam);
+        UIRenderer& rendering = system.getInstance<UIRenderer>();
         Shader& shader = Shader::get("ui_shader");
         shader.use();
 
@@ -1761,13 +1885,13 @@ void initializeECS(object::ecs& manager)
         {
             Sprite sprite = container.getComponent<Sprite>(e);
             Rect& rect = container.getComponent<Rect>(e);
-            SimpleShader& mat = container.getComponent<SimpleShader>(e);
+            SimpleShader mat = container.getComponent<SimpleShader>(e);
 
-            shader.setFloat("aspect", rect.useAspect() ? win.aspectRatio():1);
-            shader.setVec2("position", rect.relativePosition(res));
-            shader.setVec2("scale", rect.adjustedScale(res));
-            shader.setMat4("model", (mat4x4(1) * (mat4x4)rect.rotation).matrix, false);
-            shader.setVec4("objColor", mat.color);
+            shader.setFloat(rendering.aspect, rect.useAspect() ? win.aspectRatio():1);
+            shader.setVec2(rendering.position, rect.relativePosition(res));
+            shader.setVec2(rendering.scale, rect.adjustedScale(res));
+            shader.setMat4(rendering.model, (mat4x4(1) * (mat4x4)rect.rotation).matrix, false);
+            shader.setVec4(rendering.color, mat.color);
 
             sprite.render();
         }
@@ -1793,7 +1917,7 @@ void initializeECS(object::ecs& manager)
         {
             Text text = container.getComponent<Text>(e);
             Rect& rect = container.getComponent<Rect>(e);
-            TextShader& mat = container.getComponent<TextShader>(e);
+            TextShader mat = container.getComponent<TextShader>(e);
 
             // shader.setFloat("aspect", rect.useAspect() ? win.aspectRatio():1);
             // shader.setVec2("position", rect.relativePosition(res));
@@ -1847,10 +1971,7 @@ void initializeECS(object::ecs& manager)
         uint32_t& cam = win.screen.camera;
         if(cam != -1)
         {
-            Camera& camera = container.getComponent<Camera>(cam);
             Transform& transform = container.getComponent<Transform>(cam);
-
-            Vector3& position = transform.position;
             transform.lastRotation = transform.rotation;
         }
     });
@@ -1934,7 +2055,8 @@ Scene::Scene(const object::ecs& container__)
     container.addToToggle<AnimationUVManager>(pause, object::fn::FIXED_UPDATE);
 }
 
-ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& name, uint32_t width, uint32_t height)
+
+Application::Application(const std::string& name, uint32_t width, uint32_t height, uint32_t x, uint32_t y)
 {
     Source::initialize();
 
@@ -1955,13 +2077,15 @@ ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& 
     glfwSetErrorCallback(error_callback);
     glfwSetJoystickCallback(joystick_callback);
 
-    windows.push_back(Window(name, width, height));
+    windows.push_back(Window(name, width, height, x, y));
     Window& window = windows.back();
 
     Texture::load("default", {Color8(255, 255, 255, 255)}, 1, 1, Texture::RGBA, Texture::PNG);
     Mesh::load("square", shape::square());
     Mesh::load("cube", shape::cube());
-    file::loadFilesInDirectory(Source::root() + Source::font(), Font::load);
+
+    Font::loadAll(Source::root() + Source::font());
+    Texture::loadAll(Source::root() + Source::texture());
 
     std::vector<std::string> shaderConfig = file::loadFileToStringVector(Source::config() + "shader.config");
     for(const auto& line : shaderConfig)
@@ -2025,11 +2149,22 @@ ProjectManager::ProjectManager(std::vector<Window>& windows, const std::string& 
             }
         }
     }
-}
 
-Application::Application(const std::string& name, uint32_t width, uint32_t height)
-{
-    manager = ProjectManager(windows, name, width, height);
+    createEvent([](Application& app, void *data){});
+
+    BoxCollider::events["empty"] = 0;
+    BoxCollider::events["physics2DHit"] = createEvent([]
+    (Application& app, void *data)
+    {
+        BoxCollider::CollisionData cd = *(BoxCollider::CollisionData *)data;
+        physics::collisionTrigger(cd.one, cd.two, cd.edge, cd.triggered, app.getScene().container);
+    });
+    BoxCollider::events["physics2DMiss"] = createEvent([]
+    (Application& app, void *data)
+    {
+        physics::collisionMiss(*((entity *)data), app.getScene().container);
+    });
+
     currentScene = createScene();
 }
 

@@ -195,7 +195,8 @@ struct Texture
     Texture() {}
     Texture(uint32_t texture__, const Vector2I& resolution__) : texture(texture__), resolution(resolution__) {}
 
-    static void load(const std::string &path, Type type);
+    static void loadAll(const std::string& directory, Filter filter = Filter::LINEAR);
+    static void load(const std::string &path, Type type, Filter filter = Filter::LINEAR);
     static void load(const std::string &path, const std::vector<std::string> &subPaths, Type type);
     static void load(const std::string& name, const std::vector<char>& data, float width, float height, Channel channel, Type type);
     static void load(const std::string& name, const std::vector<Color8>& data, float width, float height, Channel channel, Type type, Filter filter = Filter::LINEAR);

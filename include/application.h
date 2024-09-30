@@ -31,8 +31,14 @@ struct PointLightManager{};
 struct SpotLightManager{};
 struct UIManager{};
 
-struct SimpleRenderer{};
-struct AdvancedRenderer{};
+struct SimpleRenderer
+{
+    int model, view, projection, scale, color, offset, uvScale, flip;
+};
+struct AdvancedRenderer
+{
+    int model, view, projection, scale, color, viewPos, lightDir, lightColor, lightStr, matShininess, matAmb, matDiff, matSpec;
+};
 struct ComplexRenderer
 {
     bool update = true;
@@ -41,6 +47,7 @@ struct ComplexRenderer
 struct UIRenderer
 {
     bool update = true;
+    int aspect, position, scale, model, color;
 };
 struct TextRenderer{};
 
@@ -130,79 +137,6 @@ struct Screen
     int getMaximumSamples();
 };
 
-// Window (struct): determines the appearance of the application Window
-class Window
-{
-    public:
-        Screen screen;
-        Vector2I lastPosition, lastResolution;
-        uint16_t width = 0;
-        uint16_t height = 0;
-
-        void *data, *audioDevice, *audioContext;
-        bool vsyncEnabled = false, isFullscreen = false;
-
-        Window() {};
-        Window(std::string name, uint32_t width, uint32_t height);
-
-        void setCamera(uint32_t cam)
-        {
-            screen.camera = cam;
-        }
-
-        bool closing();
-        bool decorated();
-        bool fullscreened();
-        bool maximized();
-        bool throwAudioError();
-        bool throwError();
-
-        void centerWindow();
-        void close();
-        void enableDecoration(bool enable);
-        void enableFloating(bool enable);
-        void enablePassthrough(bool enable);
-        bool enableVSync(bool enable);
-        void fullscreen(bool enable, bool vsync);
-        void hideCursor(bool enable);
-        void lockCursor(bool enable);
-        void maximize();
-        void minimize();
-        void poll();
-        void refresh();
-        void setCursor(const Vector2& position);
-        void setIcon(const char *path);
-        void setOpacity(float opacity);
-        void setPosition(const Vector2I& position);
-        void setSize(const Vector2I& size);
-        void setTitle(const char *title);
-        void terminate(void *audioDevice, void *audioContext);
-
-        float aspectRatioInv();
-        float aspectRatio();
-        float getOpacity();
-
-        Vector2I position();
-        Vector2 fetchCursorPos();
-        Vector2 cursorUniformScreenPosition();
-        Vector2 cursorScreenPosition();
-        Vector2I center();
-        Vector2I monitorCenter();
-        Vector2I resolution();
-
-        Color getPixelColor(const Vector2& position);
-        
-    private:
-        void configureGLAD();
-};
-
-//
-struct ProjectManager
-{
-    ProjectManager() {}
-    ProjectManager(std::vector<Window>& windows, const std::string& name, uint32_t width, uint32_t height);
-};
-
 //
 struct Scene
 {
@@ -266,6 +200,73 @@ struct Time
         int32_t framerateIndex = 0;
 };
 
+// Window (struct): determines the appearance of the application Window
+class Window
+{
+    public:
+        Screen screen;
+        Vector2I lastPosition, lastResolution;
+        uint16_t width = 0;
+        uint16_t height = 0;
+
+        void *data, *audioDevice, *audioContext;
+        bool vsyncEnabled = false, isFullscreen = false;
+
+        Window() {};
+        Window(std::string name, uint32_t width, uint32_t height, uint32_t x, uint32_t y);
+
+        void setCamera(uint32_t cam)
+        {
+            screen.camera = cam;
+        }
+
+        bool closing();
+        bool decorated();
+        bool fullscreened();
+        bool maximized();
+        bool throwAudioError();
+        bool throwError();
+
+        void centerWindow();
+        void close();
+        void enableDecoration(bool enable);
+        void enableFloating(bool enable);
+        void enablePassthrough(bool enable);
+        bool enableVSync(bool enable);
+        void fullscreen(bool enable, bool vsync);
+        void hideCursor(bool enable);
+        void lockCursor(bool enable);
+        void maximize();
+        void minimize();
+        void poll();
+        void refresh();
+        void setCursor(const Vector2& position);
+        void setIcon(const char *path);
+        void setOpacity(float opacity);
+        void setPosition(const Vector2I& position);
+        void setSize(const Vector2I& size);
+        void setTitle(const char *title);
+        void terminate(void *audioDevice, void *audioContext);
+        void updateResolution();
+
+        float aspectRatioInv();
+        float aspectRatio();
+        float getOpacity();
+
+        Vector2I position();
+        Vector2 fetchCursorPos();
+        Vector2 cursorUniformScreenPosition();
+        Vector2 cursorScreenPosition();
+        Vector2I center();
+        Vector2I monitorCenter();
+        Vector2I resolution();
+
+        Color getPixelColor(const Vector2& position);
+        
+    private:
+        void configureGLAD();
+};
+
 //
 namespace object
 {
@@ -289,24 +290,28 @@ namespace object
         }
 
         private:
-            void (*func)(Application &app, void *data);
+            void (*func)(Application &app, void *data) = [](Application &app, void *data){};
     };
+
+    namespace fn
+    {
+        extern uint8_t LOAD, START, UPDATE, LATE_UPDATE, FIXED_UPDATE, RENDER, DESTROY;
+    }
+
+    void defaultInsertion(entity e, std::vector<entity>& entities, std::vector<size_t>& map);
+    void insertionSort(std::vector<entity>& entities, std::vector<size_t>& map, Application& app, object::ecs& container, bool (*criteria)(entity, entity, object::ecs&, void *));
+    void setFunctionDefinitions(object::ecs& container, const std::vector<uint8_t *>& references);
 }
 
 struct Application
 {
     static inline InputManager keyboard, mouse;
     static inline std::array<JoystickManager, 17> controllers;
-    static inline uint32_t currentJoystick = 0;
-    static inline Vector2 cursorPosition;
 
-    Time time;
-    ProjectManager manager;
-
-    Application(const std::string& name = "default", uint32_t width = 800, uint32_t height = 600);
+    Application(const std::string& name = "default", uint32_t width = 800, uint32_t height = 600, uint32_t x = 0, uint32_t = 25);
 
     static Application& data(void *);
-    static void beginEventLoop(Application& app);
+    static void runEventLoop(Application& app);
 
     Window& window()
     {
@@ -323,6 +328,11 @@ struct Application
 
     void runEvent(object::event event, void *data = NULL)
     {
+        if(event >= events.size())
+        {
+            std::cout << "ERROR :: Event does not exist.\n";
+            return;
+        }
         events[event].run(*this, data);
     }
 
@@ -353,9 +363,24 @@ struct Application
         setScene(currentScene);
     }
 
+    Time getTime()
+    {
+        return time;
+    }
+
     static uint32_t currentController()
     {
         return currentJoystick;
+    }
+
+    static Vector2 getCursorPos()
+    {
+        return cursorPosition;
+    }
+
+    static void setCursorPos(const Vector2& pos)
+    {
+        cursorPosition = pos;
     }
 
     static void updateCursor()
@@ -369,6 +394,8 @@ struct Application
     }
 
     private:
+        static inline uint32_t currentJoystick = 0;
+        static inline Vector2 cursorPosition;
         static inline Vector2 lastCursorPosition = 0;
 
         uint32_t currentWindow = 0;
@@ -380,22 +407,268 @@ struct Application
 
         std::vector<object::Event> events;
 
+        Time time;
+
         void updateScene();
 };
 
 
-namespace object
+template <>
+struct Serialization<ShaderUniforms>
 {
-    namespace fn
-    {
-        extern uint8_t LOAD, START, UPDATE, LATE_UPDATE, FIXED_UPDATE, RENDER, DESTROY;
+    static size_t length(const ShaderUniforms& value)
+    {        
+        return 
+            object::length(value.booleans) + 
+            object::length(value.integers) +
+            object::length(value.uIntegers) +
+            object::length(value.floats) +
+            object::length(value.doubles) +
+            object::length(value.vBooleans) +
+            object::length(value.vIntegers) +
+            object::length(value.vUIntegers) +
+            object::length(value.vFloats) +
+            object::length(value.vDoubles);
     }
 
-    void defaultInsertion(entity e, std::vector<entity>& entities, std::vector<size_t>& map);
-    void insertionSort(std::vector<entity>& entities, std::vector<size_t>& map, Application& app, object::ecs& container, bool (*criteria)(entity, entity, object::ecs&, void *));
-    void setFunctionDefinitions(object::ecs& container, const std::vector<uint8_t *>& references);
-}
+    static size_t serialize(const ShaderUniforms& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
 
+        count += object::serialize(value.booleans, stream, index + count);
+        count += object::serialize(value.integers, stream, index + count);
+        count += object::serialize(value.uIntegers, stream, index + count);
+        count += object::serialize(value.floats, stream, index + count);
+        count += object::serialize(value.doubles, stream, index + count);
+        count += object::serialize(value.vBooleans, stream, index + count);
+        count += object::serialize(value.vIntegers, stream, index + count);
+        count += object::serialize(value.vUIntegers, stream, index + count);
+        count += object::serialize(value.vFloats, stream, index + count);
+        count += object::serialize(value.vDoubles, stream, index + count);
+
+        return count;
+    }
+
+    static ShaderUniforms deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        ShaderUniforms result = ShaderUniforms();
+        size_t count = 0;
+
+        result.booleans = object::deserialize<std::vector<bool>>(stream, index + count);
+        count += object::length(result.booleans);
+
+        result.integers = object::deserialize<std::vector<int32_t>>(stream, index + count);
+        count += object::length(result.integers);
+
+        result.uIntegers = object::deserialize<std::vector<uint32_t>>(stream, index + count);
+        count += object::length(result.uIntegers);
+
+        result.floats = object::deserialize<std::vector<float>>(stream, index + count);
+        count += object::length(result.floats);
+
+        result.doubles = object::deserialize<std::vector<double>>(stream, index + count);
+        count += object::length(result.doubles);
+
+        result.vBooleans = object::deserialize<std::vector<Vector2>>(stream, index + count);
+        count += object::length(result.vBooleans);
+        
+        result.vIntegers = object::deserialize<std::vector<Vector2>>(stream, index + count);
+        count += object::length(result.vIntegers);
+
+        result.vUIntegers = object::deserialize<std::vector<Vector2>>(stream, index + count);
+        count += object::length(result.vUIntegers);
+
+        result.vFloats = object::deserialize<std::vector<Vector2>>(stream, index + count);
+        count += object::length(result.vFloats);
+
+        result.vDoubles = object::deserialize<std::vector<Vector2>>(stream, index + count);
+        count += object::length(result.vDoubles);
+
+        return result;
+    }
+};
+
+
+template <>
+struct Serialization<SimpleShader>
+{
+    static size_t length(const SimpleShader& value)
+    {        
+        return 
+            object::length(value.values) + 
+            object::length(value.color) +
+            object::length(value.flip);
+    }
+
+    static size_t serialize(const SimpleShader& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.values, stream, index + count);
+        count += object::serialize(value.color, stream, index + count);
+        count += object::serialize(value.flip, stream, index + count);
+
+        return count;
+    }
+
+    static SimpleShader deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        SimpleShader result = SimpleShader();
+        size_t count = 0;
+
+        result.values = object::deserialize<ShaderUniforms>(stream, index + count);
+        count += object::length(result.values);
+
+        result.color = object::deserialize<Color>(stream, index + count);
+        count += object::length(result.color);
+
+        result.flip = object::deserialize<bool>(stream, index + count);
+        count += object::length(result.flip);
+
+        return result;
+    }
+};
+
+template <>
+struct Serialization<TextShader>
+{
+    static size_t length(const TextShader& value)
+    {        
+        return 
+            object::length(value.values) + 
+            object::length(value.color) +
+            object::length(value.flip);
+    }
+
+    static size_t serialize(const TextShader& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.values, stream, index + count);
+        count += object::serialize(value.color, stream, index + count);
+        count += object::serialize(value.flip, stream, index + count);
+
+        return count;
+    }
+
+    static TextShader deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        TextShader result = TextShader();
+        size_t count = 0;
+
+        result.values = object::deserialize<ShaderUniforms>(stream, index + count);
+        count += object::length(result.values);
+
+        result.color = object::deserialize<Color>(stream, index + count);
+        count += object::length(result.color);
+
+        result.flip = object::deserialize<bool>(stream, index + count);
+        count += object::length(result.flip);
+
+        return result;
+    }
+};
+
+template <>
+struct Serialization<ComplexShader>
+{
+    static size_t length(const ComplexShader& value)
+    {        
+        return 
+            object::length(value.values) + 
+            object::length(value.color) +
+            object::length(value.flip);
+    }
+
+    static size_t serialize(const ComplexShader& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.values, stream, index + count);
+        count += object::serialize(value.color, stream, index + count);
+        count += object::serialize(value.flip, stream, index + count);
+
+        return count;
+    }
+
+    static ComplexShader deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        ComplexShader result = ComplexShader();
+        size_t count = 0;
+
+        result.values = object::deserialize<ShaderUniforms>(stream, index + count);
+        count += object::length(result.values);
+
+        result.color = object::deserialize<Color>(stream, index + count);
+        count += object::length(result.color);
+
+        result.flip = object::deserialize<bool>(stream, index + count);
+        count += object::length(result.flip);
+
+        return result;
+    }
+};
+
+template <>
+struct Serialization<AdvancedShader>
+{
+    static size_t length(const AdvancedShader& value)
+    {        
+        return 
+            object::length(value.values) + 
+            object::length(value.color) +
+            object::length(value.flip) +
+            object::length(value.ambient) + 
+            object::length(value.diffuse) +
+            object::length(value.specular) +
+            object::length(value.shine);
+    }
+
+    static size_t serialize(const AdvancedShader& value, std::vector<uint8_t>& stream, size_t index)
+    {
+        size_t count = 0;
+
+        count += object::serialize(value.values, stream, index + count);
+        count += object::serialize(value.color, stream, index + count);
+        count += object::serialize(value.flip, stream, index + count);
+        count += object::serialize(value.ambient, stream, index + count);
+        count += object::serialize(value.diffuse, stream, index + count);
+        count += object::serialize(value.specular, stream, index + count);
+        count += object::serialize(value.shine, stream, index + count);
+
+        return count;
+    }
+
+    static AdvancedShader deserialize(std::vector<uint8_t>& stream, size_t index)
+    {
+        AdvancedShader result = AdvancedShader();
+        size_t count = 0;
+
+        result.values = object::deserialize<ShaderUniforms>(stream, index + count);
+        count += object::length(result.values);
+
+        result.color = object::deserialize<Color>(stream, index + count);
+        count += object::length(result.color);
+
+        result.flip = object::deserialize<bool>(stream, index + count);
+        count += object::length(result.flip);
+
+        result.ambient = object::deserialize<float>(stream, index + count);
+        count += object::length(result.ambient);
+
+        result.diffuse = object::deserialize<float>(stream, index + count);
+        count += object::length(result.diffuse);
+
+        result.specular = object::deserialize<float>(stream, index + count);
+        count += object::length(result.specular);
+
+        result.shine = object::deserialize<int32_t>(stream, index + count);
+        count += object::length(result.shine);
+        
+
+        return result;
+    }
+};
 
 template <>
 struct Serialization<Model>

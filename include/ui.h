@@ -109,8 +109,8 @@ struct Font
         return result;
     }
 
-
-    static void load(const std::string &fileName);
+    static void loadAll(const std::string &directory);
+    static void load(const std::string &fileName, const std::string &path);
     static Font& get(const std::string &fileName);
 
     private:

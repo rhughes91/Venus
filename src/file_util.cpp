@@ -135,19 +135,70 @@ Mesh file::loadObjFile(const std::string &fileName)
     return Mesh(vertices, dimensions, average);
 }
 
-void file::loadFilesInDirectory(const std::string &fileName, void(*load)(const std::string&))
+void loadImgsRecursive(const std::filesystem::path &directory, const std::string& append, Texture::Filter filter)
 {
-    for (const auto& entry : std::filesystem::directory_iterator(fileName))
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
     {
-        load(entry.path().string());
+        std::filesystem::path f = entry.path().filename();
+        if(std::filesystem::is_directory(f))
+        {
+            loadImgsRecursive(f, append + f.string() + "/", filter);
+        }
+        else if(f.extension().string() == ".png")
+        {
+            Texture::load(append + f.filename().string(), Texture::Type::PNG, filter);
+        }
+    }
+}
+void Texture::loadAll(const std::string& directory, Filter filter)
+{
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    {
+        std::filesystem::path f = entry.path();
+        if(std::filesystem::is_directory(f))
+        {
+            loadImgsRecursive(f, f.filename().string() + "/", filter);
+        }
+        else if(f.extension().string() == ".png")
+        {
+            Texture::load(f.filename().string(), Type::PNG, filter);
+        }
     }
 }
 
-
-void Font::load(const std::string &fileName)
+void loadFontsRecursive(const std::filesystem::path &directory, const std::string& append)
 {
-    int index = fileName.find_last_of('/')+1;
-    loadedFonts[fileName.substr(index, fileName.find_last_of('.')-index) + ".ttf"] = file::loadTTF(fileName);
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    {
+        std::filesystem::path file = entry.path().filename();
+        if(std::filesystem::is_directory(file))
+        {
+            loadFontsRecursive(file, append + file.string() + "/");
+        }
+        else if(file.extension().string() == ".ttf")
+        {
+            Font::load(append + file.string(), entry.path().string());
+        }
+    }
+}
+void Font::loadAll(const std::string &directory)
+{
+    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    {
+        std::filesystem::path file = entry.path();
+        if(std::filesystem::is_directory(file))
+        {
+            loadFontsRecursive(file, file.filename().string() + "/");
+        }
+        else if(file.extension().string() == ".ttf")
+        {
+            Font::load(file.filename().string(), file.string());
+        }
+    }
+}
+void Font::load(const std::string &fileName, const std::string &path)
+{
+    loadedFonts[fileName] = file::loadTTF(path);
 }
 Font& Font::get(const std::string &fileName)
 {

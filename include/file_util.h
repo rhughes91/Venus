@@ -81,8 +81,6 @@ namespace file
     // loads file at 'fileName' into std::string vector separated by line
     std::vector<std::string> loadFileToStringVector(const std::string &fileName);
 
-    void loadFilesInDirectory(const std::string &fileName, void(*load)(const std::string&));
-
     // bool save(const std::string &fileName, const std::vector<char>& data);
 }
 

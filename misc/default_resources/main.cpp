@@ -6,5 +6,5 @@ int main()
 
     // Insert scripting code here!
 
-    Application::beginEventLoop(app);
+    Application::runEventLoop(app);
 }

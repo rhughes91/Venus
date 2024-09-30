@@ -198,13 +198,26 @@ namespace controller
     bool pressed(uint32_t index, ButtonCode id);
     bool pressed(uint32_t index, ButtonArray ids);
     bool pressed(uint32_t index, const std::vector<ButtonCode>& ids);
+    bool pressed(ButtonCode id);
+    bool pressed(ButtonArray ids);
+    bool pressed(const std::vector<ButtonCode>& ids);
+
     bool held(uint32_t index, ButtonCode id);
     bool held(uint32_t index, ButtonArray ids);
     bool held(uint32_t index, const std::vector<ButtonCode>& ids);
+    bool held(ButtonCode id);
+    bool held(ButtonArray ids);
+    bool held(const std::vector<ButtonCode>& ids);
+
     bool released(uint32_t index, ButtonCode id);
     bool released(uint32_t index, ButtonArray ids);
     bool released(uint32_t index, const std::vector<ButtonCode>& ids);
+    bool released(ButtonCode id);
+    bool released(ButtonArray ids);
+    bool released(const std::vector<ButtonCode>& ids);
+
     float axis(uint32_t index, AxisCode id);
+    float axis(AxisCode id);
 }
 
 // InputManager (struct): stores keys and regulates whether they are being pressed, held, or released

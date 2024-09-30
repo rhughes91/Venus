@@ -36,12 +36,27 @@ struct FrameBuffer
     std::vector<uint8_t> getTextureData(const std::string& name);
 };
 
+
+struct ShaderUniforms
+{
+    std::vector<bool> booleans;
+    std::vector<int32_t> integers;
+    std::vector<uint32_t> uIntegers;
+    std::vector<float> floats;
+    std::vector<double> doubles;
+
+    std::vector<Vector2> vBooleans, vIntegers, vUIntegers, vFloats, vDoubles;
+
+    ShaderUniforms() {}
+};
+
 //
 struct SimpleShader
 {
     Color color = color::WHITE;
-
     bool flip = false;
+
+    ShaderUniforms values;
 
     SimpleShader(const Color& objColor = color::WHITE) : color(objColor), flip(false) {}
 };
@@ -49,7 +64,7 @@ struct SimpleShader
 //
 struct AdvancedShader : SimpleShader
 {
-    float ambient, diffuse, specular = 0;
+    float ambient = 0, diffuse = 0, specular = 0;
     int32_t shine = 0;
 
     AdvancedShader(const Color& objColor = color::WHITE, float ambientStrength = 0, float diffuseStrength = 0, float specularStrength = 0, int32_t shininess = 0) : SimpleShader(objColor), ambient(ambientStrength), diffuse(diffuseStrength), specular(specularStrength), shine(shininess) {}
@@ -64,7 +79,7 @@ struct ComplexShader : SimpleShader
 //
 struct TextShader : SimpleShader
 {
-
+    TextShader(const Color& objColor = color::WHITE) : SimpleShader(objColor) {}
 };
 
 //

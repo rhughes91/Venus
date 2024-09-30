@@ -2,6 +2,7 @@
 
 #include <array>
 #include <set>
+#include <unordered_map>
 
 #include "color.h"
 #include "vector.h"
@@ -200,29 +201,46 @@ struct Physics2D
 // BoxCollider (struct): calls 'trigger' function whenever another BoxCollider intersects with this one :: otherwise, miss function is called
 struct BoxCollider
 {
+    static inline std::unordered_map<std::string, uint32_t> events = std::unordered_map<std::string, uint32_t>();
+    struct CollisionData
+    {
+        entity one, two;
+        bool edge;
+        int triggered;
+
+        CollisionData(entity one__, entity two__, bool edge__, int triggered__)
+        {
+            one = one__;
+            two = two__;
+            edge = edge__;
+            triggered = triggered__;
+        }
+    };
+
     bool mobile = false;
     Vector3 scale, offset;
+    uint32_t enterEvent = 0, exitEvent = 0;
 
     bool enter, exit;
 
-    BoxCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0) : scale(scale__), offset(offset__) {}
+    BoxCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0, uint32_t enter__ = 0, uint32_t exit__ = 0) : scale(scale__), offset(offset__), enterEvent(enter__), exitEvent(exit__) {}
 };
 
 // 
-struct SquareCollider
+struct TriCollider
 {
-    bool mobile = false;
-    Vector3 scale, offset, storedPosition;
+    // bool mobile = false;
+    // Vector3 scale, offset;
 
-    bool enter, exit;
+    // bool enter, exit;
 
-    SquareCollider(const Vector3& scale__ = 1, const Vector3& offset__ = 0) : scale(scale__), offset(offset__) {}
+    // TriCollder(const Vector3& scale__ = 1, const Vector3& offset__ = 0) : scale(scale__), offset(offset__) {}
 };
 
 // 
 struct AABB2D
 {
-
+    
 };
 
 // 

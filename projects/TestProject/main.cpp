@@ -3,9 +3,6 @@
 int main()
 {
     Application app = Application("Example", 400, 400);
-    Texture::load("block", Texture::PNG);
-    Texture::load("crate", Texture::PNG);
-    Texture::load("floor", Texture::PNG);
     Mesh::load("sphere", shape::sphere(1, 5));
 
     Window& window = app.window();
@@ -19,5 +16,5 @@ int main()
     */
     project::initialize(app);
 
-    Application::beginEventLoop(app);
+    Application::runEventLoop(app);
 }

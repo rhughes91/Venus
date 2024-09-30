@@ -176,7 +176,7 @@ void project::initialize(Application& app)
         event.setFunction(object::fn::UPDATE, []
         (object::ecs& container, object::ecs::system& script, void *data)
         {
-            Time& time = Application::data(data).time;
+            Time time = Application::data(data).getTime();
             Event& event = script.getInstance<Event>();
 
             float frequency = 1.0f;
@@ -194,7 +194,7 @@ void project::initialize(Application& app)
         event.setFunction(object::fn::DESTROY, []
         (object::ecs& container, object::ecs::system& script, void *data)
         {
-            Time& time = Application::data(data).time;
+            Time time = Application::data(data).getTime();
             std::cout << "Your application ran for " << time.runtime << " seconds." << std::endl;
         });
     }

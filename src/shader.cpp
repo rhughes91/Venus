@@ -536,13 +536,25 @@ uint32_t Texture::filterToModifier(Filter filter)
     return -1;
 }
 
-void Texture::load(const std::string &path, Type type)
+void Texture::load(const std::string &path, Type type, Filter filter)
 {
     int32_t screenChannel = typeToModifier(type);
     std::string screenChannelString = typeToString(type);
 
+    uint32_t filterChannel = filterToModifier(filter);
+    uint32_t minFilter = -1;
+    switch(filterChannel)
+    {
+        case GL_NEAREST: 
+            minFilter = GL_NEAREST_MIPMAP_LINEAR;
+        break;
+        case GL_LINEAR:
+            minFilter = GL_LINEAR_MIPMAP_LINEAR;
+        break;
+    }
+
     int32_t width, height, channels;
-    unsigned char *data = stbi_load((Source::root() + Source::texture() + path + "." + screenChannelString).c_str(), &width, &height, &channels, 0);
+    unsigned char *data = stbi_load((Source::root() + Source::texture() + path).c_str(), &width, &height, &channels, 0);
 
     uint32_t channel;
     switch (channels)
@@ -571,15 +583,15 @@ void Texture::load(const std::string &path, Type type)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 16);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterChannel);
     }
     else
     {
         std::cout << "Failed to load texture: " << path << std::endl;
     }
     stbi_image_free(data);
-    loadedTextures[path + "." + screenChannelString] = Texture(texture, Vector2I(width, height));
+    loadedTextures[path] = Texture(texture, Vector2I(width, height));
 }
 void Texture::load(const std::string &path, const std::vector<std::string> &subPaths, Type type)
 {

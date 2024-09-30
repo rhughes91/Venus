@@ -6,9 +6,9 @@
 #include <iostream>
 #include <thread>
 
-void Application::beginEventLoop(Application& app)
+void Application::runEventLoop(Application& app)
 {    
-    Window& win = app.window();
+    Window& window = app.window();
     app.time.beginTimer();
     app.setScene();
     app.lastScene = -1;
@@ -16,20 +16,17 @@ void Application::beginEventLoop(Application& app)
 
     Application::updateCursor();
 
-    while(!win.closing())
+    while(!window.closing())
     {        
         object::ecs& ecs = app.getScene().container;
 
-        Window& win = app.window();
-        if(app.keyboard.inputs[key::ESCAPE].pressed)
-            win.close();
+        Window& window = app.window();
+        if(key::pressed(key::ESCAPE))
+            window.close();
 
-        if(win.screen.resolutionUpdated)
-        {
-            win.screen.refreshResolution(win.resolution());
-        }
+        window.updateResolution();
 
-        entity camera = win.screen.camera;
+        entity camera = window.screen.camera;
         bool fovChanged = false;
         float fov = 0;
         if(camera != -1)
@@ -48,23 +45,24 @@ void Application::beginEventLoop(Application& app)
         ecs.run(object::fn::UPDATE, &app);
         ecs.run(object::fn::LATE_UPDATE, &app);
 
-        win.screen.store();
+        window.screen.store();
         if(camera != -1)
         {
             Camera& cam = ecs.getComponent<Camera>(camera);
             fovChanged = (fov != cam.fov);
-            win.screen.clear(cam.backgroundColor);
+            window.screen.clear(cam.backgroundColor);
         }
         else
         {
-            win.screen.clear(color::MAGENTA);
+            fovChanged = false;
+            window.screen.clear(color::MAGENTA);
         }
         
         ecs.run(object::fn::RENDER, &app);
-        win.screen.draw();
+        window.screen.draw();
 
-        bool fullscreen = win.fullscreened();
-        bool maximized = win.maximized();
+        bool fullscreen = window.fullscreened();
+        bool maximized = window.maximized();
         
         app.keyboard.refresh();
         app.mouse.refresh();
@@ -75,16 +73,16 @@ void Application::beginEventLoop(Application& app)
         }
 
         Application::updateCursor();
-        win.refresh();
-        win.poll();
+        window.refresh();
+        window.poll();
 
         if(key::pressed(key::F11))
         {
-            win.isFullscreen = !win.isFullscreen;
-            win.fullscreen(win.isFullscreen, win.vsyncEnabled);
+            window.isFullscreen = !window.isFullscreen;
+            window.fullscreen(window.isFullscreen, window.vsyncEnabled);
         }
         
-        win.screen.resolutionUpdated = (fullscreen != win.fullscreened() || maximized != win.maximized() || win.screen.resolution != win.resolution() || fovChanged);
+        window.screen.resolutionUpdated = (fullscreen != window.fullscreened() || maximized != window.maximized() || window.screen.resolution != window.resolution() || fovChanged);
         
         app.updateScene();
     }
@@ -98,7 +96,7 @@ void Application::beginEventLoop(Application& app)
     // Audio::clear();
 
     std::cout << app.time.framerate() << " FPS : " << app.time.deltaTime*1000 << " ms\n";
-    win.throwError();
+    window.throwError();
     // win.throwAudioError();
     std::cout << ecs.parseError() << " (ECS)" << std::endl;
     // win.terminate(win.audioDevice, win.audioContext);
